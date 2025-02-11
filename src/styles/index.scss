@@ -1,0 +1,26 @@
+@use 'sass:color';
+@use 'variables' as vars;
+@use 'mixins' as mix;
+@use 'normalize.css/normalize.css';
+
+// 导入布局样式
+@forward 'layout';
+// 全局样式
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  font-family: vars.$font-family-base;
+  line-height: vars.$line-height-base;
+  color: vars.$primary-dark;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}

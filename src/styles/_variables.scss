@@ -1,0 +1,86 @@
+// 主题颜色
+$primary-green: #83B735;  // Logo中的绿色
+$primary-dark: #2C3E50;   // Logo中的深色
+$accent-green: #6FA22E;   // 深绿色，用于悬停效果
+$accent-dark: #1A2633;    // 更深的灰色，用于强调
+
+// 辅助颜色
+$gray-100: #F8F9FA;
+$gray-200: #E9ECEF;
+$gray-300: #DEE2E6;
+$gray-400: #CED4DA;
+$gray-500: #ADB5BD;
+$gray-600: #6C757D;
+$gray-700: #495057;
+$gray-800: #343A40;
+
+// 功能色
+$success: #28A745;
+$info: #17A2B8;
+$warning: #FFC107;
+$danger: #DC3545;
+
+// 基础布局变量
+$header-height: 80px;
+$max-width: 1400px;
+$side-padding: 2rem;
+$border-radius: 8px;
+$border-radius-lg: 12px;
+$transition-normal: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+// 阴影
+$shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+$shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+$shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+$shadow-hover: 0 15px 30px rgba(0, 0, 0, 0.15);
+
+// 字体
+$font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+$font-size-base: 1rem;
+$font-size-lg: 1.125rem;
+$font-size-sm: 0.875rem;
+$line-height-base: 1.6;
+
+// Z-index
+$z-index-dropdown: 1000;
+$z-index-sticky: 1020;
+$z-index-fixed: 1030;
+$z-index-modal-backdrop: 1040;
+$z-index-modal: 1050;
+$z-index-popover: 1060;
+$z-index-tooltip: 1070;
+
+:root {
+  // 颜色
+  --primary-green: #{$primary-green};
+  --primary-dark: #{$primary-dark};
+  --accent-green: #{$accent-green};
+  --accent-dark: #{$accent-dark};
+  
+  // 背景色
+  --bg-primary: #{$gray-100};
+  --bg-secondary: white;
+  --bg-tertiary: #{$gray-200};
+  
+  // 文本颜色
+  --text-primary: #{$primary-dark};
+  --text-secondary: #{$gray-600};
+  --text-light: #{$gray-500};
+  
+  // 边框颜色
+  --border-color: #{$gray-300};
+  
+  // 布局
+  --header-height: #{$header-height};
+  --max-width: #{$max-width};
+  --side-padding: #{$side-padding};
+  --border-radius: #{$border-radius};
+  --border-radius-lg: #{$border-radius-lg};
+  --transition-normal: #{$transition-normal};
+  
+  // 阴影
+  --shadow-sm: #{$shadow-sm};
+  --shadow-md: #{$shadow-md};
+  --shadow-lg: #{$shadow-lg};
+  --shadow-hover: #{$shadow-hover};
+} 

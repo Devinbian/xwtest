@@ -1,0 +1,48 @@
+@use 'sass:color';
+@use 'variables' as vars;
+
+// 布局混入
+@mixin container {
+  max-width: vars.$max-width;
+  margin: 0 auto;
+  padding: 0 vars.$side-padding;
+}
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin grid-auto-fit {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+// 响应式混入
+@mixin mobile {
+  @media (max-width: 768px) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (max-width: 1024px) {
+    @content;
+  }
+}
+
+// 动画混入
+@mixin fade-transition {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+@mixin hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  }
+} 
