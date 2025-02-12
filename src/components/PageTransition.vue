@@ -2,9 +2,12 @@
   <transition
     name="page"
     mode="out-in"
-    @before-leave="beforeLeave"
+    @before-enter="beforeEnter"
     @enter="enter"
     @after-enter="afterEnter"
+    @before-leave="beforeLeave"
+    @leave="leave"
+    @after-leave="afterLeave"
   >
     <slot></slot>
   </transition>
@@ -13,39 +16,51 @@
 <script setup lang="ts">
 import gsap from 'gsap'
 
-const beforeLeave = (el: Element) => {
-  gsap.to(el, {
+const beforeEnter = (el: Element) => {
+  gsap.set(el, {
     opacity: 0,
-    y: 30,
-    duration: 0.3
+    y: 20
   })
 }
 
 const enter = (el: Element, done: () => void) => {
-  gsap.fromTo(
-    el,
-    {
-      opacity: 0,
-      y: 30
-    },
-    {
-      opacity: 1,
-      y: 0,
-      duration: 0.3,
-      onComplete: done
-    }
-  )
+  gsap.to(el, {
+    opacity: 1,
+    y: 0,
+    duration: 0.5,
+    onComplete: done
+  })
 }
 
-const afterEnter = (el: Element) => {
-  gsap.set(el, { clearProps: 'all' })
+const beforeLeave = (el: Element) => {
+  gsap.set(el, {
+    opacity: 1,
+    y: 0
+  })
 }
+
+const leave = (el: Element, done: () => void) => {
+  gsap.to(el, {
+    opacity: 0,
+    y: -20,
+    duration: 0.5,
+    onComplete: done
+  })
+}
+
+// 空函数以满足 TypeScript
+const afterEnter = () => {}
+const afterLeave = () => {}
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .page-enter-active,
 .page-leave-active {
-  position: absolute;
-  width: 100%;
+  transition: opacity 0.5s ease;
+}
+
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
 }
 </style> 

@@ -5,6 +5,11 @@
 
 // 导入布局样式
 @forward 'layout';
+@forward 'variables';
+@forward 'base';
+@forward 'utilities';
+
+
 // 全局样式
 * {
   margin: 0;
@@ -12,15 +17,44 @@
   box-sizing: border-box;
 }
 
+:root {
+  --primary-color: #1a73e8;
+  --secondary-color: #4285f4;
+  --text-color: #202124;
+  --background-color: #ffffff;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
 body {
   min-width: 320px;
   min-height: 100vh;
-  font-family: vars.$font-family-base;
-  line-height: vars.$line-height-base;
-  color: vars.$primary-dark;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  color: var(--text-color);
+  background-color: var(--background-color);
+  line-height: 1.5;
 }
 
 img {
   max-width: 100%;
   height: auto;
 }
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@media (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+
+// 如果有其他样式文件，也使用 @forward 导入

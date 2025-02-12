@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 0.0.0.0",
     "build": "vue-tsc && vite build",
     "preview": "vite preview",
     "generate-assets": "node scripts/generate-assets.js"
@@ -20,7 +20,7 @@
   "devDependencies": {
     "@types/node": "^18.15.0",
     "@vitejs/plugin-vue": "^4.2.3",
-    "sass": "^1.84.0",
+    "sass": "^1.69.7",
     "typescript": "^5.0.2",
     "vite": "^4.4.5",
     "vue-tsc": "^1.8.5"

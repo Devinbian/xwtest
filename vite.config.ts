@@ -17,8 +17,14 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       scss: {
-        additionalData: ''
+        charset: false
       }
     }
+  },
+  server: {
+    host: '0.0.0.0',
+    port: 5174,
+    strictPort: true,
+    https: false,
   }
 }) 
