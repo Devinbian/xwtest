@@ -10,7 +10,7 @@
           <div v-for="(industry, index) in industries" :key="industry.id" class="slider-item"
             @mouseenter="activeIndustry = index" @mouseleave="activeIndustry = null"
             @touchstart="(e) => handleIndustryTouchStart(e, index)" @touchend="handleIndustryTouchEnd"
-            @touchcancel="handleIndustryTouchEnd">
+            @touchcancel="handleIndustryTouchCancel">
             <div class="slider-bg" :style="{ backgroundImage: `url(${industry.image})` }">
               <div class="slider-content">
                 <h3>{{ industry.name }}</h3>
@@ -176,7 +176,7 @@
                   </div>
                   <div class="contact-info">
                     <span class="label">服务热线</span>
-                    <strong class="value">400-888-8888</strong>
+                    <strong class="value">18112550622</strong>
                   </div>
                 </div>
 
@@ -190,7 +190,7 @@
                   </div>
                   <div class="contact-info">
                     <span class="label">邮件咨询</span>
-                    <strong class="value">support@example.com</strong>
+                    <strong class="value">sales@xwtest.com.cn</strong>
                   </div>
                 </div>
 
@@ -604,13 +604,19 @@ const handleTouchEnd = (element: HTMLElement) => {
 };
 
 const handleIndustryTouchStart = (e: TouchEvent, index: number) => {
-  e.preventDefault(); // 防止滚动
+  // 移除 preventDefault，允许页面滚动
   activeIndustry.value = index;
   const element = e.currentTarget as HTMLElement;
   element.classList.add('touch-active');
 };
 
 const handleIndustryTouchEnd = (e: TouchEvent) => {
+  activeIndustry.value = null;
+  const element = e.currentTarget as HTMLElement;
+  element.classList.remove('touch-active');
+};
+
+const handleIndustryTouchCancel = (e: TouchEvent) => {
   activeIndustry.value = null;
   const element = e.currentTarget as HTMLElement;
   element.classList.remove('touch-active');

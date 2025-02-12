@@ -53,11 +53,11 @@
             <ul>
               <li>
                 <i class="icon">📞</i>
-                <span>400-123-4567</span>
+                <span>18112550622</span>
               </li>
               <li>
                 <i class="icon">✉️</i>
-                <span>info@example.com</span>
+                <span>sales@xwtest.com.cn</span>
               </li>
               <li>
                 <i class="icon">📍</i>
@@ -83,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { ASSETS } from '@/constants/assets'
+import { ASSETS } from '@/constants/assets';
 </script>
 
 <style scoped lang="scss">
@@ -258,4 +258,4 @@ import { ASSETS } from '@/constants/assets'
     }
   }
 }
-</style> 
+</style>

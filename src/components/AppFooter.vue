@@ -3,18 +3,18 @@
     <div class="footer-content">
       <div class="footer-section">
         <h3>联系方式</h3>
-        <p>📞 400-888-8888</p>
-        <p>📧 info@example.com</p>
+        <p>📞 18112550622</p>
+        <p>📧 sales@xwtest.com.cn</p>
         <p>📍 上海市浦东新区张江高科技园区</p>
       </div>
-      
+
       <div class="footer-section">
         <h3>快速链接</h3>
         <router-link to="/products">产品中心</router-link>
         <router-link to="/brands">品牌展示</router-link>
         <router-link to="/about">关于我们</router-link>
       </div>
-      
+
       <div class="footer-section">
         <h3>关注我们</h3>
         <div class="qr-code">
@@ -23,7 +23,7 @@
         </div>
       </div>
     </div>
-    
+
     <div class="footer-bottom">
       <p>&copy; 2024 仪器设备专业供应商. All rights reserved.</p>
     </div>
@@ -49,7 +49,7 @@
         font-size: 1.2rem;
         margin-bottom: 1.5rem;
         position: relative;
-        
+
         &::after {
           content: '';
           position: absolute;
@@ -81,7 +81,7 @@
 
       .qr-code {
         text-align: center;
-        
+
         img {
           width: 120px;
           height: 120px;
@@ -99,7 +99,7 @@
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     padding-top: 1rem;
     text-align: center;
-    
+
     p {
       opacity: 0.6;
       font-size: 0.9rem;
@@ -116,4 +116,4 @@
     }
   }
 }
-</style> 
+</style>
