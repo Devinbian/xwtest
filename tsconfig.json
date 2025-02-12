@@ -12,6 +12,8 @@
     "lib": ["ESNext", "DOM"],
     "skipLibCheck": true,
     "noEmit": true,
+    "allowJs": true, // 允许编译 JavaScript 文件
+    "checkJs": false, // 不检查 JavaScript 文件中的类型错误
     "paths": {
       "@/*": ["./src/*"]
     }
