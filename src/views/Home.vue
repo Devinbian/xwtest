@@ -2,6 +2,43 @@
   <div class="home">
     <HomeHero />
 
+        <!-- 合作品牌板块 -->
+    <section class="partners-section">
+      <div class="container">
+        <h2 class="section-title">合作品牌</h2>
+        <div class="partners-slider" @mouseenter="handlePartnerMouseEnter" @mouseleave="handlePartnerMouseLeave">
+          <div class="slider-wrapper" ref="partnerSliderWrapper" :style="{ transform: `translateX(${-currentPartnerSlide * 100}%)` }">
+            <div class="partner-slide" v-for="(group, index) in partnerGroups" :key="index">
+              <div class="partners-grid">
+                <div v-for="partner in group" :key="partner.id" class="partner-card" :class="{ 'empty-card': partner.isEmpty }">
+                  <a v-if="!partner.isEmpty" :href="partner.website" target="_blank" class="card-content">
+                    <div class="card-inner">
+                      <div class="logo-wrapper">
+                        <img :src="partner.logo" :alt="partner.name" />
+                      </div>
+                      <div class="card-glow"></div>
+                      <div class="card-border"></div>
+                    </div>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="slider-nav prev" @click="prevPartnerSlide" :disabled="currentPartnerSlide === 0">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <button class="slider-nav next" @click="nextPartnerSlide" :disabled="currentPartnerSlide === partnerGroups.length - 1">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+          <div class="slider-dots">
+            <button v-for="(_, index) in partnerGroups" :key="index" class="dot"
+              :class="{ active: currentPartnerSlide === index }" @click="goToPartnerSlide(index)">
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- 八大行业板块 -->
     <section class="industries-section">
       <div class="container-fluid">
@@ -241,8 +278,9 @@
 <script setup lang="ts">
 import HomeHero from '@/components/HomeHero.vue';
 import ProductCard from '@/components/ProductCard.vue';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import AppIcon from '@/components/AppIcon.vue';
+import { partners } from '../data/partners.js';
 
 const featuredProducts = ref([
   {
@@ -621,9 +659,118 @@ const handleIndustryTouchCancel = (e: TouchEvent) => {
   const element = e.currentTarget as HTMLElement;
   element.classList.remove('touch-active');
 };
+
+// 修改分组逻辑，每组显示10个品牌
+const partnerGroups = computed(() => {
+  const groups = [];
+  const itemsPerGroup = 10; // 改为每组10个品牌，匹配 5x2 的网格布局
+  for (let i = 0; i < partners.length; i += itemsPerGroup) {
+    const group = partners.slice(i, i + itemsPerGroup);
+    // 如果最后一组不足10个，用空对象填充以保持布局
+    if (group.length < itemsPerGroup) {
+      const padding = Array(itemsPerGroup - group.length).fill({
+        id: `empty-${i}`,
+        name: '',
+        logo: '',
+        website: '',
+        isEmpty: true // 标记为空卡片
+      });
+      group.push(...padding);
+    }
+    groups.push(group);
+  }
+  return groups;
+});
+
+// 合作品牌轮播相关
+const currentPartnerSlide = ref(0);
+const partnerAutoPlayInterval = ref<number | null>(null);
+const isPartnerHovering = ref(false);
+
+const prevPartnerSlide = () => {
+  if (currentPartnerSlide.value > 0) {
+    currentPartnerSlide.value--;
+  }
+};
+
+const nextPartnerSlide = () => {
+  if (currentPartnerSlide.value < partnerGroups.value.length - 1) {
+    currentPartnerSlide.value++;
+  }
+};
+
+const goToPartnerSlide = (index: number) => {
+  currentPartnerSlide.value = index;
+};
+
+const startPartnerAutoPlay = () => {
+  if (partnerAutoPlayInterval.value) return;
+  partnerAutoPlayInterval.value = window.setInterval(() => {
+    if (!isPartnerHovering.value) {
+      if (currentPartnerSlide.value < partnerGroups.value.length - 1) {
+        currentPartnerSlide.value++;
+      } else {
+        currentPartnerSlide.value = 0;
+      }
+    }
+  }, 5000);
+};
+
+const stopPartnerAutoPlay = () => {
+  if (partnerAutoPlayInterval.value) {
+    clearInterval(partnerAutoPlayInterval.value);
+    partnerAutoPlayInterval.value = null;
+  }
+};
+
+const handlePartnerMouseEnter = () => {
+  isPartnerHovering.value = true;
+};
+
+const handlePartnerMouseLeave = () => {
+  isPartnerHovering.value = false;
+};
+
+onMounted(() => {
+  startPartnerAutoPlay();
+});
+
+onUnmounted(() => {
+  stopPartnerAutoPlay();
+});
+
+// 添加鼠标移动跟踪效果
+onMounted(() => {
+  const cards = document.querySelectorAll('.partner-card');
+  
+  cards.forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      
+      const rotateX = (y - centerY) / 10;
+      const rotateY = (centerX - x) / 10;
+      
+      card.style.setProperty('--rotate-x', rotateX.toString());
+      card.style.setProperty('--rotate-y', rotateY.toString());
+      card.style.setProperty('--mouse-x', `${(x / rect.width) * 100}%`);
+      card.style.setProperty('--mouse-y', `${(y / rect.height) * 100}%`);
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.style.setProperty('--rotate-x', '0');
+      card.style.setProperty('--rotate-y', '0');
+    });
+  });
+});
 </script>
 
 <style lang="scss" scoped>
+@use '../styles/variables' as vars;
 // 更新背景色变量
 $bg-gradients: (
   hero: (start: #000000,
@@ -1790,7 +1937,7 @@ $primary-black: #000000;
     padding: 4rem 0;
 
     .section-title {
-      font-size: 2rem;
+      font-size: 2.8rem;
       margin-bottom: 2rem;
     }
 
@@ -2056,7 +2203,7 @@ $primary-black: #000000;
     padding: 4rem 0;
 
     .section-title {
-      font-size: 2rem;
+      font-size: 2.8rem;
       margin-bottom: 3rem;
     }
 
@@ -2628,6 +2775,338 @@ $primary-black: #000000;
               rgba(0, 0, 0, 0.3));
         }
       }
+    }
+  }
+}
+
+.partners-section {
+  padding: 4rem 0;
+  background: vars.$primary-black;
+  color: white;
+
+  .section-title {
+    text-align: center;
+    font-size: 2.8rem;
+    margin-bottom: 5rem;
+    font-weight: 300;
+    position: relative;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+
+    &::after {
+      content: '';
+      position: absolute;
+      background: linear-gradient(90deg, transparent, vars.$primary-green, transparent);
+      width: 10%;
+      height: 2px;
+      bottom: calc(-1rem - 0.5px);
+      left: 45%;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .partners-section {
+    .section-title {
+      font-size: 2rem;
+      margin-bottom: 3rem;
+
+      &::after {
+        width: 20%; // 在移动端增加宽度比例
+        left: 40%; // 调整位置以保持居中
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .partners-section {
+    .section-title {
+      font-size: 2.8rem;
+      margin-bottom: 2.5rem;
+
+      &::after {
+        width: 30%; // 在更小的屏幕上进一步增加宽度比例
+        left: 35%; // 调整位置以保持居中
+      }
+    }
+  }
+}
+
+.partners-slider {
+  position: relative;
+  overflow: hidden;
+  margin: 0 auto;
+  max-width: 1200px;
+
+  .slider-wrapper {
+    display: flex;
+    transition: transform 0.5s ease;
+  }
+
+  .partner-slide {
+    flex: 0 0 100%;
+    width: 100%;
+  }
+
+  .partners-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr); // 改为5列，这样每行显示更多
+    grid-template-rows: repeat(2, 1fr);
+    gap: 1.2rem; // 减小间距
+    padding: 0 1rem;
+  }
+}
+
+.partner-card {
+  position: relative;
+  height: 90px; // 减小卡片高度
+  perspective: 1000px;
+
+  .card-content {
+    display: block;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+  }
+
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.95); // 改为白色背景
+    border-radius: 8px; // 减小圆角
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        130deg,
+        transparent 0%,
+        rgba(vars.$primary-green, 0.05) 30%,
+        rgba(vars.$primary-green, 0.02) 70%,
+        transparent 100%
+      );
+    }
+  }
+
+  .logo-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem; // 减小内边距
+    z-index: 1;
+
+    img {
+      max-width: 85%; // 增大logo尺寸占比
+      max-height: 85%;
+      object-fit: contain;
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  }
+
+  .card-glow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      rgba(vars.$primary-green, 0.15) 0%,
+      transparent 60%
+    );
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .card-border {
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    padding: 1px;
+    background: linear-gradient(
+      130deg,
+      transparent,
+      rgba(vars.$primary-green, 0.5) 50%,
+      transparent
+    );
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+
+  &:hover {
+    .card-inner {
+      transform: translateY(-3px); // 减小上浮距离
+      background: rgba(255, 255, 255, 1);
+      box-shadow: 
+        0 10px 20px rgba(0, 0, 0, 0.1),
+        0 0 20px rgba(vars.$primary-green, 0.1);
+    }
+
+    .logo-wrapper img {
+      transform: scale(1.08); // 减小放大比例
+    }
+
+    .card-glow {
+      opacity: 1;
+    }
+
+    .card-border {
+      opacity: 1;
+    }
+  }
+
+  // 添加空卡片样式
+  &.empty-card {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 1024px) {
+  .partners-grid {
+    grid-template-columns: repeat(4, 1fr); // 中等屏幕4列
+  }
+}
+
+@media (max-width: 768px) {
+  .partners-grid {
+    grid-template-columns: repeat(3, 1fr); // 小屏幕3列
+    gap: 1rem;
+  }
+
+  .partner-card {
+    height: 70px; // 移动端更小的高度
+
+    .logo-wrapper {
+      padding: 0.8rem;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .partners-grid {
+    grid-template-columns: repeat(2, 1fr); // 超小屏幕2列
+  }
+}
+
+// 添加鼠标跟踪效果
+@media (hover: hover) {
+  .partner-card {
+    &:hover {
+      .card-inner {
+        transform: 
+          translateY(-3px)
+          rotateX(calc(var(--rotate-x, 0) * 1deg))
+          rotateY(calc(var(--rotate-y, 0) * 1deg));
+      }
+    }
+  }
+}
+
+// 导航按钮样式
+.slider-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  &.prev {
+    left: -60px;
+  }
+
+  &.next {
+    right: -60px;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  i {
+    font-size: 1.2rem;
+  }
+}
+
+// 指示点样式
+.slider-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.8rem;
+  margin-top: 2.5rem;
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border: none;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &.active {
+      width: 24px;
+      background: vars.$primary-green;
+    }
+
+    &:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
+}
+
+@media (max-width: 1024px) {
+  .partners-slider {
+    .partners-grid {
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      gap: 1.5rem;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .partners-slider {
+    .partners-grid {
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 1rem;
+    }
+  }
+
+  .slider-nav {
+    display: none;
+  }
+
+  .partner-card {
+    .logo-wrapper {
+      padding: 1.5rem;
     }
   }
 }

@@ -208,196 +208,18 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-
-// 品牌数据
-const allBrands = [
-  {
-    name: 'ADCMT',
-    logo: '/images/co-brands/adcmt.png',
-    description: '爱德万测试'
-  },
-  {
-    name: 'ADVANTEST',
-    logo: '/images/co-brands/advantest.png',
-    description: '爱德万'
-  },
-  {
-    name: 'HIOKI',
-    logo: '/images/co-brands/hioki.png',
-    description: '日置'
-  },
-  {
-    name: 'KIKUSUI',
-    logo: '/images/co-brands/kikusui.png',
-    description: '菊水'
-  },
-  {
-    name: 'KEYSIGHT',
-    logo: '/images/co-brands/keysight.png',
-    description: '是德科技'
-  },
-  {
-    name: 'TEKTRONIX',
-    logo: '/images/co-brands/tektronix.png',
-    description: '泰克'
-  },
-  {
-    name: 'KEITHLEY',
-    logo: '/images/co-brands/keithley.png',
-    description: '吉时利'
-  },
-  {
-    name: 'FLUKE',
-    logo: '/images/co-brands/fluke.png',
-    description: '福禄克'
-  },
-  {
-    name: 'METTLER TOLEDO',
-    logo: '/images/co-brands/mettler-toledo.png',
-    description: '梅特勒-托利多'
-  },
-  {
-    name: 'NOISEKEN',
-    logo: '/images/co-brands/noiseken.png',
-    description: 'EMC'
-  },
-  {
-    name: 'NF',
-    logo: '/images/co-brands/nf.png',
-    description: '恩乃普'
-  },
-  {
-    name: 'TEXIO',
-    logo: '/images/co-brands/texio.png',
-    description: '德士'
-  },
-  {
-    name: 'GWINSTEK',
-    logo: '/images/co-brands/gwinstek.png',
-    description: '固纬'
-  },
-  {
-    name: 'AIKON',
-    logo: '/images/co-brands/aikon.png',
-    description: '爱光'
-  },
-  {
-    name: 'SHIMADZU',
-    logo: '/images/co-brands/shimadzu.png',
-    description: '岛津'
-  },
-  {
-    name: 'ANRITSU',
-    logo: '/images/co-brands/anritsu.png',
-    description: '安立'
-  },
-  {
-    name: 'TAKASAGO',
-    logo: '/images/co-brands/takasago.png',
-    description: '高砂'
-  },
-  {
-    name: 'TOPCON',
-    logo: '/images/co-brands/topcon.png',
-    description: '拓普康'
-  },
-  {
-    name: 'MITUTOYO',
-    logo: '/images/co-brands/mitutoyo.png',
-    description: '三丰'
-  },
-  {
-    name: 'EMIC',
-    logo: '/images/co-brands/emic.png',
-    description: '爱美克'
-  },
-  {
-    name: 'IWATSU',
-    logo: '/images/co-brands/iwatsu.png',
-    description: '岩崎'
-  },
-  {
-    name: 'CONTEC',
-    logo: '/images/co-brands/contec.png',
-    description: '康泰克'
-  },
-  {
-    name: 'HITACHI',
-    logo: '/images/co-brands/hitachi.png',
-    description: '日立'
-  },
-  {
-    name: 'MALCOM',
-    logo: '/images/co-brands/malcom.png',
-    description: 'Malcom'
-  },
-  {
-    name: 'NEW COSMOS',
-    logo: '/images/co-brands/new-cosmos.png',
-    description: '新宇宙'
-  },
-  {
-    name: 'ONOSOKKI',
-    logo: '/images/co-brands/onosokki.png',
-    description: '小野'
-  },
-  {
-    name: 'RION',
-    logo: '/images/co-brands/rion.png',
-    description: '理音'
-  },
-  {
-    name: 'GRAPHTEC',
-    logo: '/images/co-brands/graphtec.png',
-    description: '图技'
-  },
-  {
-    name: 'IMADA',
-    logo: '/images/co-brands/imada.png',
-    description: 'IMADA'
-  },
-  {
-    name: 'JEOL',
-    logo: '/images/co-brands/jeol.png',
-    description: '日本电子'
-  },
-  {
-    name: 'ABO',
-    logo: '/images/co-brands/abo.png',
-    description: 'ABO株式会社'
-  },
-  {
-    name: 'X.RITE',
-    logo: '/images/co-brands/x-rite.png',
-    description: '爱色丽'
-  },
-  {
-    name: 'YOKOGAWA',
-    logo: '/images/co-brands/yokogawa.png',
-    description: '横河'
-  },
-  {
-    name: 'TONGHUI',
-    logo: '/images/co-brands/tonghui.png',
-    description: '同惠'
-  },
-  {
-    name: 'RIGOL',
-    logo: '/images/co-brands/rigol.png',
-    description: '普源'
-  }
-];
+import { partners } from '../data/partners.js';
 
 // 分页相关
 const currentPage = ref(1);
 const brandsPerPage = 12; // 每页显示12个品牌
 
-const totalPages = computed(() => Math.ceil(allBrands.length / brandsPerPage));
+const totalPages = computed(() => Math.ceil(partners.length / brandsPerPage));
 
 const displayedBrands = computed(() => {
   const start = (currentPage.value - 1) * brandsPerPage;
   const end = start + brandsPerPage;
-  return allBrands.slice(start, end);
+  return partners.slice(start, end);
 });
 
 const changePage = (page: number) => {
@@ -982,5 +804,34 @@ section {
       }
     }
   }
+}
+
+.partners-section {
+  padding: 2rem 0;
+  text-align: center;
+}
+
+.partners-list {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.partner-item {
+  width: 150px;
+  text-align: center;
+}
+
+.partner-item img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.partner-item p {
+  margin-top: 0.5rem;
+  font-size: 1rem;
+  color: #333;
 }
 </style>

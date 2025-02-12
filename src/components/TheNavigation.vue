@@ -857,4 +857,8 @@ onUnmounted(() => {
   margin: 0;
   padding: 0;
 }
+
+.products-list .product-item {
+  text-decoration: none; /* 去掉下划线 */
+}
 </style>
