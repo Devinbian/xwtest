@@ -26,5 +26,6 @@ export default defineConfig({
     port: 5174,
     strictPort: true,
     https: false,
-  }
+  },
+  base: '/xwtest/', // 替换成你的仓库名
 }) 
