@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@types/node": "^18.15.0",
+    "@types/vue-router": "^2.0.0",
     "@vitejs/plugin-vue": "^4.2.3",
     "sass": "^1.69.7",
     "typescript": "^5.0.2",
