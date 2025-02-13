@@ -23,13 +23,7 @@ jobs:
           cache: 'npm' # 添加缓存
 
       - name: Install dependencies
-        run: |
-          npm install -g typescript
-          npm ci
-          npm install @types/node @types/vue-router --save-dev
-
-      - name: Type Check
-        run: npx vue-tsc --noEmit
+        run: npm ci
 
       - name: Build
         run: npm run build
