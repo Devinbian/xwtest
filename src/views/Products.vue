@@ -126,7 +126,7 @@
             {{ getConditionText(product.condition) }}
           </div>
           <div class="image-wrapper">
-            <img :src="product.image" :alt="product.name">
+            <LazyImage :src="product.image" :alt="product.name" :placeholder="product.imagePlaceholder" />
           </div>
           <div class="product-info">
             <h3>{{ product.name }}</h3>
@@ -147,6 +147,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import LazyImage from '@/components/LazyImage.vue';
 import { getAssetUrl } from '@/utils/assets';
 const route = useRoute();
 const router = useRouter();
@@ -194,6 +195,7 @@ onMounted(() => {
       }
     });
   }
+  preloadVisibleImages();
 });
 
 onUnmounted(() => {
@@ -358,6 +360,7 @@ const products = [
     name: 'Keithley 2450 数字源表',
     description: '高精度数字源表，支持电压/电流源和测量功能',
     image: getAssetUrl('/images/products/keithley-2450.jpg'),
+    imagePlaceholder: getAssetUrl('/images/products/keithley-2450-small.jpg'),
     brand: 'KEITHLEY',
     type: 'new',
     condition: 'new',
@@ -369,6 +372,7 @@ const products = [
     name: 'Rigol DM3068 数字万用表',
     description: '6½ 位高精度数字万用表',
     image: getAssetUrl('/images/products/rigol-dm3068.jpg'),
+    imagePlaceholder: getAssetUrl('/images/products/rigol-dm3068-small.jpg'),
     brand: 'RIGOL',
     type: 'used',
     condition: 'used',
@@ -380,6 +384,7 @@ const products = [
     name: 'Tektronix MSO46 示波器',
     description: '高性能混合信号示波器',
     image: getAssetUrl('/images/products/tektronix-mso46.jpg'),
+    imagePlaceholder: getAssetUrl('/images/products/tektronix-mso46-small.jpg'),
     brand: 'TEKTRONIX',
     type: 'new',
     condition: 'new',
@@ -391,6 +396,7 @@ const products = [
     name: 'Kikusui PCR500M 交流电源',
     description: '高性能交流电源',
     image: getAssetUrl('/images/products/kikusui-pcr500m.jpg'),
+    imagePlaceholder: getAssetUrl('/images/products/kikusui-pcr500m-small.jpg'),
     brand: 'KIKUSUI',
     type: 'used',
     condition: 'used',
@@ -398,6 +404,24 @@ const products = [
     specs: ['500VA', '1-500V', '40-500Hz']
   }
 ];
+
+// 添加图片预加载函数
+const preloadImage = (src: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve();
+    img.onerror = reject;
+    img.src = src;
+  });
+};
+
+// 批量预加载当前可见产品的图片
+const preloadVisibleImages = async () => {
+  const visibleProducts = filteredProducts.value.slice(0, 4); // 只预加载前4个产品
+  await Promise.all(
+    visibleProducts.map(product => preloadImage(product.image))
+  );
+};
 </script>
 
 <style lang="scss" scoped>
@@ -781,26 +805,12 @@ const products = [
         overflow: hidden;
         background: #000;
 
-        img {
+        :deep(.lazy-image) {
           position: absolute;
           top: 0;
           left: 0;
           width: 100%;
           height: 100%;
-          object-fit: cover;
-          transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
-        }
-
-        &::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(to top,
-              rgba(0, 0, 0, 0.8) 0%,
-              rgba(0, 0, 0, 0) 60%);
-          opacity: 0.5;
-          transition: opacity 0.4s ease;
-          z-index: 1;
         }
       }
 

@@ -1,7 +1,7 @@
 <template>
   <div class="product-card" @mouseenter="hover = true" @mouseleave="hover = false">
     <div class="image-container">
-      <img :src="product.image" :alt="product.title">
+      <img :src="productImage" :alt="product.title">
       <div class="overlay" :class="{ active: hover }">
         <router-link :to="`/products/${product.id}`" class="view-details">
           查看详情
@@ -17,21 +17,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref } from 'vue';
+import { getAssetUrl } from '@/utils/assets';
+import { generatePlaceholderUrl } from '@/utils/image';
 
 interface ProductProps {
-  id: number
-  title: string
-  image: string
-  brand: string
-  description: string
+  id: number;
+  title: string;
+  image: string;
+  brand: string;
+  description: string;
 }
 
 defineProps<{
-  product: ProductProps
-}>()
+  product: ProductProps;
+}>();
 
-const hover = ref(false)
+const hover = ref(false);
+
+const productImage = getAssetUrl('/images/products/product1.jpg');
+const placeholderImage = generatePlaceholderUrl(productImage);
 </script>
 
 <style lang="scss" scoped>
@@ -39,17 +44,17 @@ const hover = ref(false)
   background: white;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease;
-  
+
   &:hover {
     transform: translateY(-4px);
   }
-  
+
   .image-container {
     position: relative;
     padding-top: 75%;
-    
+
     img {
       position: absolute;
       top: 0;
@@ -58,24 +63,24 @@ const hover = ref(false)
       height: 100%;
       object-fit: cover;
     }
-    
+
     .overlay {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0, 0, 0, 0.5);
       display: flex;
       align-items: center;
       justify-content: center;
       opacity: 0;
       transition: opacity 0.3s ease;
-      
+
       &.active {
         opacity: 1;
       }
-      
+
       .view-details {
         color: white;
         text-decoration: none;
@@ -83,7 +88,7 @@ const hover = ref(false)
         border: 2px solid white;
         border-radius: 4px;
         transition: all 0.3s ease;
-        
+
         &:hover {
           background: white;
           color: black;
@@ -91,20 +96,20 @@ const hover = ref(false)
       }
     }
   }
-  
+
   .product-info {
     padding: 1rem;
-    
+
     h3 {
       margin: 0 0 0.5rem;
       font-size: 1.2rem;
     }
-    
+
     .brand {
       color: #666;
       margin: 0 0 0.5rem;
     }
-    
+
     .description {
       font-size: 0.9rem;
       margin: 0;
@@ -112,4 +117,4 @@ const hover = ref(false)
     }
   }
 }
-</style> 
+</style>
