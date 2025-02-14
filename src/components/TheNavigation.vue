@@ -22,7 +22,7 @@
       <div class="container nav-container">
         <div class="nav-logo">
           <router-link to="/">
-            <img src="/images/logo.svg" alt="Logo">
+            <img :src="getAssetUrl('/images/logo.svg')" alt="Logo">
           </router-link>
         </div>
 
@@ -83,7 +83,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
-
+import { getAssetUrl } from '@/utils/assets';
 const isScrolled = ref(false);
 const isMenuOpen = ref(false);
 const activeSubmenu = ref<string | null>(null);
@@ -94,18 +94,18 @@ const topBrands = [
   {
     id: 1,
     name: 'KEITHLEY',
-    logo: '/images/brands/keithley/logo.png',
+    logo: getAssetUrl('/images/brands/keithley/logo.png'),
     products: [
       {
         id: 1,
         name: 'KEITHLEY 2450',
-        image: '/images/products/battery-tester.jpg',
+        image: getAssetUrl('/images/products/battery-tester.jpg'),
         description: '高精度数字源表'
       },
       {
         id: 2,
         name: 'KEITHLEY 2460',
-        image: '/images/products/data-acquisition.jpg',
+        image: getAssetUrl('/images/products/data-acquisition.jpg'),
         description: '高压数字源表'
       }
     ]
@@ -113,18 +113,18 @@ const topBrands = [
   {
     id: 2,
     name: 'TEKTRONIX',
-    logo: '/images/brands/tektronix/logo.png',
+    logo: getAssetUrl('/images/brands/tektronix/logo.png'),
     products: [
       {
         id: 3,
         name: 'MSO46',
-        image: '/images/products/environmental-chamber.jpg',
+        image: getAssetUrl('/images/products/environmental-chamber.jpg'),
         description: '混合信号示波器'
       },
       {
         id: 4,
         name: 'TBS1000C',
-        image: '/images/products/multimeter-1.jpg',
+        image: getAssetUrl('/images/products/multimeter-1.jpg'),
         description: '数字示波器'
       }
     ]
@@ -132,18 +132,18 @@ const topBrands = [
   {
     id: 3,
     name: 'KIKUSUI',
-    logo: '/images/brands/kikusui/logo.svg',
+    logo: getAssetUrl('/images/brands/kikusui/logo.svg'),
     products: [
       {
         id: 5,
         name: 'PWX1500L',
-        image: '/images/products/oscilloscope-1.jpg',
+        image: getAssetUrl('/images/products/oscilloscope-1.jpg'),
         description: '可编程直流电源'
       },
       {
         id: 6,
         name: 'PCR-WE/WE2',
-        image: '/images/products/power-analyzer.jpg',
+        image: getAssetUrl('/images/products/power-analyzer.jpg'),
         description: '交流电源'
       }
     ]
@@ -154,25 +154,25 @@ const categories = [
   {
     id: 1,
     name: '数字万用表/源表',
-    image: '/images/products/keithley-2450.jpg',
+    image: getAssetUrl('/images/products/keithley-2450.jpg'),
     brands: ['ADC', 'KEITHLEY', 'RIGOL', 'TEXIO', 'GWINSTEK']
   },
   {
     id: 2,
     name: '电压/电流源',
-    image: '/images/products/kikusui-pwx1500l.jpg',
+    image: getAssetUrl('/images/products/kikusui-pwx1500l.jpg'),
     brands: ['ADC', 'KEITHLEY', 'KIKUSUI', 'RIGOL', 'TEXIO']
   },
   {
     id: 3,
     name: '示波器',
-    image: '/images/products/tektronix-mso46.jpg',
+    image: getAssetUrl('/images/products/tektronix-mso46.jpg'),
     brands: ['TEKTRONIX', 'KEYSIGHT', 'RIGOL', 'TEXIO', 'GWINSTEK']
   },
   {
     id: 4,
     name: '电气安规试验',
-    image: '/images/products/chroma-62000p.jpg',
+    image: getAssetUrl('/images/products/chroma-62000p.jpg'),
     brands: ['KIKUSUI', 'HIOKI', 'TEXIO', 'GWINSTEK']
   }
 ];
@@ -859,6 +859,7 @@ onUnmounted(() => {
 }
 
 .products-list .product-item {
-  text-decoration: none; /* 去掉下划线 */
+  text-decoration: none;
+  /* 去掉下划线 */
 }
 </style>

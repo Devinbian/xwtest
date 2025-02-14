@@ -22,31 +22,31 @@
       <button class="next" @click="nextSlide">›</button>
     </div>
   </div>
-  <img :src="getAssetPath('/images/logo.png')" alt="logo">
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
+import { getAssetUrl } from '@/utils/assets';
 
 const slides = [
   {
     title: '创新测量方案',
     description: '为您提供专业精准的仪器仪表解决方案',
-    image: '/images/hero/slide1.jpg',
+    image: getAssetUrl('images/hero/slide1.jpg'),
     link: '/products',
     buttonText: '了解更多'
   },
   {
     title: '全方位技术支持',
     description: '专业团队为您提供完整的技术支持与服务',
-    image: '/images/hero/slide2.jpg',
+    image: getAssetUrl('images/hero/slide2.jpg'),
     link: '/services',
     buttonText: '查看服务'
   },
   {
     title: '行业领先品牌',
     description: '与全球顶尖仪器仪表品牌深度合作',
-    image: '/images/hero/slide3.jpg',
+    image: getAssetUrl('images/hero/slide3.jpg'),
     link: '/brands',
     buttonText: '品牌介绍'
   }

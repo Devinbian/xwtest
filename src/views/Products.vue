@@ -99,7 +99,7 @@
             <div class="brand-list">
               <button v-for="brand in category.brands" :key="brand" class="brand-item"
                 :class="{ active: selectedBrands.includes(brand) }" @click="toggleBrand(category.id, brand)">
-                <img :src="`/images/brands/${brand.toLowerCase()}.png`" :alt="brand">
+                <img :src="`${getAssetUrl('/images/brands/${brand.toLowerCase()}.png')}`" :alt="brand">
                 <span>{{ brand }}</span>
               </button>
             </div>
@@ -147,7 +147,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-
+import { getAssetUrl } from '@/utils/assets';
 const route = useRoute();
 const router = useRouter();
 const activeCategoryId = ref<string | number | null>(null);
@@ -291,7 +291,7 @@ const products = [
     id: 1,
     name: 'Keithley 2450 数字源表',
     description: '高精度数字源表，支持电压/电流源和测量功能',
-    image: '/images/products/keithley-2450.jpg',
+    image: getAssetUrl('/images/products/keithley-2450.jpg'),
     brand: 'KEITHLEY',
     type: 'new',
     condition: 'new',
@@ -302,7 +302,7 @@ const products = [
     id: 2,
     name: 'Rigol DM3068 数字万用表',
     description: '6½ 位高精度数字万用表',
-    image: '/images/products/rigol-dm3068.jpg',
+    image: getAssetUrl('/images/products/rigol-dm3068.jpg'),
     brand: 'RIGOL',
     type: 'used',
     condition: 'used',
@@ -313,22 +313,22 @@ const products = [
     id: 3,
     name: 'Tektronix MSO46 示波器',
     description: '高性能混合信号示波器',
-    image: '/images/products/tektronix-mso46.jpg',
+    image: getAssetUrl('/images/products/tektronix-mso46.jpg'),
     brand: 'TEKTRONIX',
     type: 'new',
     condition: 'new',
-    categoryId: 3,
+    categoryId: 1,
     specs: ['4通道', '1GHz带宽', '数字通道']
   },
   {
     id: 4,
     name: 'Kikusui PCR500M 交流电源',
     description: '高性能交流电源',
-    image: '/images/products/kikusui-pcr500m.jpg',
+    image: getAssetUrl('/images/products/kikusui-pcr500m.jpg'),
     brand: 'KIKUSUI',
     type: 'used',
     condition: 'used',
-    categoryId: 2,
+    categoryId: 1,
     specs: ['500VA', '1-500V', '40-500Hz']
   }
 ];
