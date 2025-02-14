@@ -49,6 +49,9 @@
 
     <!-- 移动端筛选按钮和菜单 -->
     <div v-if="isMobile" class="mobile-filter">
+      <!-- 遮罩层 -->
+      <div class="menu-overlay" :class="{ active: showFilter }" @click="showFilter = false"></div>
+
       <!-- 筛选按钮 -->
       <button class="filter-btn" @click="showFilter = true">
         <div class="left-section">
@@ -70,16 +73,10 @@
       <div class="filter-menu" :class="{ active: showFilter }">
         <div class="menu-header">
           <h3>筛选条件</h3>
-          <div class="header-actions">
-            <button class="clear-btn" @click="clearFilters" v-if="activeFiltersCount > 0">
-              清除
-            </button>
-            <button class="close-btn" @click="showFilter = false">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
+          <button class="close-btn" @click="showFilter = false">
+            <i class="fas fa-times"></i>
+          </button>
         </div>
-
         <div class="menu-content">
           <div class="filter-section">
             <div class="section-title">产品类型</div>
@@ -99,7 +96,7 @@
             <div class="brand-list">
               <button v-for="brand in category.brands" :key="brand" class="brand-item"
                 :class="{ active: isBrandSelected(category.id, brand) }" @click="toggleBrand(category.id, brand)">
-                <img :src="`${getAssetUrl('/images/brands/${brand.toLowerCase()}.png')}`" :alt="brand">
+                <img :src="getAssetUrl(`/images/brands/${brand.toLowerCase()}/logo.png`)" :alt="brand">
                 <span>{{ brand }}</span>
               </button>
             </div>
@@ -107,9 +104,6 @@
         </div>
       </div>
     </div>
-
-    <!-- 遮罩层 -->
-    <div class="filter-overlay" :class="{ active: showFilter }" @click="showFilter = false"></div>
 
     <!-- 右侧产品列表 -->
     <main class="products-content">
@@ -428,19 +422,21 @@ const preloadVisibleImages = async () => {
 @use '../styles/variables' as vars;
 
 .products-page {
+  // 定义全局变量
+  --top-bar-height: 40px;
+  --nav-height: 38px;
+
   display: grid;
   grid-template-columns: 280px 1fr;
   gap: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
   padding: 2rem;
-  padding-top: calc(var(--top-bar-height) + var(--nav-height) + 2rem);
   min-height: 100vh;
+  background: #f8f8f8;
 
   @media (max-width: 768px) {
     display: block;
-    padding: 0;
-    padding-top: calc(var(--top-bar-height) + var(--nav-height));
+    padding-top: calc(var(--nav-height) + 60px + 1px);
+    padding-bottom: env(safe-area-inset-bottom, 0);
   }
 }
 
@@ -451,7 +447,7 @@ const preloadVisibleImages = async () => {
   padding: 1.5rem;
   height: fit-content;
   position: sticky;
-  top: calc(var(--top-bar-height) + var(--nav-height) + 2rem);
+  // top: calc(var(--top-bar-height) + var(--nav-height) + 2rem);
 
   @media (max-width: 768px) {
     position: fixed;
@@ -887,88 +883,142 @@ const preloadVisibleImages = async () => {
 
 // 移动端筛选样式
 .mobile-filter {
+  position: fixed;
+  top: var(--nav-height);
+  left: 0;
+  right: 0;
+  background: white;
+  z-index: 1001;
+  -webkit-overflow-scrolling: touch;
+
+
+
+  // 顶部分割线
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(to right,
+        rgba(131, 183, 53, 0.05),
+        rgba(131, 183, 53, 0.3) 50%,
+        rgba(131, 183, 53, 0.05));
+    opacity: 1;
+  }
+
+  // 底部分割线
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  // 遮罩层样式
+  .menu-overlay {
+    position: fixed;
+    top: var(--nav-height);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+
+    &.active {
+      opacity: 1;
+      visibility: visible;
+    }
+  }
 
   // 筛选按钮
   .filter-btn {
-    position: fixed;
-    top: calc(var(--top-bar-height) + var(--nav-height));
-    left: 0;
-    width: 100%;
-    height: 52px;
+    height: 60px;
     background: white;
     border: none;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 1.2rem;
+    padding: 0 1rem;
     font-size: 1rem;
     color: #333;
-    z-index: 100;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    width: 100%;
+    position: relative;
+    line-height: 1;
+    cursor: pointer;
 
-    .left-section {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-
-      i {
-        color: vars.$primary-green;
-        font-size: 1.1rem;
-      }
-
-      span {
-        font-weight: 500;
-      }
-    }
-
-    .right-section {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      color: #666;
-      font-size: 0.9rem;
-
-      .active-filters {
-        padding: 0.3rem 0.8rem;
-        background: rgba(vars.$primary-green, 0.08);
-        border-radius: 20px;
-        color: vars.$primary-green;
-        font-weight: 500;
-      }
-
-      i {
-        font-size: 0.8rem;
-      }
+    // 顶部装饰线
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80%;
+      height: 2px;
+      background: linear-gradient(to right,
+          rgba(131, 183, 53, 0.05),
+          rgba(131, 183, 53, 0.3) 50%,
+          rgba(131, 183, 53, 0.05));
+      border-radius: 2px;
     }
   }
 
   // 筛选菜单
   .filter-menu {
     position: fixed;
-    top: calc(var(--top-bar-height) + var(--nav-height) + 52px);
+    top: var(--nav-height);
     left: 0;
     width: 100%;
-    height: calc(100vh - var(--top-bar-height) - var(--nav-height) - 52px);
-    background: #f8f9fa;
-    z-index: 1000;
+    height: calc(100vh - var(--nav-height));
+    background: white;
+    z-index: 1001;
     display: flex;
     flex-direction: column;
-    transform: translateY(-100%);
+    transform: translateX(100%);
     transition: transform 0.3s ease;
+    -webkit-overflow-scrolling: touch;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
 
     &.active {
-      transform: translateY(0);
+      transform: translateX(0);
     }
 
     .menu-header {
-      height: 60px;
-      padding: 0 1.2rem;
-      background: white;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      padding: 1rem 1.2rem;
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+      background: white;
+      position: relative;
+      z-index: 2;
+      flex-shrink: 0;
+
+      // 顶部装饰线
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80%;
+        height: 2px;
+        background: linear-gradient(to right,
+            rgba(131, 183, 53, 0.05),
+            rgba(131, 183, 53, 0.3) 50%,
+            rgba(131, 183, 53, 0.05));
+        border-radius: 2px;
+      }
 
       h3 {
         margin: 0;
@@ -980,110 +1030,104 @@ const preloadVisibleImages = async () => {
       .close-btn {
         width: 36px;
         height: 36px;
-        border-radius: 50%;
-        background: #f5f5f5;
         border: none;
-        color: #666;
+        background: #f5f5f5;
+        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.3s ease;
+        color: #666;
+        cursor: pointer;
+
+        i {
+          font-size: 1rem;
+        }
 
         &:active {
           background: #eee;
-        }
-      }
-
-      .header-actions {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-
-        .clear-btn {
-          padding: 0.5rem 1rem;
-          color: #666;
-          font-size: 0.9rem;
-          background: none;
-          border: none;
-          cursor: pointer;
-
-          &:active {
-            color: vars.$primary-green;
-          }
         }
       }
     }
 
     .menu-content {
       flex: 1;
-      overflow-y: auto;
+      overflow-y: scroll;
       padding: 1.2rem;
+      background: white;
+      position: relative;
+      z-index: 1;
+      overscroll-behavior: none;
+      padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 180px); // 增加底部内边距
+      -webkit-overflow-scrolling: touch;
+      position: relative;
+      will-change: transform;
 
+      // 筛选区块样式
       .filter-section {
+        margin-bottom: 2rem;
         background: white;
         border-radius: 12px;
-        padding: 1.2rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+
+        &:last-child {
+          margin-bottom: calc(env(safe-area-inset-bottom, 20px) + 80px); // 为最后一个区块增加更多底部边距
+        }
 
         .section-title {
-          font-size: 1rem;
+          font-size: 1.1rem;
           font-weight: 600;
           color: vars.$primary-black;
           margin-bottom: 1rem;
         }
 
+        // 类型选择网格
         .filter-grid {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
           gap: 0.8rem;
 
           .filter-item {
-            padding: 0.8rem;
+            height: 44px;
             background: #f5f5f5;
+            border: none;
             border-radius: 8px;
-            text-align: center;
             color: #666;
+            font-size: 0.95rem;
             font-weight: 500;
             transition: all 0.3s ease;
-            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
 
             &.active {
               background: vars.$primary-green;
               color: white;
-
-              // 移除选中对勾图标，保持与 PC 端一致
-              &::after {
-                display: none;
-              }
             }
 
             &:active {
-              transform: scale(0.98);
+              opacity: 0.8;
             }
           }
         }
 
+        // 品牌列表
         .brand-list {
-          display: flex;
-          flex-wrap: wrap;
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
           gap: 0.8rem;
 
           .brand-item {
-            flex: 1 0 calc(50% - 0.4rem);
-            padding: 0.8rem;
+            height: 52px;
+            padding: 0 1rem;
             background: #f5f5f5;
+            border: none;
             border-radius: 8px;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            color: #666;
+            gap: 0.8rem;
             transition: all 0.3s ease;
-            border: none;
             cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
 
             img {
               width: 24px;
@@ -1091,13 +1135,22 @@ const preloadVisibleImages = async () => {
               object-fit: contain;
             }
 
+            span {
+              color: #666;
+              font-size: 0.95rem;
+              font-weight: 500;
+            }
+
             &.active {
-              background: rgba(vars.$primary-green, 0.08);
-              color: vars.$primary-green;
+              background: rgba(vars.$primary-green, 0.1);
+
+              span {
+                color: vars.$primary-green;
+              }
             }
 
             &:active {
-              transform: scale(0.98);
+              opacity: 0.8;
             }
           }
         }
@@ -1106,49 +1159,9 @@ const preloadVisibleImages = async () => {
   }
 }
 
-// 遮罩层
-.filter-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s ease;
-  z-index: 98;
-
-  &.active {
-    opacity: 1;
-    visibility: visible;
-  }
-}
-
 @media (max-width: 768px) {
-  .products-page {
-    padding-top: calc(var(--top-bar-height) + var(--nav-height) + 48px); // 为筛选按钮留出空间
-  }
-
   .products-content {
-    padding: 1rem;
-  }
-}
-
-.filter-item,
-.brand-item {
-  &.active {
-    position: relative;
-
-    &::after {
-      content: '\f00c';
-      font-family: 'Font Awesome 5 Free';
-      font-weight: 900;
-      position: absolute;
-      top: 0.5rem;
-      right: 0.5rem;
-      font-size: 0.8rem;
-    }
+    padding: 0.5rem 1rem;
   }
 }
 </style>
