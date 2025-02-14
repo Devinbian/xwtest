@@ -27,11 +27,11 @@
           <div v-for="category in categories" :key="category.id" class="category-item">
             <div class="category-header" @click="toggleCategory(category.id)">
               <span>{{ category.name }}</span>
-              <i :class="['fas', activeCategoryId === category.id ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
+              <i :class="['fas', isCategoryActive(category.id) ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
             </div>
-            <div class="brands-list" :class="{ active: activeCategoryId === category.id }">
+            <div class="brands-list" :class="{ active: isCategoryActive(category.id) }">
               <button v-for="brand in category.brands" :key="brand" class="brand-link"
-                :class="{ active: selectedBrands.includes(brand) }" @click="toggleBrand(category.id, brand)">
+                :class="{ active: isBrandSelected(category.id, brand) }" @click="toggleBrand(category.id, brand)">
                 {{ brand }}
               </button>
             </div>
@@ -98,7 +98,7 @@
             <div class="section-title">{{ category.name }}</div>
             <div class="brand-list">
               <button v-for="brand in category.brands" :key="brand" class="brand-item"
-                :class="{ active: selectedBrands.includes(brand) }" @click="toggleBrand(category.id, brand)">
+                :class="{ active: isBrandSelected(category.id, brand) }" @click="toggleBrand(category.id, brand)">
                 <img :src="`${getAssetUrl('/images/brands/${brand.toLowerCase()}.png')}`" :alt="brand">
                 <span>{{ brand }}</span>
               </button>
@@ -150,7 +150,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { getAssetUrl } from '@/utils/assets';
 const route = useRoute();
 const router = useRouter();
-const activeCategoryId = ref<string | number | null>(null);
+const activeCategories = ref<(string | number)[]>([]);
 const currentBrand = computed(() => route.query.brand as string);
 const currentType = computed(() => (route.query.type as string) || 'new'); // 默认显示新品
 
@@ -160,7 +160,7 @@ const showFilter = ref(false);
 
 // 添加选中项的状态管理
 const selectedTypes = ref<string[]>([]);
-const selectedBrands = ref<string[]>([]);
+const selectedBrands = ref<Record<number | string, string[]>>({});
 
 // 检查是否为移动端
 const checkMobile = () => {
@@ -179,14 +179,20 @@ onMounted(() => {
   // 确保类型只能选择一个
   const typeParam = route.query.type as string;
   if (typeParam) {
-    // 只取第一个类型值
     selectedTypes.value = [typeParam.split(',')[0]];
   }
 
-  // 品牌可以多选
+  // 从路由参数初始化品牌选择
   const brandParam = route.query.brand as string;
   if (brandParam) {
-    selectedBrands.value = brandParam.split(',');
+    const brands = brandParam.split(',');
+    // 遍历所有分类，将品牌分配到对应的分类中
+    categories.forEach(category => {
+      const categoryBrands = brands.filter(brand => category.brands.includes(brand));
+      if (categoryBrands.length > 0) {
+        selectedBrands.value[category.id] = categoryBrands;
+      }
+    });
   }
 });
 
@@ -223,57 +229,117 @@ const currentCategory = computed(() =>
 );
 
 const toggleCategory = (categoryId: string | number) => {
-  activeCategoryId.value = activeCategoryId.value === categoryId ? null : categoryId;
+  const index = activeCategories.value.indexOf(categoryId);
+  if (index === -1) {
+    // 如果分类未展开，则添加到数组中
+    activeCategories.value.push(categoryId);
+  } else {
+    // 如果分类已展开，则从数组中移除
+    activeCategories.value.splice(index, 1);
+  }
+};
+
+const isCategoryActive = (categoryId: string | number) => {
+  return activeCategories.value.includes(categoryId);
 };
 
 // 切换产品类型（新品/中古品）
 const toggleType = (type: string) => {
-  // 如果点击的是当前选中的类型，则取消选择
+  // 如果点击的是当前选中的类型，不做任何操作（保持选中状态）
   if (selectedTypes.value.includes(type)) {
-    selectedTypes.value = [];
-  } else {
-    // 否则替换为新选择的类型
-    selectedTypes.value = [type];
+    return;
   }
+  // 替换为新选择的类型
+  selectedTypes.value = [type];
   updateRoute();
 };
 
 // 切换品牌选择
 const toggleBrand = (categoryId: string | number, brand: string) => {
-  const index = selectedBrands.value.indexOf(brand);
-  if (index === -1) {
-    selectedBrands.value.push(brand);
+  // 确保该分类的品牌数组已初始化
+  if (!selectedBrands.value[categoryId]) {
+    selectedBrands.value[categoryId] = [];
+  }
+
+  const brandIndex = selectedBrands.value[categoryId].indexOf(brand);
+  if (brandIndex === -1) {
+    selectedBrands.value[categoryId].push(brand);
   } else {
-    selectedBrands.value.splice(index, 1);
+    selectedBrands.value[categoryId].splice(brandIndex, 1);
   }
   updateRoute();
 };
 
 // 更新路由
 const updateRoute = () => {
+  // 将所有选中的品牌合并为一个数组
+  const allSelectedBrands = Object.values(selectedBrands.value)
+    .flat()
+    .filter((brand, index, self) => self.indexOf(brand) === index); // 去重
+
   router.push({
     name: 'products',
     query: {
       ...route.query,
       type: selectedTypes.value.length > 0 ? selectedTypes.value.join(',') : undefined,
-      brand: selectedBrands.value.length > 0 ? selectedBrands.value.join(',') : undefined,
+      brand: allSelectedBrands.length > 0 ? allSelectedBrands.join(',') : undefined,
       category: route.query.category
     }
   });
 };
 
-// 修改已选筛选项计数
-const activeFiltersCount = computed(() => {
-  return selectedTypes.value.length + selectedBrands.value.length;
-});
-
-// 清除所有筛选
+// 修改清除筛选函数
 const clearFilters = () => {
-  selectedTypes.value = [];
-  selectedBrands.value = [];
+  // 清空所有分类下的品牌选择
+  selectedBrands.value = {};
   updateRoute();
   showFilter.value = false;
 };
+
+// 修改活跃筛选项计数
+const activeFiltersCount = computed(() => {
+  return Object.values(selectedBrands.value).flat().length;
+});
+
+// 修改品牌选中状态的判断
+const isBrandSelected = (categoryId: string | number, brand: string) => {
+  return selectedBrands.value[categoryId]?.includes(brand) || false;
+};
+
+// 修改筛选产品的计算属性
+const filteredProducts = computed(() => {
+  let filtered = [...products];
+
+  // 应用类型筛选（如果有选择类型）
+  if (selectedTypes.value.length > 0) {
+    filtered = filtered.filter(p => selectedTypes.value.includes(p.type));
+  } else {
+    // 如果没有选择类型，默认显示新品
+    filtered = filtered.filter(p => p.type === 'new');
+  }
+
+  // 应用品牌筛选
+  const allSelectedBrands = Object.values(selectedBrands.value).flat();
+  if (allSelectedBrands.length > 0) {
+    filtered = filtered.filter(product => {
+      // 检查产品所属分类中是否有选中的品牌
+      const categoryBrands = selectedBrands.value[product.categoryId] || [];
+      // 如果该分类有选中的品牌，则产品品牌必须在选中的品牌中
+      if (categoryBrands.length > 0) {
+        return categoryBrands.includes(product.brand);
+      }
+      // 如果该分类没有选中的品牌，则检查其他分类是否有选中该品牌
+      return allSelectedBrands.includes(product.brand);
+    });
+  }
+
+  // 应用分类筛选
+  if (route.query.category) {
+    filtered = filtered.filter(p => p.categoryId === Number(route.query.category));
+  }
+
+  return filtered;
+});
 
 // 添加成色文本转换函数
 const getConditionText = (condition: string) => {
@@ -332,25 +398,6 @@ const products = [
     specs: ['500VA', '1-500V', '40-500Hz']
   }
 ];
-
-// 修改筛选产品的计算属性
-const filteredProducts = computed(() => {
-  let filtered = [...products];
-
-  if (route.query.category) {
-    filtered = filtered.filter(p => p.categoryId === Number(route.query.category));
-  }
-
-  if (selectedTypes.value.length > 0) {
-    filtered = filtered.filter(p => selectedTypes.value.includes(p.type));
-  }
-
-  if (selectedBrands.value.length > 0) {
-    filtered = filtered.filter(p => selectedBrands.value.includes(p.brand));
-  }
-
-  return filtered;
-});
 </script>
 
 <style lang="scss" scoped>
