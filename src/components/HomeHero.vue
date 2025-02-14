@@ -22,6 +22,7 @@
       <button class="next" @click="nextSlide">›</button>
     </div>
   </div>
+  <img :src="getAssetPath('/images/logo.png')" alt="logo">
 </template>
 
 <script setup lang="ts">
@@ -106,6 +107,10 @@ const preloadImages = () => {
     const img = new Image();
     img.src = slide.image;
   });
+};
+
+const getAssetPath = (path: string): string => {
+  return new URL(path, import.meta.url).href;
 };
 
 onMounted(() => {
