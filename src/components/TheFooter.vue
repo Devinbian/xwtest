@@ -4,7 +4,7 @@
             <div class="footer-content">
                 <!-- Logo部分 -->
                 <div class="footer-section logo-section">
-                    <img src="/images/logo_bottom.svg" alt="Logo" class="footer-logo">
+                    <img :src="getAssetUrl('/images/logo_bottom.svg')" alt="Logo" class="footer-logo">
                     <p class="company-desc">
                         专业的仪器设备供应商，为您提供一站式测试测量解决方案
                     </p>
@@ -51,15 +51,25 @@
                     <p>&copy; {{ new Date().getFullYear() }} 鑫万测电子科技（苏州）有限公司 版权所有</p>
                 </div>
                 <div class="icp">
+<<<<<<< HEAD
                     <a href="https://beian.miit.gov.cn/" target="_blank">苏ICP备2022042335号-1</a>
                     <!-- <span class="divider">|</span>
                     <img src="/images/gongan.png" alt="公安备案图标">
                     <a href="http://www.beian.gov.cn/" target="_blank">苏公网安备 xxxxxxxxxx号</a> -->
+=======
+                    <a href="https://beian.miit.gov.cn/" target="_blank">苏ICP备xxxxxxxx号-1</a>
+                    <span class="divider">|</span>
+                    <img :src="getAssetUrl('/images/gongan.png')" alt="公安备案图标">
+                    <a href="http://www.beian.gov.cn/" target="_blank">苏公网安备 xxxxxxxxxx号</a>
+>>>>>>> 0ce98f6e1ebb2616de7cfb3569ad453638c63bd5
                 </div>
             </div>
         </div>
     </footer>
 </template>
+<script setup lang="ts">
+import { getAssetUrl } from '@/utils/assets';
+</script>
 
 <style lang="scss" scoped>
 @use '../styles/variables' as vars;

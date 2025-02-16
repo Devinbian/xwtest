@@ -2,8 +2,10 @@
   <div class="hero-section" @mouseenter="pauseAutoplay" @mouseleave="resumeAutoplay">
     <div class="hero-slider" ref="slider">
       <div v-for="(slide, index) in slides" :key="index" class="hero-slide"
-        :class="{ 'active': currentSlide === index, 'prev': isPrevSlide(index), 'next': isNextSlide(index) }"
-        :style="{ backgroundImage: `url(${slide.image})` }">
+        :class="{ 'active': currentSlide === index, 'prev': isPrevSlide(index), 'next': isNextSlide(index) }">
+        <div class="slide-background">
+          <LazyImage :src="slide.image" :placeholder="slide.imagePlaceholder" :alt="slide.title" />
+        </div>
         <div class="slide-content">
           <h2>{{ slide.title }}</h2>
           <p>{{ slide.description }}</p>
@@ -26,26 +28,32 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
+import { getAssetUrl } from '@/utils/assets';
+import { generatePlaceholderUrl } from '@/utils/image';
+import LazyImage from '@/components/LazyImage.vue';
 
 const slides = [
   {
     title: '创新测量方案',
     description: '为您提供专业精准的仪器仪表解决方案',
-    image: '/images/hero/slide1.jpg',
+    image: getAssetUrl('images/hero/slide1.jpg'),
+    imagePlaceholder: generatePlaceholderUrl(getAssetUrl('images/hero/slide1.jpg')),
     link: '/products',
     buttonText: '了解更多'
   },
   {
     title: '全方位技术支持',
     description: '专业团队为您提供完整的技术支持与服务',
-    image: '/images/hero/slide2.jpg',
+    image: getAssetUrl('images/hero/slide2.jpg'),
+    imagePlaceholder: generatePlaceholderUrl(getAssetUrl('images/hero/slide2.jpg')),
     link: '/services',
     buttonText: '查看服务'
   },
   {
     title: '行业领先品牌',
     description: '与全球顶尖仪器仪表品牌深度合作',
-    image: '/images/hero/slide3.jpg',
+    image: getAssetUrl('images/hero/slide3.jpg'),
+    imagePlaceholder: generatePlaceholderUrl(getAssetUrl('images/hero/slide3.jpg')),
     link: '/brands',
     buttonText: '品牌介绍'
   }
@@ -57,6 +65,7 @@ let autoplayInterval: number;
 
 const nextSlide = () => {
   currentSlide.value = (currentSlide.value + 1) % slides.length;
+  preloadNextSlide();
 };
 
 const prevSlide = () => {
@@ -68,7 +77,7 @@ const goToSlide = (index: number) => {
 };
 
 const startAutoplay = () => {
-  stopAutoplay(); // 先清除之前的定时器
+  stopAutoplay();
   autoplayInterval = window.setInterval(() => {
     nextSlide();
   }, 5000);
@@ -80,12 +89,10 @@ const stopAutoplay = () => {
   }
 };
 
-// 添加鼠标悬停时暂停自动播放
 const pauseAutoplay = () => {
   stopAutoplay();
 };
 
-// 添加鼠标离开时恢复自动播放
 const resumeAutoplay = () => {
   startAutoplay();
 };
@@ -100,12 +107,17 @@ const isNextSlide = (index: number) => {
   return index === currentSlide.value + 1;
 };
 
-// 预加载图片
 const preloadImages = () => {
   slides.forEach(slide => {
     const img = new Image();
     img.src = slide.image;
   });
+};
+
+const preloadNextSlide = () => {
+  const nextIndex = (currentSlide.value + 1) % slides.length;
+  const img = new Image();
+  img.src = slides[nextIndex].image;
 };
 
 onMounted(() => {
@@ -123,7 +135,7 @@ onUnmounted(() => {
   position: relative;
   height: calc(100vh - 80px);
   overflow: hidden;
-  background: #000; // 添加黑色背景，避免白屏
+  background: #000;
 }
 
 .hero-slider {
@@ -135,8 +147,6 @@ onUnmounted(() => {
   position: absolute;
   width: 100%;
   height: 100%;
-  background-size: cover;
-  background-position: center;
   opacity: 0;
   transform: scale(1.05);
   transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -164,7 +174,7 @@ onUnmounted(() => {
     opacity: 0;
     z-index: 1;
     transform: scale(1.05);
-    pointer-events: none; // 防止非活动幻灯片响应事件
+    pointer-events: none;
   }
 
   &::before {
@@ -174,58 +184,111 @@ onUnmounted(() => {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5); // 加深遮罩
+    background: rgba(0, 0, 0, 0.5);
     opacity: 0;
     transition: opacity 0.6s ease;
   }
-}
 
-.slide-content {
-  position: relative;
-  z-index: 2;
-  max-width: 800px;
-  margin: 0 auto;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  padding: 2rem;
-  color: white;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: all 0.8s ease;
-  will-change: transform, opacity; // 优化性能
+  .slide-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
 
-  h2 {
-    font-size: 3.5rem;
-    font-weight: 300;
-    margin-bottom: 1.5rem;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    :deep(.lazy-image) {
+      width: 100%;
+      height: 100%;
+
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top,
+            rgba(0, 0, 0, 0.8) 0%,
+            rgba(0, 0, 0, 0) 60%);
+        opacity: 0.5;
+        z-index: 1;
+      }
+    }
   }
 
-  p {
-    font-size: 1.5rem;
-    margin-bottom: 2rem;
-    opacity: 0.9;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  }
-
-  .cta-button {
-    display: inline-block;
-    padding: 1rem 2.5rem;
-    background: var(--primary-color);
+  .slide-content {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    margin: 0 auto;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 2rem;
     color: white;
-    text-decoration: none;
-    border-radius: 4px;
-    font-size: 1.1rem;
-    font-weight: 500;
-    transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.8s ease;
+    will-change: transform, opacity;
 
-    &:hover {
-      background: var(--primary-color-dark);
-      transform: translateY(-2px);
+    h2 {
+      font-size: 3.5rem;
+      font-weight: 300;
+      margin-bottom: 1.5rem;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    p {
+      font-size: 1.5rem;
+      margin-bottom: 2rem;
+      opacity: 0.9;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .cta-button {
+      display: inline-block;
+      padding: 1rem 2.5rem;
+      background: var(--primary-color);
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      font-size: 1.1rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: var(--primary-color-dark);
+        transform: translateY(-2px);
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    .slide-background {
+      :deep(.lazy-image) {
+        img {
+          object-position: center;
+        }
+      }
+    }
+
+    .slide-content {
+      padding: 0 1rem;
+      text-align: center;
+
+      h2 {
+        font-size: 2rem;
+      }
+
+      p {
+        font-size: 1rem;
+      }
+
+      .cta-button {
+        padding: 0.8rem 2rem;
+        font-size: 1rem;
+      }
     }
   }
 }
@@ -285,38 +348,6 @@ onUnmounted(() => {
       &:hover:not(.active) {
         background: rgba(255, 255, 255, 0.5);
       }
-    }
-  }
-}
-
-@media (max-width: 768px) {
-  .slide-content {
-    h2 {
-      font-size: 2.5rem;
-    }
-
-    p {
-      font-size: 1.2rem;
-    }
-
-    .cta-button {
-      padding: 0.8rem 2rem;
-      font-size: 1rem;
-    }
-  }
-
-  .slider-controls {
-    bottom: 1.5rem;
-
-    button {
-      width: 28px;
-      height: 28px;
-      font-size: 1rem;
-    }
-
-    .dots span {
-      width: 6px;
-      height: 6px;
     }
   }
 }

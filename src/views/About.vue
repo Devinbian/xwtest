@@ -166,7 +166,7 @@
                   </div>
                 </div>
                 <div class="qrcode-wrapper">
-                  <img src="/images/qrcode.png" alt="微信二维码">
+                  <img :src="getAssetUrl('/images/qrcode.png')" alt="微信二维码">
                 </div>
               </div>
               <div class="decoration">
@@ -209,7 +209,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { partners } from '../data/partners.js';
-
+import { getAssetUrl } from '@/utils/assets';
 // 分页相关
 const currentPage = ref(1);
 const brandsPerPage = 12; // 每页显示12个品牌

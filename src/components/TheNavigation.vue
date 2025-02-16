@@ -22,7 +22,7 @@
       <div class="container nav-container">
         <div class="nav-logo">
           <router-link to="/">
-            <img src="/images/logo.svg" alt="Logo">
+            <img :src="getAssetUrl('/images/logo.svg')" alt="Logo">
           </router-link>
         </div>
 
@@ -149,12 +149,12 @@ const handleTouchEnd = (event: TouchEvent) => {
 const getCategoryIdByBrand = (brandName: string) => {
   const brandCategories = {
     'KEITHLEY': 1, // 数字万用表/源表
-    'RIGOL': 1,
-    'GWINSTEK': 1,
-    'KIKUSUI': 2, // 电压/电流源
-    'TEKTRONIX': 3, // 示波器
-    'KEYSIGHT': 3,
-    'HIOKI': 4 // 电气安规试验
+    'RIGOL': 2,
+    'GWINSTEK': 3,
+    'KIKUSUI': 4, // 电压/电流源
+    'TEKTRONIX': 5, // 示波器
+    'KEYSIGHT': 6,
+    'HIOKI': 7 // 电气安规试验
   } as { [key: string]: number; };
 
   return brandCategories[brandName] || 1; // 默认返回第一个分类
@@ -775,6 +775,7 @@ onUnmounted(() => {
 }
 
 .products-list .product-item {
-  text-decoration: none; /* 去掉下划线 */
+  text-decoration: none;
+  /* 去掉下划线 */
 }
 </style>

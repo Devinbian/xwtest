@@ -2,15 +2,17 @@
   <div class="home">
     <HomeHero />
 
-        <!-- 合作品牌板块 -->
+    <!-- 合作品牌板块 -->
     <section class="partners-section">
       <div class="container">
         <h2 class="section-title">合作品牌</h2>
         <div class="partners-slider" @mouseenter="handlePartnerMouseEnter" @mouseleave="handlePartnerMouseLeave">
-          <div class="slider-wrapper" ref="partnerSliderWrapper" :style="{ transform: `translateX(${-currentPartnerSlide * 100}%)` }">
+          <div class="slider-wrapper" ref="partnerSliderWrapper"
+            :style="{ transform: `translateX(${-currentPartnerSlide * 100}%)` }">
             <div class="partner-slide" v-for="(group, index) in partnerGroups" :key="index">
               <div class="partners-grid">
-                <div v-for="partner in group" :key="partner.id" class="partner-card" :class="{ 'empty-card': partner.isEmpty }">
+                <div v-for="partner in group" :key="partner.id" class="partner-card"
+                  :class="{ 'empty-card': partner.isEmpty }">
                   <a v-if="!partner.isEmpty" :href="partner.website" target="_blank" class="card-content">
                     <div class="card-inner">
                       <div class="logo-wrapper">
@@ -27,7 +29,8 @@
           <button class="slider-nav prev" @click="prevPartnerSlide" :disabled="currentPartnerSlide === 0">
             <i class="fas fa-chevron-left"></i>
           </button>
-          <button class="slider-nav next" @click="nextPartnerSlide" :disabled="currentPartnerSlide === partnerGroups.length - 1">
+          <button class="slider-nav next" @click="nextPartnerSlide"
+            :disabled="currentPartnerSlide === partnerGroups.length - 1">
             <i class="fas fa-chevron-right"></i>
           </button>
           <div class="slider-dots">
@@ -243,7 +246,7 @@
               <!-- 右侧二维码 -->
               <div class="contact-right">
                 <div class="contact-qr">
-                  <img src="/images/qr-code.png" alt="扫码咨询">
+                  <img :src="getAssetUrl('/images/qr-code.png')" alt="扫码咨询">
                   <span>扫码添加客服</span>
                 </div>
               </div>
@@ -251,7 +254,7 @@
           </div>
 
           <div class="cta-image">
-            <img src="/images/support-team.jpg" alt="专业支持团队">
+            <img :src="getAssetUrl('/images/support-team.jpg')" alt="专业支持团队">
             <div class="image-overlay">
               <div class="stats-grid">
                 <div class="stat-item">
@@ -279,10 +282,87 @@
 import HomeHero from '@/components/HomeHero.vue';
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { partners } from '../data/partners.js';
+<<<<<<< HEAD
 //获取10大热门产品数据
 import { top10Products } from '../data/top10Products.js';
 
 const featuredProducts = ref(top10Products);
+=======
+import { getAssetUrl } from '@/utils/assets';
+
+const featuredProducts = ref([
+  {
+    id: 1,
+    title: '数字万用表',
+    image: getAssetUrl('/images/products/multimeter-1.jpg'),
+    brand: 'KEITHLEY',
+    description: '高精度数字万用表，提供优异的测量精度和稳定性，适用于研发和生产测试。'
+  },
+  {
+    id: 2,
+    title: '示波器',
+    image: getAssetUrl('/images/products/oscilloscope-1.jpg'),
+    brand: 'TEKTRONIX',
+    description: '高带宽数字示波器，具备强大的信号捕获和分析能力，是电子测试的理想选择。'
+  },
+  {
+    id: 3,
+    title: '电源分析仪',
+    image: getAssetUrl('/images/products/power-analyzer.jpg'),
+    brand: 'YOKOGAWA',
+    description: '高精度电源分析仪，可进行全面的电能质量分析和效率测试。'
+  },
+  {
+    id: 4,
+    title: '频谱分析仪',
+    image: getAssetUrl('/images/products/spectrum-analyzer.jpg'),
+    brand: 'RIGOL',
+    description: '实时频谱分析仪，提供出色的射频信号分析性能，适用于无线通信测试。'
+  },
+  {
+    id: 5,
+    title: '温度测试系统',
+    image: getAssetUrl('/images/products/temperature-system.jpg'),
+    brand: 'FLUKE',
+    description: '高精度温度测试系统，支持多通道温度监测和数据记录。'
+  },
+  {
+    id: 6,
+    title: '数据采集系统',
+    image: getAssetUrl('/images/products/data-acquisition.jpg'),
+    brand: 'HIOKI',
+    description: '多功能数据采集系统，可同时采集多种物理量，支持远程监控。'
+  },
+  {
+    id: 7,
+    title: '电池测试系统',
+    image: getAssetUrl('/images/products/battery-tester.jpg'),
+    brand: 'CHROMA',
+    description: '专业电池测试系统，支持充放电测试、内阻测试等多种功能。'
+  },
+  {
+    id: 8,
+    title: '环境试验箱',
+    image: getAssetUrl('/images/products/environmental-chamber.jpg'),
+    brand: 'ESPEC',
+    description: '可靠性环境试验箱，提供温湿度循环测试，确保产品质量。'
+  },
+  {
+    id: 9,
+    title: '光谱分析仪',
+    image: getAssetUrl('/images/products/spectrometer.jpg'),
+    brand: 'SHIMADZU',
+    description: '高性能光谱分析仪，适用于材料分析和光学测量。'
+  },
+  {
+    id: 10,
+    title: '信号发生器',
+    image: getAssetUrl('/images/products/signal-generator.jpg'),
+    brand: 'SIGLENT',
+    description: '多功能信号发生器，提供各种波形输出，满足不同测试需求。'
+  }
+]);
+>>>>>>> 0ce98f6e1ebb2616de7cfb3569ad453638c63bd5
 
 const activeIndustry = ref<number | null>(null);
 
@@ -290,7 +370,7 @@ const industries = [
   {
     id: 1,
     name: '传统汽车',
-    image: '/images/industries/auto.jpg',
+    image: getAssetUrl('/images/industries/auto.jpg'),
     description: '提供完整的汽车电子测试解决方案',
     features: [
       '发动机性能测试',
@@ -302,7 +382,7 @@ const industries = [
   {
     id: 2,
     name: '新能源汽车',
-    image: '/images/industries/material.jpg',
+    image: getAssetUrl('/images/industries/material.jpg'),
     description: '电池、电机、电控等全方位测试方案',
     features: [
       '电池包性能测试',
@@ -314,37 +394,37 @@ const industries = [
   {
     id: 3,
     name: '液晶显示',
-    image: '/images/industries/lcd.jpg',
+    image: getAssetUrl('/images/industries/lcd.jpg'),
     description: '液晶面板测试及自动化解决方案'
   },
   {
     id: 4,
     name: '半导体',
-    image: '/images/industries/semiconductor.jpg',
+    image: getAssetUrl('/images/industries/semiconductor.jpg'),
     description: '半导体器件测试与可靠性验证'
   },
   {
     id: 5,
     name: '化学工业',
-    image: '/images/industries/chemical.jpg',
+    image: getAssetUrl('/images/industries/chemical.jpg'),
     description: '化工过程控制与安全监测方案'
   },
   {
     id: 6,
     name: 'PCB',
-    image: '/images/industries/pcb.jpg',
+    image: getAssetUrl('/images/industries/pcb.jpg'),
     description: '印制电路板测试与品质管控方案'
   },
   {
     id: 7,
     name: '医药',
-    image: '/images/industries/medical.jpg',
+    image: getAssetUrl('/images/industries/medical.jpg'),
     description: '医药研发与生产质量控制方案'
   },
   {
     id: 8,
     name: '环境',
-    image: '/images/industries/environment.jpg',
+    image: getAssetUrl('/images/industries/environment.jpg'),
     description: '环境监测与污染防治解决方案'
   }
 ];
@@ -353,8 +433,8 @@ const productCategories = [
   {
     id: 1,
     name: '汽车关联',
-    icon: '/images/icons/auto.svg',
-    image: '/images/products/auto-related.jpg',
+    icon: getAssetUrl('/images/icons/auto.svg'),
+    image: getAssetUrl('/images/products/auto-related.jpg'),
     items: [
       '排气分析系统',
       'VOC检测系统',
@@ -371,7 +451,7 @@ const productCategories = [
   {
     id: 2,
     name: '液晶关联',
-    image: '/images/products/lcd-related.jpg',
+    image: getAssetUrl('/images/products/lcd-related.jpg'),
     items: [
       '老化・耐久试验设备',
       '信号发生器',
@@ -388,7 +468,7 @@ const productCategories = [
   {
     id: 3,
     name: 'PCB关联',
-    image: '/images/products/pcb-related.jpg',
+    image: getAssetUrl('/images/products/pcb-related.jpg'),
     items: [
       '离子迁移系统',
       '接触角仪',
@@ -405,7 +485,7 @@ const productCategories = [
   {
     id: 4,
     name: '新能源关联',
-    image: '/images/products/new-energy-related.jpg',
+    image: getAssetUrl('/images/products/new-energy-related.jpg'),
     items: [
       '电子显微镜',
       '轮廓仪・画像测定仪',
@@ -422,7 +502,7 @@ const productCategories = [
   {
     id: 5,
     name: '半导体关联',
-    image: '/images/products/semiconductor-related.jpg',
+    image: getAssetUrl('/images/products/semiconductor-related.jpg'),
     items: [
       '高精度万用表',
       '高精度电流发生器',
@@ -442,7 +522,7 @@ const services = [
   {
     id: 1,
     title: '技术商谈',
-    icon: 'icon-consult',
+    icon: getAssetUrl('/images/icons/consult.svg'),
     description: '专业的技术团队为您提供全方位的解决方案咨询',
     features: [
       '需求分析',
@@ -454,7 +534,7 @@ const services = [
   {
     id: 2,
     title: '交货安装调试',
-    icon: 'icon-install',
+    icon: getAssetUrl('/images/icons/install.svg'),
     description: '专业的安装团队确保设备完美运行',
     features: [
       '现场勘察',
@@ -466,7 +546,7 @@ const services = [
   {
     id: 3,
     title: '使用培训',
-    icon: 'icon-training',
+    icon: getAssetUrl('/images/icons/training.svg'),
     description: '全面的培训确保您能充分利用设备功能',
     features: [
       '操作培训',
@@ -478,7 +558,7 @@ const services = [
   {
     id: 4,
     title: '定期维保',
-    icon: 'icon-maintenance',
+    icon: getAssetUrl('/images/icons/maintenance.svg'),
     description: '定期维护保养，确保设备持续稳定运行',
     features: [
       '定期检查',
@@ -490,7 +570,7 @@ const services = [
   {
     id: 5,
     title: '修理校正',
-    icon: 'icon-repair',
+    icon: getAssetUrl('/images/icons/repair.svg'),
     description: '快速响应的维修服务和精准的校准服务',
     features: [
       '故障诊断',
@@ -671,19 +751,19 @@ onUnmounted(() => {
 // 添加鼠标移动跟踪效果
 onMounted(() => {
   const cards = document.querySelectorAll('.partner-card');
-  
+
   cards.forEach(card => {
     card.addEventListener('mousemove', (e) => {
       const rect = card.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      
+
       const centerX = rect.width / 2;
       const centerY = rect.height / 2;
-      
+
       const rotateX = (y - centerY) / 10;
       const rotateY = (centerX - x) / 10;
-      
+
       card.style.setProperty('--rotate-x', rotateX.toString());
       card.style.setProperty('--rotate-y', rotateY.toString());
       card.style.setProperty('--mouse-x', `${(x / rect.width) * 100}%`);
@@ -2808,18 +2888,16 @@ $primary-black: #000000;
     border-radius: 8px; // 减小圆角
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
-    
+
     &::before {
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(
-        130deg,
-        transparent 0%,
-        rgba(vars.$primary-green, 0.05) 30%,
-        rgba(vars.$primary-green, 0.02) 70%,
-        transparent 100%
-      );
+      background: linear-gradient(130deg,
+          transparent 0%,
+          rgba(vars.$primary-green, 0.05) 30%,
+          rgba(vars.$primary-green, 0.02) 70%,
+          transparent 100%);
     }
   }
 
@@ -2844,11 +2922,9 @@ $primary-black: #000000;
   .card-glow {
     position: absolute;
     inset: 0;
-    background: radial-gradient(
-      circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-      rgba(vars.$primary-green, 0.15) 0%,
-      transparent 60%
-    );
+    background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(vars.$primary-green, 0.15) 0%,
+        transparent 60%);
     opacity: 0;
     transition: opacity 0.3s;
     z-index: 2;
@@ -2860,12 +2936,10 @@ $primary-black: #000000;
     inset: 0;
     border-radius: 8px;
     padding: 1px;
-    background: linear-gradient(
-      130deg,
-      transparent,
-      rgba(vars.$primary-green, 0.5) 50%,
-      transparent
-    );
+    background: linear-gradient(130deg,
+        transparent,
+        rgba(vars.$primary-green, 0.5) 50%,
+        transparent);
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask-composite: exclude;
     opacity: 0;
@@ -2876,7 +2950,7 @@ $primary-black: #000000;
     .card-inner {
       transform: translateY(-3px); // 减小上浮距离
       background: rgba(255, 255, 255, 1);
-      box-shadow: 
+      box-shadow:
         0 10px 20px rgba(0, 0, 0, 0.1),
         0 0 20px rgba(vars.$primary-green, 0.1);
     }
@@ -2933,10 +3007,8 @@ $primary-black: #000000;
   .partner-card {
     &:hover {
       .card-inner {
-        transform: 
-          translateY(-3px)
-          rotateX(calc(var(--rotate-x, 0) * 1deg))
-          rotateY(calc(var(--rotate-y, 0) * 1deg));
+        transform:
+          translateY(-3px) rotateX(calc(var(--rotate-x, 0) * 1deg)) rotateY(calc(var(--rotate-y, 0) * 1deg));
       }
     }
   }
