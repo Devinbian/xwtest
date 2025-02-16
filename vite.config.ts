@@ -2,30 +2,33 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
 
-export default defineConfig({
-  plugins: [vue()],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, 'src'),
-      '/@': path.resolve(__dirname, 'src')
-    }
-  },
-  publicDir: 'public',
-  build: {
-    assetsDir: 'assets'
-  },
-  css: {
-    preprocessorOptions: {
-      scss: {
-        charset: false
+// 使用函数式配置
+export default defineConfig(({ command }) => {
+  return {
+    plugins: [vue()],
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, 'src'),
+        '/@': path.resolve(__dirname, 'src')
       }
-    }
-  },
-  server: {
-    host: '0.0.0.0',
-    port: 5174,
-    strictPort: true,
-    https: false,
-  },
-  base: '/xwtest/', // 替换成你的仓库名
+    },
+    publicDir: 'public',
+    build: {
+      assetsDir: 'assets'
+    },
+    css: {
+      preprocessorOptions: {
+        scss: {
+          charset: false
+        }
+      }
+    },
+    server: {
+      host: '0.0.0.0',
+      port: 5174,
+      strictPort: true,
+      https: false,
+    },
+    base: command === 'build' ? '/xwtest/' : '/',
+  }
 }) 

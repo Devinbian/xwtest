@@ -4,7 +4,7 @@
             <div class="footer-content">
                 <!-- Logo部分 -->
                 <div class="footer-section logo-section">
-                    <img src="/images/logo_bottom.svg" alt="Logo" class="footer-logo">
+                    <img :src="getAssetUrl('/images/logo_bottom.svg')" alt="Logo" class="footer-logo">
                     <p class="company-desc">
                         专业的仪器设备供应商，为您提供一站式测试测量解决方案
                     </p>
@@ -60,6 +60,9 @@
         </div>
     </footer>
 </template>
+<script setup lang="ts">
+import { getAssetUrl } from '@/utils/assets';
+</script>
 
 <style lang="scss" scoped>
 @use '../styles/variables' as vars;

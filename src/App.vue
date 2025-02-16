@@ -27,6 +27,6 @@ import PageTransition from '@/components/PageTransition.vue';
 
 .main-content {
   flex: 1;
-  margin-top: 120px; // 为固定导航栏留出空间
+  margin-top: 128px; // 为固定导航栏留出空间
 }
 </style>

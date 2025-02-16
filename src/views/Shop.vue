@@ -39,6 +39,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import ProductCard from '@/components/ProductCard.vue';
+import { getAssetUrl } from '@/utils/assets';
 
 // 模拟数据
 const categories = [
@@ -59,7 +60,7 @@ const products = ref([
     {
         id: 1,
         title: 'KEITHLEY 2450',
-        image: '/images/products/keithley-2450.jpg',
+        image: getAssetUrl('/images/products/keithley-2450.jpg'),
         brand: 'KEITHLEY',
         description: '高精度数字源表',
         category: 1,
@@ -68,7 +69,7 @@ const products = ref([
     {
         id: 2,
         title: 'KIKUSUI PWX1500L',
-        image: '/images/products/kikusui-pwx1500l.jpg',
+        image: getAssetUrl('/images/products/kikusui-pwx1500l.jpg'),
         brand: 'KIKUSUI',
         description: '可编程直流电源',
         category: 2,
@@ -77,7 +78,7 @@ const products = ref([
     {
         id: 3,
         title: 'ADC 7461',
-        image: '/images/products/adc-7461.jpg',
+        image: getAssetUrl('/images/products/adc-7461.jpg'),
         brand: 'ADC',
         description: '高精度数字万用表',
         category: 1,
@@ -86,7 +87,7 @@ const products = ref([
     {
         id: 4,
         title: 'RIGOL DM3068',
-        image: '/images/products/rigol-dm3068.jpg',
+        image: getAssetUrl('/images/products/rigol-dm3068.jpg'),
         brand: 'RIGOL',
         description: '6½ 位数字万用表',
         category: 1,
@@ -95,7 +96,7 @@ const products = ref([
     {
         id: 5,
         title: 'Tektronix MSO46',
-        image: '/images/products/tektronix-mso46.jpg',
+        image: getAssetUrl('/images/products/tektronix-mso46.jpg'),
         brand: 'Tektronix',
         description: '混合信号示波器',
         category: 4,
@@ -104,7 +105,7 @@ const products = ref([
     {
         id: 6,
         title: 'Keysight DSOX1204G',
-        image: '/images/products/keysight-dsox1204g.jpg',
+        image: getAssetUrl('/images/products/keysight-dsox1204g.jpg'),
         brand: 'Keysight',
         description: '数字示波器',
         category: 4,
@@ -113,7 +114,7 @@ const products = ref([
     {
         id: 7,
         title: 'CHROMA 62000P',
-        image: '/images/products/chroma-62000p.jpg',
+        image: getAssetUrl('/images/products/chroma-62000p.jpg'),
         brand: 'CHROMA',
         description: '可编程直流电源',
         category: 2,
