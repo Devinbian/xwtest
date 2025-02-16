@@ -38,7 +38,7 @@
                 <div class="footer-section contact-section">
                     <h3>联系我们</h3>
                     <div class="contact-info">
-                        <p><i class="fas fa-phone-alt"></i> 181-1255-0622</p>
+                        <p><i class="fas fa-phone-alt"></i> 186-6258-5852</p>
                         <p><i class="fas fa-envelope"></i> sales@xwtest.com.cn</p>
                         <p><i class="fas fa-clock"></i> 周一至周五 9:00-18:00</p>
                     </div>
@@ -51,10 +51,10 @@
                     <p>&copy; {{ new Date().getFullYear() }} 鑫万测电子科技（苏州）有限公司 版权所有</p>
                 </div>
                 <div class="icp">
-                    <a href="https://beian.miit.gov.cn/" target="_blank">苏ICP备xxxxxxxx号-1</a>
-                    <span class="divider">|</span>
+                    <a href="https://beian.miit.gov.cn/" target="_blank">苏ICP备2022042335号-1</a>
+                    <!-- <span class="divider">|</span>
                     <img src="/images/gongan.png" alt="公安备案图标">
-                    <a href="http://www.beian.gov.cn/" target="_blank">苏公网安备 xxxxxxxxxx号</a>
+                    <a href="http://www.beian.gov.cn/" target="_blank">苏公网安备 xxxxxxxxxx号</a> -->
                 </div>
             </div>
         </div>

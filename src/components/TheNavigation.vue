@@ -7,8 +7,8 @@
           <span>鑫万测电子科技（苏州）有限公司</span>
         </div>
         <div class="contact-info">
-          <a href="tel:18112550622">
-            <i class="fas fa-phone-alt"></i> 18112550622
+          <a href="tel:186-6258-5852">
+            <i class="fas fa-phone-alt"></i> 186-6258-5852
           </a>
           <a href="mailto:sales@xwtest.com.cn">
             <i class="fas fa-envelope"></i> sales@xwtest.com.cn
@@ -84,98 +84,14 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 
+//获取新品下拉菜单数据
+import { topBrands } from '../data/menuforNewProds.js';
+
 const isScrolled = ref(false);
 const isMenuOpen = ref(false);
 const activeSubmenu = ref<string | null>(null);
 const isMobile = ref(false);
 
-// 完整的 Top3 品牌数据
-const topBrands = [
-  {
-    id: 1,
-    name: 'KEITHLEY',
-    logo: '/images/brands/keithley/logo.png',
-    products: [
-      {
-        id: 1,
-        name: 'KEITHLEY 2450',
-        image: '/images/products/battery-tester.jpg',
-        description: '高精度数字源表'
-      },
-      {
-        id: 2,
-        name: 'KEITHLEY 2460',
-        image: '/images/products/data-acquisition.jpg',
-        description: '高压数字源表'
-      }
-    ]
-  },
-  {
-    id: 2,
-    name: 'TEKTRONIX',
-    logo: '/images/brands/tektronix/logo.png',
-    products: [
-      {
-        id: 3,
-        name: 'MSO46',
-        image: '/images/products/environmental-chamber.jpg',
-        description: '混合信号示波器'
-      },
-      {
-        id: 4,
-        name: 'TBS1000C',
-        image: '/images/products/multimeter-1.jpg',
-        description: '数字示波器'
-      }
-    ]
-  },
-  {
-    id: 3,
-    name: 'KIKUSUI',
-    logo: '/images/brands/kikusui/logo.svg',
-    products: [
-      {
-        id: 5,
-        name: 'PWX1500L',
-        image: '/images/products/oscilloscope-1.jpg',
-        description: '可编程直流电源'
-      },
-      {
-        id: 6,
-        name: 'PCR-WE/WE2',
-        image: '/images/products/power-analyzer.jpg',
-        description: '交流电源'
-      }
-    ]
-  }
-];
-
-const categories = [
-  {
-    id: 1,
-    name: '数字万用表/源表',
-    image: '/images/products/keithley-2450.jpg',
-    brands: ['ADC', 'KEITHLEY', 'RIGOL', 'TEXIO', 'GWINSTEK']
-  },
-  {
-    id: 2,
-    name: '电压/电流源',
-    image: '/images/products/kikusui-pwx1500l.jpg',
-    brands: ['ADC', 'KEITHLEY', 'KIKUSUI', 'RIGOL', 'TEXIO']
-  },
-  {
-    id: 3,
-    name: '示波器',
-    image: '/images/products/tektronix-mso46.jpg',
-    brands: ['TEKTRONIX', 'KEYSIGHT', 'RIGOL', 'TEXIO', 'GWINSTEK']
-  },
-  {
-    id: 4,
-    name: '电气安规试验',
-    image: '/images/products/chroma-62000p.jpg',
-    brands: ['KIKUSUI', 'HIOKI', 'TEXIO', 'GWINSTEK']
-  }
-];
 
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 50;
