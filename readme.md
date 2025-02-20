@@ -9,3 +9,8 @@ src
 ----menuforNewProds.js        主导航，新品菜单数据源，目前维护了3个品牌的数据，每个品牌提供2个产品
 ----products.js               产品页面，产品的数据源
 ----categories.js             产品页面，左侧菜单数据源
+
+
+scripts
+--generate-thumbnails.cjs  生成缩略图，遍历images下的所有图片，生成缩略图，方便加载显示
+

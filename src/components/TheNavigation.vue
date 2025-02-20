@@ -44,15 +44,25 @@
                       <h3>{{ brand.name }}</h3>
                     </div>
                     <div class="products-list">
-                      <router-link v-for="product in brand.products" :key="product.id" :to="{
-                        name: 'products',
-                        query: {
-                          category: getCategoryIdByBrand(brand.name),
-                          brand: brand.name,
-                          type: 'new'
-                        }
-                      }" class="product-item" @touchstart.native="handleTouchStart" @touchend.native="handleTouchEnd"
-                        @click.native="handleProductClick">
+                      <router-link 
+                        v-for="product in brand.products" 
+                        :key="product.id" 
+                        :to="{
+                          name: 'products',
+                          query: {
+                            filters: JSON.stringify({
+                              types: ['new'],
+                              brands: [{
+                                categoryId: brand.categoryId,
+                                brands: [brand.name]
+                              }],
+                              category: brand.categoryId
+                            })
+                          }
+                        }" 
+                        class="product-item" 
+                        @click="handleNewProductClick(brand)"
+                      >
                         <img :src="product.image" :alt="product.name">
                         <div class="product-info">
                           <h4>{{ product.name }}</h4>
@@ -83,10 +93,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { getAssetUrl } from '@/utils/assets';
 
 //获取新品下拉菜单数据
 import { topBrands } from '../data/menuforNewProds.js';
+
+const router = useRouter();
 
 const isScrolled = ref(false);
 const isMenuOpen = ref(false);
@@ -146,36 +159,29 @@ const handleTouchEnd = (event: TouchEvent) => {
   element.classList.remove('touch-active');
 };
 
-// 添加辅助函数来根据品牌名获取对应的分类ID
-const getCategoryIdByBrand = (brandName: string) => {
-  const brandCategories = {
-    'KEITHLEY': 1, // 数字万用表/源表
-    'RIGOL': 2,
-    'GWINSTEK': 3,
-    'KIKUSUI': 4, // 电压/电流源
-    'TEKTRONIX': 5, // 示波器
-    'KEYSIGHT': 6,
-    'HIOKI': 7 // 电气安规试验
-  } as { [key: string]: number; };
-
-  return brandCategories[brandName] || 1; // 默认返回第一个分类
-};
-
-const handleProductClick = (event: Event) => {
-  // 阻止默认行为，避免重复触发
-  event.preventDefault();
-
-  // 获取目标链接
-  const link = event.currentTarget as HTMLElement;
-  const routerLink = link.getAttribute('to');
-
-  if (routerLink) {
-    // 使用编程式导航
-    router.push(JSON.parse(routerLink));
-  }
-
+const handleNewProductClick = (brand: any) => {
   // 关闭菜单
   closeMenu();
+  
+  // 清除之前的路由查询参数并设置新的参数
+  router.push({
+    name: 'products',
+    query: {
+      filters: JSON.stringify({
+        types: ['new'],
+        brands: [{
+          categoryId: brand.categoryId,
+          brands: [brand.name]
+        }],
+        category: brand.categoryId
+      })
+    },
+    // 添加 replace: true 确保替换当前历史记录
+    replace: true
+  }).then(() => {
+    // 强制重新加载组件
+    router.go(0);
+  });
 };
 
 onMounted(() => {

@@ -73,6 +73,11 @@ export const categories = [
         id: 15,
         name: '环境试验箱',
         brands: ['ESPEC', 'HITACHI', 'GWINSTEK', 'TOMILO']
+      },
+      {
+        id: 16,
+        name: '耗材・工具',
+        brands: ['通讯连接器']
       }
       
 ]

@@ -120,7 +120,11 @@
             {{ getConditionText(product.condition) }}
           </div>
           <div class="image-wrapper">
-            <LazyImage :src="product.image" :alt="product.name" :placeholder="product.imagePlaceholder" />
+            <LazyImage 
+              :src="getAssetUrl(product.image)" 
+              :alt="product.name"
+              :placeholder="getAssetUrl(product.image.replace(/(\.[^.]+)$/, '-small$1'))"
+            />
           </div>
           <div class="product-info">
             <h3>{{ product.name }}</h3>
@@ -130,7 +134,9 @@
                 {{ spec }}
               </span>
             </div>
-            <div class="product-brand">{{ product.brand }}</div>
+            <div class="product-brand">
+              {{ product.brand }}
+            </div>
           </div>
         </div>
       </div>
@@ -139,9 +145,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getAssetUrl } from '@/utils/assets';
+import { preloadImage } from '@/utils/image';
+import LazyImage from '@/components/LazyImage.vue';
 
 //获取产品分类数据
 import { categories } from '../data/categories';
@@ -151,54 +159,153 @@ import { products } from '../data/products';
 const route = useRoute();
 const router = useRouter();
 const activeCategories = ref<(string | number)[]>([]);
+const selectedTypes = ref<string[]>([]);
+const selectedBrands = ref<BrandFilter[]>([]);
 
 // 添加移动端相关状态
 const isMobile = ref(false);
 const showFilter = ref(false);
-
-// 添加选中项的状态管理
-const selectedTypes = ref<string[]>([]);
-const selectedBrands = ref<Record<number | string, string[]>>({});
 
 // 检查是否为移动端
 const checkMobile = () => {
   isMobile.value = window.innerWidth <= 768;
 };
 
-// 应用筛选并关闭菜单
-const applyFilter = () => {
-  showFilter.value = false;
-};
-
+// 将初始化逻辑移到 onMounted 中
 onMounted(() => {
   checkMobile();
   window.addEventListener('resize', checkMobile);
+  initializeFilters();
+});
 
-  // 确保类型只能选择一个
-  const typeParam = route.query.type as string;
-  if (typeParam) {
-    selectedTypes.value = [typeParam.split(',')[0]];
-  }
+// 定义类型接口
+interface Category {
+  id: number;
+  name: string;
+  brands: string[];
+}
 
-  // 从路由参数初始化品牌选择
-  const brandParam = route.query.brand as string;
-  if (brandParam) {
-    const brands = brandParam.split(',');
-    // 遍历所有分类，将品牌分配到对应的分类中
-    categories.forEach(category => {
-      const categoryBrands = brands.filter(brand => category.brands.includes(brand));
-      if (categoryBrands.length > 0) {
-        selectedBrands.value[category.id] = categoryBrands;
+interface BrandFilter {
+  categoryId: number;
+  brands: string[];
+}
+
+interface Product {
+  id: number;
+  name: string;
+  brand: string;
+  type: string;
+  categoryId: number;
+  image: string;
+  description: string;
+  specs: string[];
+  condition: string;
+}
+
+// 切换品牌选择
+const toggleBrand = (categoryId: number, brand: string) => {
+  // 查找当前分类的筛选条件
+  const categoryFilter = selectedBrands.value.find(filter => filter.categoryId === categoryId);
+  
+  if (categoryFilter) {
+    // 如果已有该分类的筛选条件
+    const brandIndex = categoryFilter.brands.indexOf(brand);
+    if (brandIndex === -1) {
+      // 添加品牌
+      categoryFilter.brands.push(brand);
+    } else {
+      // 移除品牌
+      categoryFilter.brands.splice(brandIndex, 1);
+      // 如果该分类下没有选中的品牌了，移除整个分类筛选
+      if (categoryFilter.brands.length === 0) {
+        const filterIndex = selectedBrands.value.findIndex(filter => filter.categoryId === categoryId);
+        selectedBrands.value.splice(filterIndex, 1);
       }
+    }
+  } else {
+    // 添加新的分类筛选
+    selectedBrands.value.push({
+      categoryId,
+      brands: [brand]
     });
   }
-  preloadVisibleImages();
-});
+  
+  updateRoute();
+};
 
-onUnmounted(() => {
-  window.removeEventListener('resize', checkMobile);
-});
+// 检查品牌是否被选中
+const isBrandSelected = (categoryId: number, brand: string) => {
+  const categoryFilter = selectedBrands.value.find(filter => filter.categoryId === categoryId);
+  return categoryFilter?.brands.includes(brand) || false;
+};
 
+// 更新路由
+const updateRoute = () => {
+  // 构建统一的筛选条件对象
+  const filters = {
+    types: selectedTypes.value,
+    brands: selectedBrands.value,
+    category: route.query.category ? Number(route.query.category) : undefined
+  };
+
+  // 只在有筛选条件时添加查询参数
+  const query = Object.keys(filters).some(key => {
+    const value = filters[key as keyof typeof filters];
+    return Array.isArray(value) ? value.length > 0 : value !== undefined;
+  }) ? {
+    filters: JSON.stringify(filters)
+  } : undefined;
+
+  router.push({
+    name: 'products',
+    query
+  });
+};
+
+// 初始化筛选器
+const initializeFilters = () => {
+  // 清空现有筛选条件
+  selectedTypes.value = [];
+  selectedBrands.value = [];
+
+  // 从统一的 filters 参数初始化所有筛选条件
+  const filtersParam = route.query.filters as string;
+  if (filtersParam) {
+    try {
+      const filters = JSON.parse(filtersParam) as {
+        types: string[];
+        brands: { categoryId: number; brands: string[] }[];
+        category?: number;
+      };
+
+      // 初始化类型筛选
+      if (filters.types) {
+        selectedTypes.value = filters.types;
+      }
+
+      // 初始化品牌筛选
+      if (filters.brands) {
+        selectedBrands.value = filters.brands;
+      }
+    } catch (e) {
+      console.error('Failed to parse filters:', e);
+    }
+  }
+};
+
+// 监听路由变化，重新初始化筛选器
+watch(
+  () => route.fullPath, // 监听完整的路由路径
+  () => {
+    // 完全重置筛选条件
+    selectedTypes.value = [];
+    selectedBrands.value = [];
+    
+    // 然后初始化新的筛选条件
+    initializeFilters();
+  },
+  { immediate: true }
+);
 
 const currentCategory = computed(() =>
   categories.find(c => c.id === Number(route.query.category))
@@ -230,91 +337,110 @@ const toggleType = (type: string) => {
   updateRoute();
 };
 
-// 切换品牌选择
-const toggleBrand = (categoryId: string | number, brand: string) => {
-  // 确保该分类的品牌数组已初始化
-  if (!selectedBrands.value[categoryId]) {
-    selectedBrands.value[categoryId] = [];
+// 计算活跃的筛选数量
+const activeFiltersCount = computed(() => {
+  // 检查是否是从新品菜单进入
+  const isFromNewMenu = route.query.type === 'new' && 
+                       route.query.category && 
+                       route.query.filters;
+
+  // 如果是从新品菜单进入，不计入筛选数量
+  if (isFromNewMenu) {
+    return 0;
   }
 
-  const brandIndex = selectedBrands.value[categoryId].indexOf(brand);
-  if (brandIndex === -1) {
-    selectedBrands.value[categoryId].push(brand);
-  } else {
-    selectedBrands.value[categoryId].splice(brandIndex, 1);
-  }
-  updateRoute();
-};
+  // 计算有效的筛选数量（必须匹配到产品）
+  let effectiveCount = 0;
 
-// 更新路由
-const updateRoute = () => {
-  // 将所有选中的品牌合并为一个数组
-  const allSelectedBrands = Object.values(selectedBrands.value)
-    .flat()
-    .filter((brand, index, self) => self.indexOf(brand) === index); // 去重
-
-  router.push({
-    name: 'products',
-    query: {
-      ...route.query,
-      type: selectedTypes.value.length > 0 ? selectedTypes.value.join(',') : undefined,
-      brand: allSelectedBrands.length > 0 ? allSelectedBrands.join(',') : undefined,
-      category: route.query.category
+  // 检查类型筛选是否有效
+  if (selectedTypes.value.length > 0) {
+    const hasMatchingType = products.some(product => 
+      selectedTypes.value.includes(product.type)
+    );
+    if (hasMatchingType) {
+      effectiveCount += selectedTypes.value.length;
     }
+  }
+
+  // 检查品牌筛选是否有效
+  selectedBrands.value.forEach(filter => {
+    filter.brands.forEach(brand => {
+      // 检查是否有匹配的产品
+      const hasMatchingProduct = products.some(product => 
+        product.categoryId === filter.categoryId && 
+        product.brand === brand
+      );
+      if (hasMatchingProduct) {
+        effectiveCount += 1;
+      }
+    });
+  });
+
+  return effectiveCount;
+});
+
+// 清除筛选
+const clearFilters = () => {
+  // 检查是否是从新品菜单进入
+  const isFromNewMenu = route.query.type === 'new' && 
+                       route.query.category && 
+                       route.query.filters;
+
+  if (isFromNewMenu) {
+    // 如果是从新品菜单进入，不执行清除操作
+    return;
+  }
+
+  // 否则清除左侧菜单的筛选条件
+  selectedTypes.value = [];
+  selectedBrands.value = [];
+  router.push({
+    name: 'products'
   });
 };
 
-// 修改清除筛选函数
-const clearFilters = () => {
-  // 清空所有分类下的品牌选择
-  selectedBrands.value = {};
-  updateRoute();
-  showFilter.value = false;
-};
-
-// 修改活跃筛选项计数
-const activeFiltersCount = computed(() => {
-  return Object.values(selectedBrands.value).flat().length;
-});
-
-// 修改品牌选中状态的判断
-const isBrandSelected = (categoryId: string | number, brand: string) => {
-  return selectedBrands.value[categoryId]?.includes(brand) || false;
-};
-
-// 修改筛选产品的计算属性
+// 筛选产品
 const filteredProducts = computed(() => {
-  let filtered = [...products];
-
-  // 应用类型筛选（如果有选择类型）
-  if (selectedTypes.value.length > 0) {
-    filtered = filtered.filter(p => selectedTypes.value.includes(p.type));
-  } else {
-    // 如果没有选择类型，默认显示新品
-    filtered = filtered.filter(p => p.type === 'new');
+  // 如果没有任何筛选条件，显示所有产品
+  if (selectedTypes.value.length === 0 && 
+      selectedBrands.value.length === 0 && 
+      !route.query.category) {
+    return products;
   }
 
-  // 应用品牌筛选
-  const allSelectedBrands = Object.values(selectedBrands.value).flat();
-  if (allSelectedBrands.length > 0) {
-    filtered = filtered.filter(product => {
-      // 检查产品所属分类中是否有选中的品牌
-      const categoryBrands = selectedBrands.value[product.categoryId] || [];
-      // 如果该分类有选中的品牌，则产品品牌必须在选中的品牌中
-      if (categoryBrands.length > 0) {
-        return categoryBrands.includes(product.brand);
+  return products.filter((product: Product) => {
+    // 1. 类型筛选（新品/中古品）
+    if (selectedTypes.value.length > 0 && !selectedTypes.value.includes(product.type)) {
+      return false;
+    }
+
+    // 2. 品牌筛选
+    if (selectedBrands.value.length > 0) {
+      // 检查产品是否匹配选中的分类和品牌
+      const matchedFilter = selectedBrands.value.find(filter => {
+        // 检查分类匹配
+        if (filter.categoryId !== product.categoryId) {
+          return false;
+        }
+        
+        // 检查品牌匹配
+        const category = categories.find((c: Category) => c.id === filter.categoryId);
+        return category?.brands.includes(product.brand) && filter.brands.includes(product.brand);
+      });
+
+      if (!matchedFilter) {
+        return false;
       }
-      // 如果该分类没有选中的品牌，则检查其他分类是否有选中该品牌
-      return allSelectedBrands.includes(product.brand);
-    });
-  }
+    }
 
-  // 应用分类筛选
-  if (route.query.category) {
-    filtered = filtered.filter(p => p.categoryId === Number(route.query.category));
-  }
+    // 3. 分类筛选（从 URL 参数）
+    const categoryParam = Number(route.query.category);
+    if (categoryParam && product.categoryId !== categoryParam) {
+      return false;
+    }
 
-  return filtered;
+    return true;
+  });
 });
 
 // 添加成色文本转换函数
@@ -327,12 +453,39 @@ const getConditionText = (condition: string) => {
   return conditionMap[condition as keyof typeof conditionMap] || '未知';
 };
 
-// 批量预加载当前可见产品的图片
+// 预加载可见图片
 const preloadVisibleImages = async () => {
-  const visibleProducts = filteredProducts.value.slice(0, 4); // 只预加载前4个产品
-  await Promise.all(
-    visibleProducts.map(product => preloadImage(product.image))
-  );
+  const visibleProducts = filteredProducts.value.map(product => product.image);
+  await Promise.all(visibleProducts.map(src => preloadImage(src)));
+};
+
+// 监听筛选结果变化，预加载新的可见图片
+watch(filteredProducts, () => {
+  preloadVisibleImages();
+});
+
+onMounted(() => {
+  preloadVisibleImages();
+});
+
+// 修改新品菜单点击处理函数
+const handleNewProductClick = (brand: any) => {
+  const filters = {
+    types: ['new'],
+    brands: [{
+      categoryId: brand.categoryId,
+      brands: [brand.name]
+    }],
+    category: brand.categoryId
+  };
+
+  router.push({
+    name: 'products',
+    query: {
+      filters: JSON.stringify(filters)
+    },
+    replace: true
+  });
 };
 </script>
 
@@ -633,137 +786,131 @@ const preloadVisibleImages = async () => {
 
   .products-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 2.5rem;
-
-    @media (max-width: 768px) {
-      grid-template-columns: 1fr; // 移动端单列显示
-      gap: 1rem;
-
-      .product-card {
-        .image-wrapper {
-          padding-top: 66%; // 调整图片比例
-
-          img {
-            object-fit: contain; // 确保图片完整显示
-            padding: 1rem; // 添加内边距
-            background: #f8f8f8; // 添加背景色
-          }
-        }
-
-        .product-info {
-          padding: 1rem;
-
-          h3 {
-            font-size: 1.1rem;
-          }
-        }
-      }
-    }
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
 
     .product-card {
       background: white;
-      border-radius: 12px;
+      border-radius: 16px;
       overflow: hidden;
-      border: 1px solid rgba(0, 0, 0, 0.08);
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-      transition: all 0.4s ease;
       position: relative;
-
-      // 成色标签
-      .condition-tag {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        padding: 0.5rem 1rem;
-        background: rgba(0, 0, 0, 0.7);
-        color: white;
-        font-size: 0.85rem;
-        font-weight: 500;
-        border-radius: 6px;
-        backdrop-filter: blur(8px);
-        z-index: 2;
-        letter-spacing: 0.5px;
-
-        &.new {
-          background: rgba(vars.$primary-green, 0.9);
-        }
-
-        &.used {
-          background: rgba(#FF9800, 0.9);
-        }
-
-        &.refurbished {
-          background: rgba(#2196F3, 0.9);
-        }
-      }
-
-      &:hover {
-        border-color: rgba(vars.$primary-green, 0.3);
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-
-        .image-wrapper {
-          img {
-            transform: scale(1.05);
-          }
-
-          &::after {
-            opacity: 0.7;
-          }
-        }
-      }
+      cursor: pointer;
 
       .image-wrapper {
         position: relative;
-        padding-top: 75%;
+        width: 100%;
+        height: 240px;
         overflow: hidden;
-        background: #000;
+        background: #f0f0f0;
 
-        :deep(.lazy-image) {
-          position: absolute;
-          top: 0;
-          left: 0;
+        .lazy-image {
           width: 100%;
           height: 100%;
+
+          :deep(img) {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+          }
+        }
+
+        &:hover {
+          :deep(img) {
+            transform: scale(1.08);
+          }
         }
       }
 
+      .condition-tag {
+        position: absolute;
+        top: 5px;
+        right: -42px;
+        padding: 0.4rem 3rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+        z-index: 2;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transform: rotate(45deg);
+        transform-origin: center;
+        letter-spacing: 1px;
+        min-width: 120px;
+        text-align: center;
+
+        &::before {
+          content: '';
+          position: absolute;
+          inset: 1px;
+          border: 1px solid rgba(0, 0, 0, 0.05);
+          border-radius: inherit;
+        }
+
+        &.new {
+          background: rgba(vars.$primary-green, 0.95);
+          color: white;
+        }
+
+        &.used {
+          background: rgba(#FF9800, 0.95);
+          color: white;
+        }
+
+        &.refurbished {
+          background: rgba(#2196F3, 0.95);
+          color: white;
+        }
+      }
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(
+          45deg,
+          transparent,
+          rgba(255, 255, 255, 0.1)
+        );
+        z-index: 1;
+      }
+
       .product-info {
-        position: relative;
         padding: 1.5rem;
-        background: white;
-        border-top: 1px solid rgba(0, 0, 0, 0.05);
+        border-top: 1px solid rgba(0, 0, 0, 0.04);
 
         h3 {
-          margin: 0 0 0.8rem;
           font-size: 1.2rem;
+          margin: 0 0 0.8rem;
           color: vars.$primary-black;
           font-weight: 600;
-          letter-spacing: 0.3px;
-          line-height: 1.3;
+          line-height: 1.4;
         }
 
         p {
-          margin: 0 0 1.2rem;
-          font-size: 0.9rem;
+          font-size: 0.95rem;
           color: #666;
+          margin: 0 0 1.2rem;
           line-height: 1.6;
         }
 
         .specs-list {
           display: flex;
-          gap: 0.6rem;
           flex-wrap: wrap;
+          gap: 0.8rem;
           margin-bottom: 1.2rem;
 
           .spec-tag {
-            padding: 0.4rem 0.8rem;
+            padding: 0.5rem 1rem;
             background: #f5f5f5;
-            color: #666;
-            font-size: 0.85rem;
-            font-weight: 500;
             border-radius: 6px;
-            letter-spacing: 0.3px;
+            font-size: 0.9rem;
+            color: #555;
             transition: all 0.3s ease;
 
             &:hover {
@@ -774,28 +921,95 @@ const preloadVisibleImages = async () => {
         }
 
         .product-brand {
+          font-size: 1rem;
+          font-weight: 600;
+          color: vars.$primary-green;
           display: inline-flex;
           align-items: center;
-          gap: 0.6rem;
-          padding: 0.6rem 1.2rem;
-          background: vars.$primary-black;
-          color: white;
-          font-size: 0.9rem;
-          font-weight: 500;
-          border-radius: 8px;
-          letter-spacing: 0.3px;
+          gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          background: rgba(vars.$primary-green, 0.06);
+          border-radius: 6px;
+          transition: all 0.3s ease;
+
+          &:hover {
+            background: rgba(vars.$primary-green, 0.1);
+            transform: translateY(-1px);
+          }
 
           &::before {
-            content: '';
-            display: block;
-            width: 6px;
-            height: 6px;
-            background: vars.$primary-green;
-            border-radius: 50%;
+            content: '品牌';
+            font-size: 0.8rem;
+            color: #666;
+            font-weight: normal;
           }
         }
       }
     }
+  }
+}
+
+@media (max-width: 768px) {
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.2rem;
+
+    .product-card {
+      .image-wrapper {
+        height: 200px;
+
+        img {
+          padding: 1rem;
+        }
+      }
+
+      .product-info {
+        padding: 1.2rem;
+
+        h3 {
+          font-size: 1.1rem;
+        }
+
+        p {
+          font-size: 0.9rem;
+          margin-bottom: 1rem;
+        }
+
+        .specs-list {
+          gap: 0.6rem;
+          margin-bottom: 1.2rem;
+
+          .spec-tag {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+          }
+        }
+
+        .product-brand {
+          font-size: 0.9rem;
+          padding: 0.4rem 0.8rem;
+
+          &::before {
+            font-size: 0.75rem;
+          }
+        }
+      }
+
+      .condition-tag {
+        top: 20px;
+        right: -38px;
+        padding: 0.3rem 2.5rem;
+        font-size: 0.8rem;
+        min-width: 100px;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .products-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 }
 
@@ -808,8 +1022,6 @@ const preloadVisibleImages = async () => {
   background: white;
   z-index: 1001;
   -webkit-overflow-scrolling: touch;
-
-
 
   // 顶部分割线
   &::before {
@@ -1074,12 +1286,6 @@ const preloadVisibleImages = async () => {
         }
       }
     }
-  }
-}
-
-@media (max-width: 768px) {
-  .products-content {
-    padding: 0.5rem 1rem;
   }
 }
 </style>
