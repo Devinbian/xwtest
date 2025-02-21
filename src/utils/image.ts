@@ -5,28 +5,27 @@ export const generatePlaceholderUrl = (originalUrl: string): string => {
   }
   
   // 生产环境下，返回低质量预览图的URL
-  // 假设您的低质量预览图命名规则是 original-small.jpg
-  // 解析URL
-  const base = import.meta.env.BASE_URL; // "/xwtest/" 或 "/"
-  const urlWithoutBase = originalUrl.replace(base, '');
+  // 移除重复的 base 路径
+  const cleanUrl = originalUrl.replace(/^\/xwtest\//, '').replace(/^\//, '');
   
   // 生成小图URL
-  const smallImageUrl = urlWithoutBase.replace(/(\.[^.]+)$/, '-small$1');
-
-  console.log("生成小图URL:"+smallImageUrl);
+  const smallImageUrl = cleanUrl.replace(/(\.[^.]+)$/, '-small$1');
   
+  // 添加正确的 base 路径
+  return `${import.meta.env.BASE_URL}${smallImageUrl}`;
 };
 
 export const preloadImage = (src: string): Promise<void> => {
-  console.log("preloadImage:"+src);
+  // 移除重复的 base 路径
+  const cleanUrl = src.replace(/^\/xwtest\//, '').replace(/^\//, '');
   
-  const cleanUrl = src.replace(/^\/xwtest\//, '');
-  console.log("preloadImage cleanUrl:"+cleanUrl);
+  // 添加正确的 base 路径
+  const finalUrl = `${import.meta.env.BASE_URL}${cleanUrl}`;
 
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve();
     img.onerror = () => reject();
-    img.src = cleanUrl;
+    img.src = finalUrl;
   });
 }; 

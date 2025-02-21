@@ -28,12 +28,13 @@ interface ProductProps {
   description: string;
 }
 
-defineProps<{
+const props = defineProps<{
   product: ProductProps;
 }>();
 
 const hover = ref(false);
 
+// 处理图片路径
 const placeholderImage = generatePlaceholderUrl(props.product.image);
 console.log("placeholderImage:"+placeholderImage);
 </script>
