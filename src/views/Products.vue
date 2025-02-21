@@ -31,10 +31,11 @@
 
           <!-- 产品类型选择器 -->
           <div class="product-type-selector">
-            <button class="type-btn" :class="{ active: isTypeSelected('new') }" @click="toggleType('new')">
+            <button class="type-btn" :class="{ active: route.query.type === 'new' }" @click="toggleProductType('new')">
               新品
             </button>
-            <button class="type-btn" :class="{ active: isTypeSelected('used') }" @click="toggleType('used')">
+            <button class="type-btn" :class="{ active: route.query.type === 'used' }"
+              @click="toggleProductType('used')">
               中古品
             </button>
           </div>
@@ -99,19 +100,21 @@
             </button>
           </div>
           <div class="menu-content">
-            <div class="filter-section">
-              <div class="section-title">产品类型</div>
-              <div class="filter-grid">
-                <button class="filter-item" :class="{ active: isTypeSelected('new') }" @click="toggleType('new')">
+            <div class="filter-group">
+              <h3>产品类型</h3>
+              <div class="filter-options">
+                <button class="filter-btn" :class="{ active: route.query.type === 'new' }"
+                  @click="toggleProductType('new')">
                   新品
                 </button>
-                <button class="filter-item" :class="{ active: isTypeSelected('used') }" @click="toggleType('used')">
+                <button class="filter-btn" :class="{ active: route.query.type === 'used' }"
+                  @click="toggleProductType('used')">
                   中古品
                 </button>
               </div>
             </div>
 
-            <div class="filter-section" v-for="category in categories" :key="category.id">
+            <div v-for="category in categories" :key="category.id" class="filter-group">
               <div class="section-title">{{ category.name }}</div>
               <div class="brand-list">
                 <button v-for="brand in category.brands" :key="brand" class="brand-item"
@@ -215,7 +218,7 @@ const getQueryParams = () => {
       const [categoryId, brand] = b.split(':');
       return { categoryId: Number(categoryId), brand };
     }),
-    newProduct: route.query.newProduct as string || '',
+    newProduct: route.query.id as string || '',
     type: route.query.type as string || ''
   };
 };
@@ -225,7 +228,7 @@ const initializeFilters = () => {
   const params = getQueryParams();
   selectedCategories.value = params.categories;
   selectedBrands.value = params.brands;
-  selectedNewProduct.value = route.query.id as string || '';
+  selectedNewProduct.value = params.newProduct;
 };
 
 // 初始化状态
@@ -252,6 +255,12 @@ const getCategoryBrands = (categoryId: number) => {
 const filteredProducts = computed(() => {
   let result = [...typedProducts] as Product[];
 
+  // 按产品类型筛选（新品/中古品）
+  if (route.query.type) {
+    const type = route.query.type as string;
+    result = result.filter(product => product.type === type);
+  }
+
   // 按分类筛选
   if (selectedCategories.value.length > 0) {
     result = result.filter(product =>
@@ -270,7 +279,6 @@ const filteredProducts = computed(() => {
 
   // 按新品ID筛选
   if (selectedNewProduct.value) {
-    // 直接通过ID精确匹配产品
     const productId = Number(selectedNewProduct.value);
     result = result.filter(product => product.id === productId);
   }
@@ -336,6 +344,15 @@ const isCategoryActive = (categoryId: number) => {
 const toggleCategory = (categoryId: number) => {
   // 清除新品筛选条件
   selectedNewProduct.value = '';
+  // 清除类型筛选条件
+  if (route.query.type) {
+    router.replace({
+      query: {
+        ...route.query,
+        type: undefined
+      }
+    });
+  }
 
   const categoryIdStr = String(categoryId);
   const index = selectedCategories.value.indexOf(categoryIdStr);
@@ -351,6 +368,15 @@ const toggleCategory = (categoryId: number) => {
 const toggleBrand = (categoryId: number, brand: string) => {
   // 清除新品筛选条件
   selectedNewProduct.value = '';
+  // 清除类型筛选条件
+  if (route.query.type) {
+    router.replace({
+      query: {
+        ...route.query,
+        type: undefined
+      }
+    });
+  }
 
   const index = selectedBrands.value.findIndex(
     b => b.categoryId === categoryId && b.brand === brand
@@ -391,14 +417,26 @@ watch(
   { immediate: true }
 );
 
-// 切换产品类型（新品/中古品）
-const toggleType = (type: string) => {
-  if (selectedType.value === type) {
-    selectedType.value = '';
+// 切换产品类型
+const toggleProductType = (type: string) => {
+  // 构建新的查询参数，保留现有的其他参数
+  const newQuery = { ...route.query };
+
+  if (route.query.type === type) {
+    // 如果点击当前选中的类型，则清除类型筛选
+    delete newQuery.type;
   } else {
-    selectedType.value = type;
+    // 设置新的类型
+    newQuery.type = type;
+    // 清除可能冲突的新品ID
+    delete newQuery.id;
   }
-  updateQueryParams();
+
+  // 更新路由
+  router.push({ query: newQuery });
+
+  // 清除新品选择
+  selectedNewProduct.value = '';
 };
 
 // 检查产品类型是否被选中
@@ -465,17 +503,28 @@ const handleNewProductClick = (brand: any) => {
 
 // 更新路由查询参数
 const updateQueryParams = () => {
-  router.push({
-    query: {
-      categories: selectedCategories.value.join(','),
-      brands: selectedBrands.value.map(b => `${b.categoryId}:${b.brand}`).join(','),
-      // 只有在有新品选择时才添加 id 参数
-      ...(selectedNewProduct.value ? { id: selectedNewProduct.value } : {}),
-      // 清除其他不相关的查询参数
-      type: undefined,
-      filters: undefined
-    },
-    replace: true
+  const newQuery: Record<string, string> = {};
+
+  // 添加分类和品牌筛选
+  if (selectedCategories.value.length > 0) {
+    newQuery.categories = selectedCategories.value.join(',');
+  }
+  if (selectedBrands.value.length > 0) {
+    newQuery.brands = selectedBrands.value.map(b => `${b.categoryId}:${b.brand}`).join(',');
+  }
+
+  // 添加新品ID（如果有）
+  if (selectedNewProduct.value) {
+    newQuery.id = selectedNewProduct.value;
+  }
+
+  // 保持当前的类型参数（如果有）
+  if (route.query.type) {
+    newQuery.type = route.query.type as string;
+  }
+
+  router.replace({
+    query: newQuery
   });
 };
 
@@ -496,6 +545,14 @@ onUnmounted(() => {
   }
   window.removeEventListener('resize', checkMobile);
 });
+
+// 监听路由变化
+watch(
+  () => route.query.type,
+  (newType) => {
+    console.log('Product type changed:', newType); // 添加调试日志
+  }
+);
 </script>
 
 <style lang="scss" scoped>
@@ -1371,6 +1428,48 @@ onUnmounted(() => {
     &:hover {
       background: #f5f5f5;
       border-color: #999;
+    }
+  }
+}
+
+.filter-option {
+  &.active {
+    background-color: var(--primary-color);
+    color: white;
+  }
+}
+
+.filter-group {
+  margin-bottom: 1.5rem;
+
+  h3 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: #333;
+  }
+
+  .filter-options {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: var(--primary-color);
+    }
+
+    &.active {
+      background-color: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
     }
   }
 }

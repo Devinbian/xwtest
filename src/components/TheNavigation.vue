@@ -63,7 +63,12 @@
             </div>
           </div>
 
-          <router-link to="/used" class="nav-link" @click="closeMenu">中古品</router-link>
+          <router-link :to="{
+            name: 'products',
+            query: { type: 'used' }
+          }" class="nav-link" @click="closeMenu">
+            中古品
+          </router-link>
           <a href="https://shop198581009.taobao.com" target="_blank" class="nav-link" @click="closeMenu">淘宝店</a>
           <router-link to="/about" class="nav-link" @click="closeMenu">关于我们</router-link>
         </div>
@@ -283,10 +288,6 @@ onUnmounted(() => {
   transition: color 0.3s;
 
   &:hover {
-    color: vars.$primary-green;
-  }
-
-  &.router-link-active {
     color: vars.$primary-green;
   }
 }
