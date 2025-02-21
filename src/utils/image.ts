@@ -20,10 +20,11 @@ export const generatePlaceholderUrl = (originalUrl: string): string => {
 
 export const preloadImage = (src: string): Promise<void> => {
   console.log("preloadImage:"+src);
+  const cleanUrl = src.replace(/^\/xwtest\//, '');
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve();
     img.onerror = () => reject();
-    img.src = src;
+    img.src = cleanUrl;
   });
 }; 
