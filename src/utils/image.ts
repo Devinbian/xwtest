@@ -12,11 +12,14 @@ export const generatePlaceholderUrl = (originalUrl: string): string => {
   
   // 生成小图URL
   const smallImageUrl = urlWithoutBase.replace(/(\.[^.]+)$/, '-small$1');
+
+  console.log("生成小图URL:"+smallImageUrl);
   
   return `${smallImageUrl}`;
 };
 
 export const preloadImage = (src: string): Promise<void> => {
+  console.log("preloadImage:"+src);
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve();
