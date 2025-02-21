@@ -1,7 +1,7 @@
 <template>
   <div class="product-card" @mouseenter="hover = true" @mouseleave="hover = false">
     <div class="image-container">
-      <img :src="productImage" :alt="product.title">
+      <img :src="placeholderImage" :alt="product.title">
       <div class="overlay" :class="{ active: hover }">
         <router-link :to="`/products/${product.id}`" class="view-details">
           查看详情
@@ -35,7 +35,7 @@ defineProps<{
 
 const hover = ref(false);
 
-const productImage = getAssetUrl('/images/products/product1.jpg');
+const productImage = getAssetUrl(props.product.image);
 const placeholderImage = generatePlaceholderUrl(productImage);
 </script>
 
