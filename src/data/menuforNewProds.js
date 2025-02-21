@@ -4,7 +4,7 @@ export const topBrands = [
   {
     id: 1,
     name: 'ADCMT',
-    logo: '/images/brands/adcmt/logo.png',
+    logo: getAssetUrl('/images/brands/adcmt/logo.png'),
     categoryId: 1,
     type: 'new',
     products: [
