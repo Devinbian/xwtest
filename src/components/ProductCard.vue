@@ -18,7 +18,6 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { getAssetUrl } from '@/utils/assets';
 import { generatePlaceholderUrl } from '@/utils/image';
 
 interface ProductProps {
@@ -35,8 +34,7 @@ defineProps<{
 
 const hover = ref(false);
 
-const productImage = getAssetUrl(props.product.image);
-const placeholderImage = generatePlaceholderUrl(productImage);
+const placeholderImage = generatePlaceholderUrl(props.product.image);
 </script>
 
 <style lang="scss" scoped>
