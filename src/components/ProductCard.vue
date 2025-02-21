@@ -1,7 +1,7 @@
 <template>
   <div class="product-card" @mouseenter="hover = true" @mouseleave="hover = false">
     <div class="image-container">
-      <img :src="placeholderImage" :alt="product.title">
+      <img :src="logImagePath" :alt="product.title">
       <div class="overlay" :class="{ active: hover }">
         <router-link :to="`/products/${product.id}`" class="view-details">
           查看详情
@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { generatePlaceholderUrl } from '@/utils/image';
 
 interface ProductProps {
@@ -36,7 +36,19 @@ const hover = ref(false);
 
 // 处理图片路径
 const placeholderImage = generatePlaceholderUrl(props.product.image);
-console.log("placeholderImage:"+placeholderImage);
+
+// 添加生命周期钩子来确保组件确实被渲染
+onMounted(() => {
+  console.log('ProductCard mounted');
+  console.log('Original image:', props.product.image);
+  console.log('Placeholder image:', placeholderImage);
+});
+
+// 添加计算属性来监听图片路径的变化
+const logImagePath = computed(() => {
+  console.log('Image path changed:', placeholderImage);
+  return placeholderImage;
+});
 </script>
 
 <style lang="scss" scoped>
