@@ -288,13 +288,15 @@ const filteredProducts = computed(() => {
 
 // 处理图片路径
 const getProductImageUrl = (product: Product) => {
-  return getAssetUrl(product.image);
+  // return getAssetUrl(product.image);
+  return product.image;
 };
 
 // 获取产品预览图
 const getProductPreviewUrl = (product: Product) => {
   const imagePath = product.image.replace(/\.[^.]+$/, '-small$&');
-  return getAssetUrl(imagePath);
+  // return getAssetUrl(imagePath);
+  return imagePath;
 };
 
 // 监听筛选结果变化并显示提示
