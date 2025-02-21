@@ -13,8 +13,7 @@ export const generatePlaceholderUrl = (originalUrl: string): string => {
   // 生成小图URL
   const smallImageUrl = urlWithoutBase.replace(/(\.[^.]+)$/, '-small$1');
   
-  // 重新添加base路径
-  return `${base}${smallImageUrl}`;
+  return `${smallImageUrl}`;
 };
 
 export const preloadImage = (src: string): Promise<void> => {
