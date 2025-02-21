@@ -44,25 +44,12 @@
                       <h3>{{ brand.name }}</h3>
                     </div>
                     <div class="products-list">
-                      <router-link 
-                        v-for="product in brand.products" 
-                        :key="product.id" 
-                        :to="{
-                          name: 'products',
-                          query: {
-                            filters: JSON.stringify({
-                              types: ['new'],
-                              brands: [{
-                                categoryId: brand.categoryId,
-                                brands: [brand.name]
-                              }],
-                              category: brand.categoryId
-                            })
-                          }
-                        }" 
-                        class="product-item" 
-                        @click="handleNewProductClick(brand)"
-                      >
+                      <router-link v-for="product in brand.products" :key="product.id" :to="{
+                        name: 'products',
+                        query: {
+                          id: product.id
+                        }
+                      }" class="product-item" @click="handleNewProductClick(product)">
                         <img :src="product.image" :alt="product.name">
                         <div class="product-info">
                           <h4>{{ product.name }}</h4>
@@ -76,7 +63,12 @@
             </div>
           </div>
 
-          <router-link to="/used" class="nav-link" @click="closeMenu">中古品</router-link>
+          <router-link :to="{
+            name: 'products',
+            query: { type: 'used' }
+          }" class="nav-link" @click="closeMenu">
+            中古品
+          </router-link>
           <a href="https://shop198581009.taobao.com" target="_blank" class="nav-link" @click="closeMenu">淘宝店</a>
           <router-link to="/about" class="nav-link" @click="closeMenu">关于我们</router-link>
         </div>
@@ -159,29 +151,14 @@ const handleTouchEnd = (event: TouchEvent) => {
   element.classList.remove('touch-active');
 };
 
-const handleNewProductClick = (brand: any) => {
-  // 关闭菜单
-  closeMenu();
-  
-  // 清除之前的路由查询参数并设置新的参数
+const handleNewProductClick = (item: any) => {
   router.push({
     name: 'products',
     query: {
-      filters: JSON.stringify({
-        types: ['new'],
-        brands: [{
-          categoryId: brand.categoryId,
-          brands: [brand.name]
-        }],
-        category: brand.categoryId
-      })
-    },
-    // 添加 replace: true 确保替换当前历史记录
-    replace: true
-  }).then(() => {
-    // 强制重新加载组件
-    router.go(0);
+      id: item.id
+    }
   });
+  closeMenu();
 };
 
 onMounted(() => {
@@ -311,10 +288,6 @@ onUnmounted(() => {
   transition: color 0.3s;
 
   &:hover {
-    color: vars.$primary-green;
-  }
-
-  &.router-link-active {
     color: vars.$primary-green;
   }
 }

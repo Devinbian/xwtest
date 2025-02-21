@@ -1,182 +1,182 @@
 <template>
-  <div class="products-page">
-    <!-- PC端左侧分类菜单 -->
-    <aside v-if="!isMobile" class="categories-menu">
-      <div class="filter-content">
-        <!-- 添加筛选状态提示 -->
-        <div class="filter-status" v-if="activeFiltersCount > 0">
-          <span class="status-text">已选{{ activeFiltersCount }}项</span>
-          <button class="clear-all-btn" @click="clearFilters">
-            <i class="fas fa-times"></i>
-            清除全部
-          </button>
-        </div>
+  <div>
+    <!-- 筛选结果提示 -->
+    <Teleport to="body">
+      <div class="filter-result-container">
+        <Transition name="fade">
+          <div v-show="showFilterResult" class="filter-result-tip">
+            <template v-if="filteredProducts.length > 0">
+              找到 {{ filteredProducts.length }} 个符合条件的产品
+            </template>
+            <template v-else>
+              没有找到符合条件的产品
+            </template>
+          </div>
+        </Transition>
+      </div>
+    </Teleport>
 
-        <!-- 产品类型选择器 -->
-        <div class="product-type-selector">
-          <button class="type-btn" :class="{ active: selectedTypes.includes('new') }" @click="toggleType('new')">
-            新品
-          </button>
-          <button class="type-btn" :class="{ active: selectedTypes.includes('used') }" @click="toggleType('used')">
-            中古品
-          </button>
-        </div>
+    <div class="products-page">
+      <!-- PC端左侧分类菜单 -->
+      <aside v-if="!isMobile" class="categories-menu">
+        <div class="filter-content">
+          <!-- 添加筛选状态提示 -->
+          <div class="filter-status" v-if="activeFiltersCount > 0">
+            <span class="status-text">已选{{ activeFiltersCount }}项</span>
+            <button class="clear-all-btn" @click="clearFilters">
+              <i class="fas fa-times"></i>
+              清除全部
+            </button>
+          </div>
 
-        <!-- 分类列表 -->
-        <div class="category-group">
-          <div v-for="category in categories" :key="category.id" class="category-item">
-            <div class="category-header" @click="toggleCategory(category.id)">
-              <span>{{ category.name }}</span>
-              <i :class="['fas', isCategoryActive(category.id) ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
-            </div>
-            <div class="brands-list" :class="{ active: isCategoryActive(category.id) }">
-              <button v-for="brand in category.brands" :key="brand" class="brand-link"
-                :class="{ active: isBrandSelected(category.id, brand) }" @click="toggleBrand(category.id, brand)">
-                {{ brand }}
-              </button>
+          <!-- 产品类型选择器 -->
+          <div class="product-type-selector">
+            <button class="type-btn" :class="{ active: route.query.type === 'new' }" @click="toggleProductType('new')">
+              新品
+            </button>
+            <button class="type-btn" :class="{ active: route.query.type === 'used' }"
+              @click="toggleProductType('used')">
+              中古品
+            </button>
+          </div>
+
+          <!-- 分类列表 -->
+          <div class="category-group">
+            <div v-for="category in categories" :key="category.id" class="category-item">
+              <div class="category-header" @click="toggleCategory(category.id)">
+                <span>{{ category.name }}</span>
+                <i :class="['fas', isCategoryActive(category.id) ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
+              </div>
+              <div class="brands-list" :class="{ active: isCategoryActive(category.id) }">
+                <button v-for="brand in category.brands" :key="brand" class="brand-link"
+                  :class="{ active: isBrandSelected(category.id, brand) }" @click="toggleBrand(category.id, brand)">
+                  {{ brand }}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- 添加清除按钮 -->
-        <div class="filter-actions" v-if="activeFiltersCount > 0">
-          <button class="clear-btn" @click="clearFilters">
-            清除筛选
-          </button>
+          <!-- 添加清除按钮 -->
+          <div class="filter-actions" v-if="activeFiltersCount > 0">
+            <button class="clear-btn" @click="clearFilters">
+              清除筛选
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- 移动端筛选按钮和菜单 -->
+      <div v-if="isMobile" class="mobile-filter">
+        <!-- 遮罩层 -->
+        <div class="menu-overlay" :class="{ active: showFilter }" @click="showFilter = false"></div>
+
+        <!-- 筛选按钮 -->
+        <button class="filter-btn" @click="showFilter = true">
+          <div class="left-section">
+            <i class="fas fa-sliders-h"></i>
+            <span>筛选</span>
+          </div>
+          <div class="right-section">
+            <span class="active-filters" v-if="activeFiltersCount > 0">
+              已选{{ activeFiltersCount }}项
+            </span>
+            <span class="active-filters" v-else>
+              全部商品
+            </span>
+            <i class="fas fa-chevron-right"></i>
+          </div>
+        </button>
+
+        <!-- 全屏筛选菜单 -->
+        <div class="filter-menu" :class="{ active: showFilter }">
+          <div class="menu-header">
+            <h3>筛选条件</h3>
+            <button v-if="activeFiltersCount > 0" class="clear-filters-btn" @click="clearFilters">
+              <i class="fas fa-times"></i>
+              清除筛选
+            </button>
+            <button class="close-btn" @click="showFilter = false">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="menu-content">
+            <div class="filter-group">
+              <h3>产品类型</h3>
+              <div class="filter-options">
+                <button class="filter-btn" :class="{ active: route.query.type === 'new' }"
+                  @click="toggleProductType('new')">
+                  新品
+                </button>
+                <button class="filter-btn" :class="{ active: route.query.type === 'used' }"
+                  @click="toggleProductType('used')">
+                  中古品
+                </button>
+              </div>
+            </div>
+
+            <div v-for="category in categories" :key="category.id" class="filter-group">
+              <div class="section-title">{{ category.name }}</div>
+              <div class="brand-list">
+                <button v-for="brand in category.brands" :key="brand" class="brand-item"
+                  :class="{ active: isBrandSelected(category.id, brand) }" @click="toggleBrand(category.id, brand)">
+                  <img :src="getAssetUrl(`/images/brands/${brand.toLowerCase()}/logo.png`)" :alt="brand">
+                  <span>{{ brand }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </aside>
 
-    <!-- 移动端筛选按钮和菜单 -->
-    <div v-if="isMobile" class="mobile-filter">
-      <!-- 遮罩层 -->
-      <div class="menu-overlay" :class="{ active: showFilter }" @click="showFilter = false"></div>
-
-      <!-- 筛选按钮 -->
-      <button class="filter-btn" @click="showFilter = true">
-        <div class="left-section">
-          <i class="fas fa-sliders-h"></i>
-          <span>筛选</span>
-        </div>
-        <div class="right-section">
-          <span class="active-filters" v-if="activeFiltersCount > 0">
-            已选{{ activeFiltersCount }}项
-          </span>
-          <span class="active-filters" v-else>
-            全部商品
-          </span>
-          <i class="fas fa-chevron-right"></i>
-        </div>
-      </button>
-
-      <!-- 全屏筛选菜单 -->
-      <div class="filter-menu" :class="{ active: showFilter }">
-        <div class="menu-header">
-          <h3>筛选条件</h3>
-          <button class="close-btn" @click="showFilter = false">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-        <div class="menu-content">
-          <div class="filter-section">
-            <div class="section-title">产品类型</div>
-            <div class="filter-grid">
-              <button class="filter-item" :class="{ active: selectedTypes.includes('new') }" @click="toggleType('new')">
-                新品
-              </button>
-              <button class="filter-item" :class="{ active: selectedTypes.includes('used') }"
-                @click="toggleType('used')">
-                中古品
-              </button>
-            </div>
+      <!-- 右侧产品列表 -->
+      <main class="products-content">
+        <div class="products-header">
+          <h2>{{ currentCategory?.name || '全部产品' }}</h2>
+          <div class="filters">
+            <!-- 可以添加排序和筛选选项 -->
           </div>
+        </div>
 
-          <div class="filter-section" v-for="category in categories" :key="category.id">
-            <div class="section-title">{{ category.name }}</div>
-            <div class="brand-list">
-              <button v-for="brand in category.brands" :key="brand" class="brand-item"
-                :class="{ active: isBrandSelected(category.id, brand) }" @click="toggleBrand(category.id, brand)">
-                <img :src="getAssetUrl(`/images/brands/${brand.toLowerCase()}/logo.png`)" :alt="brand">
-                <span>{{ brand }}</span>
-              </button>
+        <div class="products-grid">
+          <div v-for="product in filteredProducts" :key="product.id" class="product-card">
+            <div class="condition-tag" :class="product.condition">
+              {{ getConditionText(product.condition) }}
+            </div>
+            <div class="image-wrapper">
+              <LazyImage :src="getProductImageUrl(product)" :alt="product.name"
+                :placeholder="getProductPreviewUrl(product)" />
+            </div>
+            <div class="product-info">
+              <h3>{{ product.name }}</h3>
+              <p>{{ product.description }}</p>
+              <div class="specs-list">
+                <span v-for="(spec, index) in product.specs" :key="index" class="spec-tag">
+                  {{ spec }}
+                </span>
+              </div>
+              <div class="product-brand">
+                {{ product.brand }}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
-
-    <!-- 右侧产品列表 -->
-    <main class="products-content">
-      <div class="products-header">
-        <h2>{{ currentCategory?.name || '全部产品' }}</h2>
-        <div class="filters">
-          <!-- 可以添加排序和筛选选项 -->
-        </div>
-      </div>
-
-      <div class="products-grid">
-        <div v-for="product in filteredProducts" :key="product.id" class="product-card">
-          <div class="condition-tag" :class="product.condition">
-            {{ getConditionText(product.condition) }}
-          </div>
-          <div class="image-wrapper">
-            <LazyImage 
-              :src="getAssetUrl(product.image)" 
-              :alt="product.name"
-              :placeholder="getAssetUrl(product.image.replace(/(\.[^.]+)$/, '-small$1'))"
-            />
-          </div>
-          <div class="product-info">
-            <h3>{{ product.name }}</h3>
-            <p>{{ product.description }}</p>
-            <div class="specs-list">
-              <span v-for="(spec, index) in product.specs" :key="index" class="spec-tag">
-                {{ spec }}
-              </span>
-            </div>
-            <div class="product-brand">
-              {{ product.brand }}
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, Teleport, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getAssetUrl } from '@/utils/assets';
 import { preloadImage } from '@/utils/image';
 import LazyImage from '@/components/LazyImage.vue';
 
-//获取产品分类数据
+// 导入数据
+// @ts-ignore
 import { categories } from '../data/categories';
-//获取产品数据
+// @ts-ignore
 import { products } from '../data/products';
-
-const route = useRoute();
-const router = useRouter();
-const activeCategories = ref<(string | number)[]>([]);
-const selectedTypes = ref<string[]>([]);
-const selectedBrands = ref<BrandFilter[]>([]);
-
-// 添加移动端相关状态
-const isMobile = ref(false);
-const showFilter = ref(false);
-
-// 检查是否为移动端
-const checkMobile = () => {
-  isMobile.value = window.innerWidth <= 768;
-};
-
-// 将初始化逻辑移到 onMounted 中
-onMounted(() => {
-  checkMobile();
-  window.addEventListener('resize', checkMobile);
-  initializeFilters();
-});
 
 // 定义类型接口
 interface Category {
@@ -200,248 +200,261 @@ interface Product {
   description: string;
   specs: string[];
   condition: string;
+  isNew?: boolean;
 }
 
-// 切换品牌选择
-const toggleBrand = (categoryId: number, brand: string) => {
-  // 查找当前分类的筛选条件
-  const categoryFilter = selectedBrands.value.find(filter => filter.categoryId === categoryId);
-  
-  if (categoryFilter) {
-    // 如果已有该分类的筛选条件
-    const brandIndex = categoryFilter.brands.indexOf(brand);
-    if (brandIndex === -1) {
-      // 添加品牌
-      categoryFilter.brands.push(brand);
-    } else {
-      // 移除品牌
-      categoryFilter.brands.splice(brandIndex, 1);
-      // 如果该分类下没有选中的品牌了，移除整个分类筛选
-      if (categoryFilter.brands.length === 0) {
-        const filterIndex = selectedBrands.value.findIndex(filter => filter.categoryId === categoryId);
-        selectedBrands.value.splice(filterIndex, 1);
-      }
-    }
-  } else {
-    // 添加新的分类筛选
-    selectedBrands.value.push({
-      categoryId,
-      brands: [brand]
-    });
-  }
-  
-  updateRoute();
-};
+// 类型断言
+const typedCategories = categories as Category[];
+const typedProducts = products as Product[];
 
-// 检查品牌是否被选中
-const isBrandSelected = (categoryId: number, brand: string) => {
-  const categoryFilter = selectedBrands.value.find(filter => filter.categoryId === categoryId);
-  return categoryFilter?.brands.includes(brand) || false;
-};
+const route = useRoute();
+const router = useRouter();
 
-// 更新路由
-const updateRoute = () => {
-  // 构建统一的筛选条件对象
-  const filters = {
-    types: selectedTypes.value,
-    brands: selectedBrands.value,
-    category: route.query.category ? Number(route.query.category) : undefined
+// 获取路由中的筛选参数
+const getQueryParams = () => {
+  return {
+    categories: (route.query.categories as string || '').split(',').filter(Boolean),
+    brands: (route.query.brands as string || '').split(',').filter(Boolean).map(b => {
+      const [categoryId, brand] = b.split(':');
+      return { categoryId: Number(categoryId), brand };
+    }),
+    newProduct: route.query.id as string || '',
+    type: route.query.type as string || ''
   };
-
-  // 只在有筛选条件时添加查询参数
-  const query = Object.keys(filters).some(key => {
-    const value = filters[key as keyof typeof filters];
-    return Array.isArray(value) ? value.length > 0 : value !== undefined;
-  }) ? {
-    filters: JSON.stringify(filters)
-  } : undefined;
-
-  router.push({
-    name: 'products',
-    query
-  });
 };
 
 // 初始化筛选器
 const initializeFilters = () => {
-  // 清空现有筛选条件
-  selectedTypes.value = [];
-  selectedBrands.value = [];
-
-  // 从统一的 filters 参数初始化所有筛选条件
-  const filtersParam = route.query.filters as string;
-  if (filtersParam) {
-    try {
-      const filters = JSON.parse(filtersParam) as {
-        types: string[];
-        brands: { categoryId: number; brands: string[] }[];
-        category?: number;
-      };
-
-      // 初始化类型筛选
-      if (filters.types) {
-        selectedTypes.value = filters.types;
-      }
-
-      // 初始化品牌筛选
-      if (filters.brands) {
-        selectedBrands.value = filters.brands;
-      }
-    } catch (e) {
-      console.error('Failed to parse filters:', e);
-    }
-  }
+  const params = getQueryParams();
+  selectedCategories.value = params.categories;
+  selectedBrands.value = params.brands;
+  selectedNewProduct.value = params.newProduct;
 };
 
-// 监听路由变化，重新初始化筛选器
+// 初始化状态
+const selectedCategories = ref<string[]>(getQueryParams().categories);
+const selectedBrands = ref<Array<{ categoryId: number; brand: string; }>>(getQueryParams().brands);
+const selectedNewProduct = ref<string>(getQueryParams().newProduct);
+const selectedType = ref<string>(getQueryParams().type);
+const showFilterResult = ref(false);
+let filterTipTimer: number | null = null;
+const lastCount = ref(0);
+
+// 当前选中的分类
+const currentCategory = computed(() =>
+  typedCategories.find((c: Category) => c.id === Number(route.query.category))
+);
+
+// 获取分类的品牌列表
+const getCategoryBrands = (categoryId: number) => {
+  const category = typedCategories.find(c => c.id === categoryId);
+  return category ? category.brands : [];
+};
+
+// 筛选产品
+const filteredProducts = computed(() => {
+  let result = [...typedProducts] as Product[];
+
+  // 按产品类型筛选（新品/中古品）
+  if (route.query.type) {
+    const type = route.query.type as string;
+    result = result.filter(product => product.type === type);
+  }
+
+  // 按分类筛选
+  if (selectedCategories.value.length > 0) {
+    result = result.filter(product =>
+      selectedCategories.value.includes(String(product.categoryId))
+    );
+  }
+
+  // 按品牌筛选
+  if (selectedBrands.value.length > 0) {
+    result = result.filter(product =>
+      selectedBrands.value.some(
+        b => b.categoryId === product.categoryId && b.brand === product.brand
+      )
+    );
+  }
+
+  // 按新品ID筛选
+  if (selectedNewProduct.value) {
+    const productId = Number(selectedNewProduct.value);
+    result = result.filter(product => product.id === productId);
+  }
+
+  return result;
+});
+
+// 处理图片路径
+const getProductImageUrl = (product: Product) => {
+  return getAssetUrl(product.image);
+};
+
+// 获取产品预览图
+const getProductPreviewUrl = (product: Product) => {
+  const imagePath = product.image.replace(/\.[^.]+$/, '-small$&');
+  return getAssetUrl(imagePath);
+};
+
+// 监听筛选结果变化并显示提示
 watch(
-  () => route.fullPath, // 监听完整的路由路径
+  () => filteredProducts.value.length,
+  (newCount, oldCount) => {
+    // 如果数量有变化，显示提示
+    if (oldCount !== undefined && newCount !== oldCount) {
+      if (filterTipTimer) {
+        clearTimeout(filterTipTimer);
+      }
+      showFilterResult.value = true;
+      filterTipTimer = window.setTimeout(() => {
+        showFilterResult.value = false;
+      }, 3000);
+    }
+  },
+  { immediate: false }
+);
+
+// 检查是否为移动端
+const isMobile = ref(false);
+const showFilter = ref(false);
+
+// 检查是否为移动端
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768;
+};
+
+// 将初始化逻辑移到 onMounted 中
+onMounted(() => {
+  checkMobile();
+  window.addEventListener('resize', checkMobile);
+  initializeFilters();
+  // 设置初始产品数量
+  nextTick(() => {
+    console.log('Initial products count:', filteredProducts.value.length);
+  });
+});
+
+// 检查分类是否处于激活状态
+const isCategoryActive = (categoryId: number) => {
+  return selectedCategories.value.includes(String(categoryId));
+};
+
+// 切换分类选择
+const toggleCategory = (categoryId: number) => {
+  // 清除新品筛选条件
+  selectedNewProduct.value = '';
+  // 清除类型筛选条件
+  if (route.query.type) {
+    router.replace({
+      query: {
+        ...route.query,
+        type: undefined
+      }
+    });
+  }
+
+  const categoryIdStr = String(categoryId);
+  const index = selectedCategories.value.indexOf(categoryIdStr);
+  if (index === -1) {
+    selectedCategories.value.push(categoryIdStr);
+  } else {
+    selectedCategories.value.splice(index, 1);
+  }
+  updateQueryParams();
+};
+
+// 切换品牌选择
+const toggleBrand = (categoryId: number, brand: string) => {
+  // 清除新品筛选条件
+  selectedNewProduct.value = '';
+  // 清除类型筛选条件
+  if (route.query.type) {
+    router.replace({
+      query: {
+        ...route.query,
+        type: undefined
+      }
+    });
+  }
+
+  const index = selectedBrands.value.findIndex(
+    b => b.categoryId === categoryId && b.brand === brand
+  );
+
+  if (index === -1) {
+    selectedBrands.value.push({ categoryId, brand });
+  } else {
+    selectedBrands.value.splice(index, 1);
+  }
+
+  updateQueryParams();
+};
+
+// 选择新品
+const selectNewProduct = (productId: string) => {
+  selectedNewProduct.value = productId;
+  updateQueryParams();
+};
+
+// 检查品牌是否被选中
+const isBrandSelected = (categoryId: number, brand: string) => {
+  return selectedBrands.value.some(
+    b => b.categoryId === categoryId && b.brand === brand
+  );
+};
+
+// 监听路由变化，更新选中状态
+watch(
+  () => route.query,
   () => {
-    // 完全重置筛选条件
-    selectedTypes.value = [];
-    selectedBrands.value = [];
-    
-    // 然后初始化新的筛选条件
+    // 如果 URL 中没有 id 参数，确保新品选择被清除
+    if (!route.query.id) {
+      selectedNewProduct.value = '';
+    }
     initializeFilters();
   },
   { immediate: true }
 );
 
-const currentCategory = computed(() =>
-  categories.find(c => c.id === Number(route.query.category))
-);
+// 切换产品类型
+const toggleProductType = (type: string) => {
+  // 构建新的查询参数，保留现有的其他参数
+  const newQuery = { ...route.query };
 
-const toggleCategory = (categoryId: string | number) => {
-  const index = activeCategories.value.indexOf(categoryId);
-  if (index === -1) {
-    // 如果分类未展开，则添加到数组中
-    activeCategories.value.push(categoryId);
+  if (route.query.type === type) {
+    // 如果点击当前选中的类型，则清除类型筛选
+    delete newQuery.type;
   } else {
-    // 如果分类已展开，则从数组中移除
-    activeCategories.value.splice(index, 1);
+    // 设置新的类型
+    newQuery.type = type;
+    // 清除可能冲突的新品ID
+    delete newQuery.id;
   }
+
+  // 更新路由
+  router.push({ query: newQuery });
+
+  // 清除新品选择
+  selectedNewProduct.value = '';
 };
 
-const isCategoryActive = (categoryId: string | number) => {
-  return activeCategories.value.includes(categoryId);
+// 检查产品类型是否被选中
+const isTypeSelected = (type: string) => {
+  return selectedType.value === type;
 };
 
-// 切换产品类型（新品/中古品）
-const toggleType = (type: string) => {
-  // 如果点击的是当前选中的类型，不做任何操作（保持选中状态）
-  if (selectedTypes.value.includes(type)) {
-    return;
-  }
-  // 替换为新选择的类型
-  selectedTypes.value = [type];
-  updateRoute();
-};
-
-// 计算活跃的筛选数量
+// 计算已选择的筛选项数量
 const activeFiltersCount = computed(() => {
-  // 检查是否是从新品菜单进入
-  const isFromNewMenu = route.query.type === 'new' && 
-                       route.query.category && 
-                       route.query.filters;
-
-  // 如果是从新品菜单进入，不计入筛选数量
-  if (isFromNewMenu) {
-    return 0;
-  }
-
-  // 计算有效的筛选数量（必须匹配到产品）
-  let effectiveCount = 0;
-
-  // 检查类型筛选是否有效
-  if (selectedTypes.value.length > 0) {
-    const hasMatchingType = products.some(product => 
-      selectedTypes.value.includes(product.type)
-    );
-    if (hasMatchingType) {
-      effectiveCount += selectedTypes.value.length;
-    }
-  }
-
-  // 检查品牌筛选是否有效
-  selectedBrands.value.forEach(filter => {
-    filter.brands.forEach(brand => {
-      // 检查是否有匹配的产品
-      const hasMatchingProduct = products.some(product => 
-        product.categoryId === filter.categoryId && 
-        product.brand === brand
-      );
-      if (hasMatchingProduct) {
-        effectiveCount += 1;
-      }
-    });
-  });
-
-  return effectiveCount;
+  // 只统计品牌选择的数量
+  return selectedBrands.value.length;
 });
 
 // 清除筛选
 const clearFilters = () => {
-  // 检查是否是从新品菜单进入
-  const isFromNewMenu = route.query.type === 'new' && 
-                       route.query.category && 
-                       route.query.filters;
-
-  if (isFromNewMenu) {
-    // 如果是从新品菜单进入，不执行清除操作
-    return;
-  }
-
-  // 否则清除左侧菜单的筛选条件
-  selectedTypes.value = [];
   selectedBrands.value = [];
-  router.push({
-    name: 'products'
-  });
+  updateQueryParams();
 };
-
-// 筛选产品
-const filteredProducts = computed(() => {
-  // 如果没有任何筛选条件，显示所有产品
-  if (selectedTypes.value.length === 0 && 
-      selectedBrands.value.length === 0 && 
-      !route.query.category) {
-    return products;
-  }
-
-  return products.filter((product: Product) => {
-    // 1. 类型筛选（新品/中古品）
-    if (selectedTypes.value.length > 0 && !selectedTypes.value.includes(product.type)) {
-      return false;
-    }
-
-    // 2. 品牌筛选
-    if (selectedBrands.value.length > 0) {
-      // 检查产品是否匹配选中的分类和品牌
-      const matchedFilter = selectedBrands.value.find(filter => {
-        // 检查分类匹配
-        if (filter.categoryId !== product.categoryId) {
-          return false;
-        }
-        
-        // 检查品牌匹配
-        const category = categories.find((c: Category) => c.id === filter.categoryId);
-        return category?.brands.includes(product.brand) && filter.brands.includes(product.brand);
-      });
-
-      if (!matchedFilter) {
-        return false;
-      }
-    }
-
-    // 3. 分类筛选（从 URL 参数）
-    const categoryParam = Number(route.query.category);
-    if (categoryParam && product.categoryId !== categoryParam) {
-      return false;
-    }
-
-    return true;
-  });
-});
 
 // 添加成色文本转换函数
 const getConditionText = (condition: string) => {
@@ -487,6 +500,59 @@ const handleNewProductClick = (brand: any) => {
     replace: true
   });
 };
+
+// 更新路由查询参数
+const updateQueryParams = () => {
+  const newQuery: Record<string, string> = {};
+
+  // 添加分类和品牌筛选
+  if (selectedCategories.value.length > 0) {
+    newQuery.categories = selectedCategories.value.join(',');
+  }
+  if (selectedBrands.value.length > 0) {
+    newQuery.brands = selectedBrands.value.map(b => `${b.categoryId}:${b.brand}`).join(',');
+  }
+
+  // 添加新品ID（如果有）
+  if (selectedNewProduct.value) {
+    newQuery.id = selectedNewProduct.value;
+  }
+
+  // 保持当前的类型参数（如果有）
+  if (route.query.type) {
+    newQuery.type = route.query.type as string;
+  }
+
+  router.replace({
+    query: newQuery
+  });
+};
+
+// 获取特定分类下已选中的品牌数量
+const getSelectedBrandsCount = (categoryId: number) => {
+  return selectedBrands.value.filter(b => b.categoryId === categoryId).length;
+};
+
+// 检查分类是否有任何品牌被选中
+const hasCategoryBrandsSelected = (categoryId: number) => {
+  return selectedBrands.value.some(b => b.categoryId === categoryId);
+};
+
+// 组件卸载时清理
+onUnmounted(() => {
+  if (filterTipTimer) {
+    clearTimeout(filterTipTimer);
+  }
+  window.removeEventListener('resize', checkMobile);
+});
+
+// 监听路由变化
+watch(
+  () => route.query.type,
+  (newType) => {
+    console.log('Product type changed:', newType); // 添加调试日志
+  }
+);
 </script>
 
 <style lang="scss" scoped>
@@ -872,11 +938,9 @@ const handleNewProductClick = (brand: any) => {
         right: 0;
         width: 100px;
         height: 100px;
-        background: linear-gradient(
-          45deg,
-          transparent,
-          rgba(255, 255, 255, 0.1)
-        );
+        background: linear-gradient(45deg,
+            transparent,
+            rgba(255, 255, 255, 0.1));
         z-index: 1;
       }
 
@@ -1157,6 +1221,27 @@ const handleNewProductClick = (brand: any) => {
         color: vars.$primary-black;
       }
 
+      .clear-filters-btn {
+        margin-right: 1rem;
+        padding: 0.5rem 1rem;
+        border: none;
+        background: transparent;
+        color: #666;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+
+        i {
+          font-size: 0.8rem;
+        }
+
+        &:hover {
+          color: #333;
+        }
+      }
+
       .close-btn {
         width: 36px;
         height: 36px;
@@ -1285,6 +1370,106 @@ const handleNewProductClick = (brand: any) => {
           }
         }
       }
+    }
+  }
+}
+
+.filter-result-container {
+  position: fixed;
+  top: 15%;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  padding-top: calc(var(--nav-height) + 20px);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.filter-result-tip {
+  background: rgba(0, 0, 0, 0.85);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  white-space: nowrap;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+.filter-count {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: #666;
+
+  .clear-filters {
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: transparent;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: #f5f5f5;
+      border-color: #999;
+    }
+  }
+}
+
+.filter-option {
+  &.active {
+    background-color: var(--primary-color);
+    color: white;
+  }
+}
+
+.filter-group {
+  margin-bottom: 1.5rem;
+
+  h3 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: #333;
+  }
+
+  .filter-options {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: var(--primary-color);
+    }
+
+    &.active {
+      background-color: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
     }
   }
 }
