@@ -7,6 +7,7 @@
       </PageTransition>
     </main>
     <TheFooter />
+    <BackToTop />
   </div>
 </template>
 
@@ -14,6 +15,7 @@
 import TheNavigation from '@/components/TheNavigation.vue';
 import TheFooter from '@/components/TheFooter.vue';
 import PageTransition from '@/components/PageTransition.vue';
+import BackToTop from '@/components/BackToTop.vue';
 </script>
 
 <style lang="scss">

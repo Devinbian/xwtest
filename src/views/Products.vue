@@ -447,8 +447,27 @@ const activeFiltersCount = computed(() => {
 
 // 清除筛选
 const clearFilters = () => {
+  // 检查是否是从新品菜单进入
+  const isFromNewMenu = route.query.type === 'new' && 
+                       route.query.category && 
+                       route.query.filters;
+
+  if (isFromNewMenu) {
+    // 如果是从新品菜单进入，不执行清除操作
+    return;
+  }
+
+  // 清除所有状态
+  selectedType.value = '';
   selectedBrands.value = [];
-  updateQueryParams();
+  selectedCategories.value = [];
+  selectedNewProduct.value = '';
+
+  // 清除路由中的所有筛选参数
+  router.push({
+    name: 'products',
+    query: {} // 清空所有查询参数
+  });
 };
 
 // 添加成色文本转换函数
@@ -476,26 +495,6 @@ onMounted(() => {
   preloadVisibleImages();
 });
 
-// 修改新品菜单点击处理函数
-const handleNewProductClick = (brand: any) => {
-  const filters = {
-    types: ['new'],
-    brands: [{
-      categoryId: brand.categoryId,
-      brands: [brand.name]
-    }],
-    category: brand.categoryId
-  };
-
-  router.push({
-    name: 'products',
-    query: {
-      filters: JSON.stringify(filters)
-    },
-    replace: true
-  });
-};
-
 // 更新路由查询参数
 const updateQueryParams = () => {
   const newQuery: Record<string, string> = {};
@@ -521,16 +520,6 @@ const updateQueryParams = () => {
   router.replace({
     query: newQuery
   });
-};
-
-// 获取特定分类下已选中的品牌数量
-const getSelectedBrandsCount = (categoryId: number) => {
-  return selectedBrands.value.filter(b => b.categoryId === categoryId).length;
-};
-
-// 检查分类是否有任何品牌被选中
-const hasCategoryBrandsSelected = (categoryId: number) => {
-  return selectedBrands.value.some(b => b.categoryId === categoryId);
 };
 
 // 组件卸载时清理
