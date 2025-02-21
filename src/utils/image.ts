@@ -15,12 +15,14 @@ export const generatePlaceholderUrl = (originalUrl: string): string => {
 
   console.log("生成小图URL:"+smallImageUrl);
   
-  return `${smallImageUrl}`;
 };
 
 export const preloadImage = (src: string): Promise<void> => {
   console.log("preloadImage:"+src);
+  
   const cleanUrl = src.replace(/^\/xwtest\//, '');
+  console.log("preloadImage cleanUrl:"+cleanUrl);
+
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve();

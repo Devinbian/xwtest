@@ -35,6 +35,7 @@ defineProps<{
 const hover = ref(false);
 
 const placeholderImage = generatePlaceholderUrl(props.product.image);
+console.log("placeholderImage:"+placeholderImage);
 </script>
 
 <style lang="scss" scoped>
