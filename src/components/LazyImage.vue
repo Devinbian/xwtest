@@ -7,13 +7,20 @@
             <i class="fas fa-spinner fa-spin"></i>
         </div>
         <!-- 实际图片 -->
-        <img :src="src" :alt="alt" class="main-image" @load="handleLoad" @error="handleError" :style="{ opacity: isLoaded ? 1 : 0 }" />
+        <img :src="src" :alt="alt" class="main-image" @load="handleLoad" @error="handleError"
+            :style="{ opacity: isLoaded ? 1 : 0 }" />
         <div v-if="hasError" class="error-placeholder">
             <i class="fas fa-image"></i>
             <span>图片加载失败</span>
         </div>
     </div>
 </template>
+
+<script lang="ts">
+export default {
+    name: 'LazyImage'
+};
+</script>
 
 <script setup lang="ts">
 import { ref } from 'vue';

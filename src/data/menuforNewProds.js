@@ -3,21 +3,21 @@ import { getAssetUrl } from "@/utils/assets";
 export const topBrands = [
   {
     id: 1,
-    name: 'ADCMT',
-    logo: '/images/brands/adcmt/logo.png',
+    name: "ADCMT",
+    logo: "/images/brands/adcmt/logo.png",
     categoryId: 1,
-    type: 'new',
+    type: "new",
     products: [
       {
-        id: 1,
-        name: 'ADCMT 5450',
+        id: 2,
+        name: "ADCMT 5450",
         image: getAssetUrl("/images/products/adcmt/5450.jpg"),
-        description: '6½ 位触摸屏数字万用表',
+        description: "6½ 位触摸屏数字万用表",
         type: "new",
-        categoryId: 1
+        categoryId: 1,
       },
       {
-        id: 2,
+        id: 3,
         name: "ADCMT 7351A",
         image: getAssetUrl("/images/products/adcmt/7351A.jpg"),
         description: "高压数字源表",
