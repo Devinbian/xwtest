@@ -143,7 +143,7 @@
               {{ getConditionText(product.condition) }}
             </div>
             <div class="image-wrapper">
-              <LazyImage :src="getProductImageUrl(product)" :alt="product.name"
+              <LazyImage :src="product.image" :alt="product.name"
                 :placeholder="getProductPreviewUrl(product)" />
             </div>
             <div class="product-info">
@@ -286,16 +286,9 @@ const filteredProducts = computed(() => {
   return result;
 });
 
-// 处理图片路径
-const getProductImageUrl = (product: Product) => {
-  // return getAssetUrl(product.image);
-  return product.image;
-};
-
 // 获取产品预览图
 const getProductPreviewUrl = (product: Product) => {
   const imagePath = product.image.replace(/\.[^.]+$/, '-small$&');
-  // return getAssetUrl(imagePath);
   return imagePath;
 };
 
