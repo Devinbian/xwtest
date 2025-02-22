@@ -40,7 +40,7 @@ async function processDirectory(dir) {
 
     if (stat.isDirectory()) {
       await processDirectory(filePath);
-    } else if (/\.(jpg|jpeg|png)$/i.test(file) && !file.includes("-small")) {
+    } else if (/\.(jpg|jpeg|png|avif|webp)$/i.test(file) && !file.includes("-small")) {
       await generateThumbnail(filePath);
     }
   }

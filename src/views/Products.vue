@@ -138,7 +138,7 @@
         </div>
 
         <div class="products-grid">
-          <div v-for="product in filteredProducts" :key="product.id" class="product-card">
+          <div v-for="product in filteredProducts" :key="product.id" class="product-card" @click="handleProductClick(product)">
             <div class="condition-tag" :class="product.condition">
               {{ getConditionText(product.condition) }}
             </div>
@@ -150,13 +150,22 @@
               <h3>{{ product.name }}</h3>
               <p>{{ product.description }}</p>
               <div class="specs-list">
-                <span v-for="(spec, index) in product.specs" :key="index" class="spec-tag">
-                  {{ spec }}
+                <span v-for="(spec, index) in product.specs" 
+                      :key="index" 
+                      class="spec-tag"
+                      v-html="formatSpec(spec)">
                 </span>
               </div>
               <div class="product-brand">
                 {{ product.brand }}
               </div>
+              <a :href="product.link" 
+                 target="_blank" 
+                 class="view-details-btn"
+                 @click.stop>
+                <span>查看详情</span>
+                <i class="fas fa-external-link-alt"></i>
+              </a>
             </div>
           </div>
         </div>
@@ -201,6 +210,7 @@ interface Product {
   specs: string[];
   condition: string;
   isNew?: boolean;
+  link?: string;
 }
 
 // 类型断言
@@ -537,6 +547,24 @@ watch(
     console.log('Product type changed:', newType); // 添加调试日志
   }
 );
+
+// 添加产品点击处理函数
+const handleProductClick = (product: Product) => {
+  if (product.link) {
+    window.open(product.link, '_blank');
+  }
+};
+
+// 添加格式化规格的函数
+const formatSpec = (spec: string) => {
+  // 使用正则表达式匹配 <sup> 标签
+  if (spec.includes('<sup>')) {
+    return spec; // 如果已经包含 HTML 标签，直接返回
+  }
+  
+  // 匹配数字×10数字 的格式
+  return spec.replace(/(\d+)×10(\d+)/g, '$1×10<sup>$2</sup>');
+};
 </script>
 
 <style lang="scss" scoped>
@@ -992,6 +1020,50 @@ watch(
             font-weight: normal;
           }
         }
+
+        .view-details-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          margin-top: 1rem;
+          padding: 0.8rem 1.2rem;
+          background: vars.$primary-green;
+          color: white;
+          border-radius: 6px;
+          text-decoration: none;
+          font-weight: 500;
+          transition: all 0.3s ease;
+          opacity: 0.9;
+          transform: translateY(5px);
+
+          i {
+            font-size: 0.9rem;
+            transition: transform 0.3s ease;
+          }
+
+          &:hover {
+            background: darken(vars.$primary-green, 5%);
+            
+            i {
+              transform: translateX(3px);
+            }
+          }
+
+          &:active {
+            transform: translateY(1px);
+          }
+        }
+      }
+
+      &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+        .view-details-btn {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
     }
   }
@@ -1049,6 +1121,11 @@ watch(
         padding: 0.3rem 2.5rem;
         font-size: 0.8rem;
         min-width: 100px;
+      }
+
+      .view-details-btn {
+        opacity: 1;
+        transform: none;
       }
     }
   }
@@ -1455,6 +1532,15 @@ watch(
       color: white;
       border-color: var(--primary-color);
     }
+  }
+}
+
+.spec-tag {
+  :deep(sup) {
+    font-size: 0.7em;
+    line-height: 0;
+    position: relative;
+    vertical-align: super;
   }
 }
 </style>
