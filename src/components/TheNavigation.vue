@@ -29,17 +29,17 @@
         <div class="nav-menu" :class="{ 'menu-active': isMenuOpen }">
           <router-link to="/" class="nav-link" @click="closeMenu">首页</router-link>
 
-          <!-- 新品下拉菜单 -->
+          <!-- 产品下拉菜单 -->
           <div class="nav-item" @mouseenter="!isMobile && showSubmenu('new')" @mouseleave="!isMobile && hideSubmenu()">
-            <div class="nav-link" :class="{ 'menu-trigger': isMobile }" @click="isMobile && toggleSubmenu('new')">
-              新品
+            <div class="nav-link" :class="{ 'menu-trigger': isMobile }" @click="handleProductsClick">
+              产品
               <i v-if="isMobile" :class="['fas', activeSubmenu === 'new' ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
             </div>
             <div class="submenu new-products" :class="{ active: activeSubmenu === 'new' }">
               <div class="container submenu-container">
                 <div class="brands-grid">
                   <div v-for="brand in topBrands" :key="brand.id" class="brand-section">
-                    <div class="brand-header">
+                    <div class="brand-header" @click="handleBrandClick(brand)">
                       <img :src="brand.logo" :alt="brand.name">
                       <h3>{{ brand.name }}</h3>
                     </div>
@@ -47,9 +47,10 @@
                       <router-link v-for="product in brand.products" :key="product.id" :to="{
                         name: 'products',
                         query: {
-                          id: product.id
+                          type: 'new',
+                          brands: `${brand.categoryId}:${brand.name}`
                         }
-                      }" class="product-item" @click="handleNewProductClick(product)">
+                      }" class="product-item" @click="closeMenu">
                         <img :src="product.image" :alt="product.name">
                         <div class="product-info">
                           <h4>{{ product.name }}</h4>
@@ -88,7 +89,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { getAssetUrl } from '@/utils/assets';
 
-//获取新品下拉菜单数据
+//获取产品下拉菜单数据
 import { topBrands } from '../data/menuforNewProds.js';
 
 const router = useRouter();
@@ -151,11 +152,24 @@ const handleTouchEnd = (event: TouchEvent) => {
   element.classList.remove('touch-active');
 };
 
-const handleNewProductClick = (item: any) => {
+const handleProductsClick = () => {
+  if (isMobile.value) {
+    toggleSubmenu('new');
+  } else {
+    router.push({
+      name: 'products',
+      query: { type: 'new' }
+    });
+    closeMenu();
+  }
+};
+
+const handleBrandClick = (brand: any) => {
   router.push({
     name: 'products',
     query: {
-      id: item.id
+      type: 'new',
+      brands: `${brand.categoryId}:${brand.name}`
     }
   });
   closeMenu();

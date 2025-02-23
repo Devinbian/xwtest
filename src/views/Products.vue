@@ -32,7 +32,7 @@
           <!-- 产品类型选择器 -->
           <div class="product-type-selector">
             <button class="type-btn" :class="{ active: route.query.type === 'new' }" @click="toggleProductType('new')">
-              新品
+              产品
             </button>
             <button class="type-btn" :class="{ active: route.query.type === 'used' }"
               @click="toggleProductType('used')">
@@ -105,7 +105,7 @@
               <div class="filter-options">
                 <button class="filter-btn" :class="{ active: route.query.type === 'new' }"
                   @click="toggleProductType('new')">
-                  新品
+                  产品
                 </button>
                 <button class="filter-btn" :class="{ active: route.query.type === 'used' }"
                   @click="toggleProductType('used')">
@@ -157,20 +157,34 @@
                 </span>
               </div>
               <div class="product-brand">
-                {{ product.brand }}
+                {{ product.brandDisplay }}
               </div>
-              <a :href="product.link" 
-                 target="_blank" 
-                 class="view-details-btn"
-                 @click.stop>
-                <span>查看详情</span>
-                <i class="fas fa-external-link-alt"></i>
-              </a>
+              <div class="card-actions">
+                <a :href="product.link" 
+                   target="_blank" 
+                   class="view-details-btn"
+                   @click.stop>
+                  <span>查看详情</span>
+                  <i class="fas fa-external-link-alt"></i>
+                </a>
+                <button class="quote-btn" 
+                        @click.stop="openQuoteDialog(product)">
+                  <span>索要报价</span>
+                  <i class="fas fa-comment-dollar"></i>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </main>
     </div>
+
+    <!-- 添加报价对话框 -->
+    <QuoteDialog 
+      :show="showQuoteDialog"
+      :product="selectedProduct"
+      @close="closeQuoteDialog"
+    />
   </div>
 </template>
 
@@ -180,6 +194,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { getAssetUrl } from '@/utils/assets';
 import { preloadImage } from '@/utils/image';
 import LazyImage from '@/components/LazyImage.vue';
+import QuoteDialog from '@/components/QuoteDialog.vue';
 
 // 导入数据
 // @ts-ignore
@@ -203,6 +218,7 @@ interface Product {
   id: number;
   name: string;
   brand: string;
+  brandDisplay: string;
   type: string;
   categoryId: number;
   image: string;
@@ -255,17 +271,11 @@ const currentCategory = computed(() =>
   typedCategories.find((c: Category) => c.id === Number(route.query.category))
 );
 
-// 获取分类的品牌列表
-const getCategoryBrands = (categoryId: number) => {
-  const category = typedCategories.find(c => c.id === categoryId);
-  return category ? category.brands : [];
-};
-
 // 筛选产品
 const filteredProducts = computed(() => {
   let result = [...typedProducts] as Product[];
 
-  // 按产品类型筛选（新品/中古品）
+  // 按产品类型筛选（产品/中古品）
   if (route.query.type) {
     const type = route.query.type as string;
     result = result.filter(product => product.type === type);
@@ -287,7 +297,7 @@ const filteredProducts = computed(() => {
     );
   }
 
-  // 按新品ID筛选
+  // 按产品ID筛选
   if (selectedNewProduct.value) {
     const productId = Number(selectedNewProduct.value);
     result = result.filter(product => product.id === productId);
@@ -347,7 +357,7 @@ const isCategoryActive = (categoryId: number) => {
 
 // 切换分类选择
 const toggleCategory = (categoryId: number) => {
-  // 清除新品筛选条件
+  // 清除产品筛选条件
   selectedNewProduct.value = '';
   // 清除类型筛选条件
   if (route.query.type) {
@@ -371,7 +381,7 @@ const toggleCategory = (categoryId: number) => {
 
 // 切换品牌选择
 const toggleBrand = (categoryId: number, brand: string) => {
-  // 清除新品筛选条件
+  // 清除产品筛选条件
   selectedNewProduct.value = '';
   // 清除类型筛选条件
   if (route.query.type) {
@@ -396,12 +406,6 @@ const toggleBrand = (categoryId: number, brand: string) => {
   updateQueryParams();
 };
 
-// 选择新品
-const selectNewProduct = (productId: string) => {
-  selectedNewProduct.value = productId;
-  updateQueryParams();
-};
-
 // 检查品牌是否被选中
 const isBrandSelected = (categoryId: number, brand: string) => {
   return selectedBrands.value.some(
@@ -413,7 +417,7 @@ const isBrandSelected = (categoryId: number, brand: string) => {
 watch(
   () => route.query,
   () => {
-    // 如果 URL 中没有 id 参数，确保新品选择被清除
+    // 如果 URL 中没有 id 参数，确保产品选择被清除
     if (!route.query.id) {
       selectedNewProduct.value = '';
     }
@@ -433,20 +437,15 @@ const toggleProductType = (type: string) => {
   } else {
     // 设置新的类型
     newQuery.type = type;
-    // 清除可能冲突的新品ID
+    // 清除可能冲突的产品ID
     delete newQuery.id;
   }
 
   // 更新路由
   router.push({ query: newQuery });
 
-  // 清除新品选择
+  // 清除产品选择
   selectedNewProduct.value = '';
-};
-
-// 检查产品类型是否被选中
-const isTypeSelected = (type: string) => {
-  return selectedType.value === type;
 };
 
 // 计算已选择的筛选项数量
@@ -457,13 +456,13 @@ const activeFiltersCount = computed(() => {
 
 // 清除筛选
 const clearFilters = () => {
-  // 检查是否是从新品菜单进入
+  // 检查是否是从产品菜单进入
   const isFromNewMenu = route.query.type === 'new' && 
                        route.query.category && 
                        route.query.filters;
 
   if (isFromNewMenu) {
-    // 如果是从新品菜单进入，不执行清除操作
+    // 如果是从产品菜单进入，不执行清除操作
     return;
   }
 
@@ -485,7 +484,9 @@ const getConditionText = (condition: string) => {
   const conditionMap = {
     new: '全新',
     used: '二手',
-    refurbished: '翻新'
+    refurbished: '翻新',
+    sale:'促销',
+    discount:'50%'
   } as const;
   return conditionMap[condition as keyof typeof conditionMap] || '未知';
 };
@@ -517,7 +518,7 @@ const updateQueryParams = () => {
     newQuery.brands = selectedBrands.value.map(b => `${b.categoryId}:${b.brand}`).join(',');
   }
 
-  // 添加新品ID（如果有）
+  // 添加产品ID（如果有）
   if (selectedNewProduct.value) {
     newQuery.id = selectedNewProduct.value;
   }
@@ -564,6 +565,21 @@ const formatSpec = (spec: string) => {
   
   // 匹配数字×10数字 的格式
   return spec.replace(/(\d+)×10(\d+)/g, '$1×10<sup>$2</sup>');
+};
+
+// 添加状态
+const showQuoteDialog = ref(false);
+const selectedProduct = ref<Product | null>(null);
+
+// 添加方法
+const openQuoteDialog = (product: Product) => {
+  selectedProduct.value = product;
+  showQuoteDialog.value = true;
+};
+
+const closeQuoteDialog = () => {
+  showQuoteDialog.value = false;
+  selectedProduct.value = null;
 };
 </script>
 
@@ -1021,37 +1037,43 @@ const formatSpec = (spec: string) => {
           }
         }
 
-        .view-details-btn {
+        .card-actions {
           display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
+          gap: 1rem;
           margin-top: 1rem;
-          padding: 0.8rem 1.2rem;
-          background: vars.$primary-green;
-          color: white;
-          border-radius: 6px;
-          text-decoration: none;
-          font-weight: 500;
-          transition: all 0.3s ease;
-          opacity: 0.9;
-          transform: translateY(5px);
 
-          i {
-            font-size: 0.9rem;
-            transition: transform 0.3s ease;
+          .view-details-btn,
+          .quote-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.8rem 1.2rem;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
           }
 
-          &:hover {
-            background: darken(vars.$primary-green, 5%);
-            
-            i {
-              transform: translateX(3px);
+          .view-details-btn {
+            background: vars.$primary-green;
+            color: white;
+            text-decoration: none;
+
+            &:hover {
+              background: darken(vars.$primary-green, 5%);
             }
           }
 
-          &:active {
-            transform: translateY(1px);
+          .quote-btn {
+            background: white;
+            color: vars.$primary-green;
+            border: 1px solid vars.$primary-green;
+
+            &:hover {
+              background: rgba(vars.$primary-green, 0.1);
+            }
           }
         }
       }
@@ -1059,11 +1081,6 @@ const formatSpec = (spec: string) => {
       &:hover {
         transform: translateY(-4px);
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-
-        .view-details-btn {
-          opacity: 1;
-          transform: translateY(0);
-        }
       }
     }
   }

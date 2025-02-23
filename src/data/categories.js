@@ -2,7 +2,7 @@ export const categories = [
     {
         id: 1,
         name: '数字万用表/源表',
-        brands: ['ADCMT','KEYSIGHT','KEITHLEY', 'RIGOL', 'GWINSTEK', 'HIOKI']
+        brands: ['ADCMT','KEYSIGHT','KEITHLEY', 'HIOKI','FLUKE','IWATSU', 'RIGOL', 'GWINSTEK']
       },
       {
         id: 2,

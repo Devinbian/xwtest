@@ -15,9 +15,15 @@
                     <h3>快速链接</h3>
                     <ul>
                         <li><router-link to="/">首页</router-link></li>
-                        <li><router-link to="/new">新品</router-link></li>
-                        <li><router-link to="/used">中古品</router-link></li>
-                        <li><a href="https://shop.taobao.com/xxx" target="_blank">淘宝店</a></li>
+                        <li><router-link :to="{ 
+                            name: 'products',
+                            query: { type: 'new' }
+                        }">产品</router-link></li>
+                        <li><router-link :to="{ 
+                            name: 'products',
+                            query: { type: 'used' }
+                        }">中古品</router-link></li>
+                        <li><a href="https://shop198581009.taobao.com" target="_blank">淘宝店</a></li>
                         <li><router-link to="/about">关于我们</router-link></li>
                     </ul>
                 </div>

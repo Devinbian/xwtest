@@ -246,7 +246,7 @@
               <!-- 右侧二维码 -->
               <div class="contact-right">
                 <div class="contact-qr">
-                  <img :src="getAssetUrl('/images/qr-code.png')" alt="扫码咨询">
+                  <img :src="getAssetUrl('/images/qrcode.png')" alt="扫码咨询">
                   <span>扫码添加客服</span>
                 </div>
               </div>
