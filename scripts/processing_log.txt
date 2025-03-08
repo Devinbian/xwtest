@@ -1,0 +1,64 @@
+﻿**********************
+Windows PowerShell 脚本开始
+开始时间: 20250308130229
+用户名: DESKTOP-I9MO7GG\yunlo
+RunAs 用户: DESKTOP-I9MO7GG\yunlo
+配置名称: 
+计算机: DESKTOP-I9MO7GG (Microsoft Windows NT 10.0.26100.0)
+主机应用程序: powershell -NoProfile -ExecutionPolicy Bypass -Command & {[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; & 'D:\AI\xwtest\scripts\process_img800x800.ps1'}
+进程 ID: 8724
+PSVersion: 5.1.26100.2161
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.2161
+BuildVersion: 10.0.26100.2161
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+已启动脚本，输出文件为 D:\AI\xwtest\scripts\processing_log.txt
+[Start] Processing images...
+[Processing] MDO34.png
+  [1/3] Trimming background...
+WARNING: The convert command is deprecated in IMv7, use "magick" instead of "convert" or "magick convert"
+  [2/3] Resizing...
+WARNING: The convert command is deprecated in IMv7, use "magick" instead of "convert" or "magick convert"
+  [3/3] Compositing...
+
+[Success] Processed: MDO34.png
+[Processing] MSO46.png
+  [1/3] Trimming background...
+WARNING: The convert command is deprecated in IMv7, use "magick" instead of "convert" or "magick convert"
+  [2/3] Resizing...
+WARNING: The convert command is deprecated in IMv7, use "magick" instead of "convert" or "magick convert"
+  [3/3] Compositing...
+
+[Success] Processed: MSO46.png
+[Processing] mso58b.webp
+  [1/3] Trimming background...
+WARNING: The convert command is deprecated in IMv7, use "magick" instead of "convert" or "magick convert"
+  [2/3] Resizing...
+WARNING: The convert command is deprecated in IMv7, use "magick" instead of "convert" or "magick convert"
+  [3/3] Compositing...
+
+[Success] Processed: mso58b.webp
+[Processing] tbs2000b.webp
+  [1/3] Trimming background...
+
+  [2/3] Resizing...
+
+  [3/3] Compositing...
+
+[Success] Processed: tbs2000b.webp
+[Processing] Tek-MSO68B.png
+  [1/3] Trimming background...
+
+  [2/3] Resizing...
+
+  [3/3] Compositing...
+
+[Success] Processed: Tek-MSO68B.png
+**********************
+Windows PowerShell 脚本结束
+结束时间: 20250308130233
+**********************
