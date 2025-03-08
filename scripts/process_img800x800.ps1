@@ -4,8 +4,11 @@ $ErrorActionPreference = "Stop"
 # Set input and output directories
 $ScriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = Split-Path -Parent $ScriptPath
+# Input directory   
 $InputDir = Join-Path $ProjectRoot "public\images\products\tektronix\img"
+# Output directory
 $OutputDir = $InputDir
+# Background directory
 $BgDir = Join-Path $ProjectRoot "public\images\products"
 
 # Start logging
