@@ -36,8 +36,8 @@ const slides = [
   {
     title: '创新测量方案',
     description: '为您提供专业精准的仪器仪表解决方案',
-    image: getAssetUrl('images/hero/slide1.jpg'),
-    imagePlaceholder: generatePlaceholderUrl(getAssetUrl('images/hero/slide1.jpg')),
+    image: getAssetUrl('images/hero/slide1.png'),
+    imagePlaceholder: generatePlaceholderUrl(getAssetUrl('images/hero/slide1.png')),
     link: '/products',
     buttonText: '了解更多'
   },
@@ -52,8 +52,8 @@ const slides = [
   {
     title: '行业领先品牌',
     description: '与全球顶尖仪器仪表品牌深度合作',
-    image: getAssetUrl('images/hero/slide3.jpg'),
-    imagePlaceholder: generatePlaceholderUrl(getAssetUrl('images/hero/slide3.jpg')),
+    image: getAssetUrl('images/hero/slide3.png'),
+    imagePlaceholder: generatePlaceholderUrl(getAssetUrl('images/hero/slide3.png')),
     link: '/brands',
     buttonText: '品牌介绍'
   }
