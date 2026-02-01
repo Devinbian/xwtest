@@ -76,6 +76,7 @@ const slides = [
 const slider = ref<HTMLElement | null>(null);
 const currentSlide = ref(0);
 let autoplayInterval: number;
+let prefersReducedMotion = false;
 
 const nextSlide = () => {
   currentSlide.value = (currentSlide.value + 1) % slides.length;
@@ -90,6 +91,7 @@ const goToSlide = (index: number) => {
 };
 
 const startAutoplay = () => {
+  if (prefersReducedMotion) return;
   stopAutoplay();
   autoplayInterval = window.setInterval(() => {
     nextSlide();
@@ -127,6 +129,7 @@ const shouldRenderSlideImage = (index: number) => {
 };
 
 onMounted(() => {
+  prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
   startAutoplay();
 });
 

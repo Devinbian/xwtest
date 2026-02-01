@@ -34,6 +34,7 @@
                   {{ copied ? '已复制' : '复制' }}
                 </button>
               </div>
+              <span class="sr-only" role="status" aria-live="polite">{{ copied ? '已复制到剪贴板' : '' }}</span>
               <textarea class="context-box" readonly :value="contextText" aria-label="咨询上下文内容"></textarea>
             </div>
 
@@ -228,6 +229,18 @@ const handleOverlayClick = (e: MouseEvent) => {
         transform: translateY(-1px);
       }
     }
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   .dialog-content {

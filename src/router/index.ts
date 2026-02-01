@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
-import Products from '@/views/Products.vue'
 
 const routes = [
   {
@@ -11,7 +10,7 @@ const routes = [
   {
     path: '/products',
     name: 'products',
-    component: Products,
+    component: () => import('@/views/Products.vue'),
     props: (route: { query: any }) => ({ query: route.query })
   },
   {

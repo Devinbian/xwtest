@@ -3,10 +3,10 @@
     <HomeHero />
 
     <!-- 合作品牌板块 -->
-    <section class="partners-section">
+    <section ref="partnersSectionEl" class="partners-section">
       <div class="container">
         <h2 class="section-title">合作品牌</h2>
-        <div class="partners-slider" @mouseenter="handlePartnerMouseEnter" @mouseleave="handlePartnerMouseLeave">
+        <div v-if="renderPartners" class="partners-slider" @mouseenter="handlePartnerMouseEnter" @mouseleave="handlePartnerMouseLeave">
           <div class="slider-wrapper" ref="partnerSliderWrapper"
             :style="{ transform: `translateX(${-currentPartnerSlide * 100}%)` }">
             <div class="partner-slide" v-for="(group, index) in partnerGroups" :key="index">
@@ -57,14 +57,15 @@
             />
           </div>
         </div>
+        <div v-else class="section-placeholder" aria-hidden="true"></div>
       </div>
     </section>
 
     <!-- 八大行业板块 -->
-    <section class="industries-section">
+    <section ref="industriesSectionEl" class="industries-section">
       <div class="container-fluid">
         <h2 class="section-title">八大行业解决方案</h2>
-        <div class="industries-slider">
+        <div v-if="renderIndustries" class="industries-slider">
           <div v-for="(industry, index) in industries" :key="industry.id" class="slider-item"
             @mouseenter="activeIndustry = index" @mouseleave="activeIndustry = null"
             @touchstart="(e) => handleIndustryTouchStart(e, index)" @touchend="handleIndustryTouchEnd"
@@ -77,14 +78,15 @@
             </div>
           </div>
         </div>
+        <div v-else class="section-placeholder" aria-hidden="true"></div>
       </div>
     </section>
 
     <!-- 主营产品板块 -->
-    <section class="main-products-section">
+    <section ref="mainProductsSectionEl" class="main-products-section">
       <div class="container">
         <h2 class="section-title">主营产品</h2>
-        <div class="products-grid">
+        <div v-if="renderMainProducts" class="products-grid">
           <div v-for="category in productCategories" :key="category.id" class="product-category">
             <div class="category-inner" @touchstart="(e) => handleTouchStart(e.currentTarget)"
               @touchend="(e) => handleTouchEnd(e.currentTarget)" @touchcancel="(e) => handleTouchEnd(e.currentTarget)">
@@ -108,13 +110,14 @@
             </div>
           </div>
         </div>
+        <div v-else class="section-placeholder" aria-hidden="true"></div>
       </div>
     </section>
 
-    <section class="services-section">
+    <section ref="servicesSectionEl" class="services-section">
       <div class="container">
 	        <h2 class="section-title">我们的服务</h2>
-	        <div class="services-grid">
+	        <div v-if="renderServices" class="services-grid">
 	          <div v-for="service in services" :key="service.id" class="service-card"
 	            @touchstart="(e) => handleTouchStart(e.currentTarget)" @touchend="(e) => handleTouchEnd(e.currentTarget)"
 	            @touchcancel="(e) => handleTouchEnd(e.currentTarget)">
@@ -133,14 +136,15 @@
             </div>
           </div>
         </div>
+        <div v-else class="section-placeholder" aria-hidden="true"></div>
       </div>
     </section>
 
     <!-- 热门产品板块 -->
-    <section class="featured-products">
+    <section ref="featuredSectionEl" class="featured-products">
       <div class="container">
         <h2 class="section-title">热门产品</h2>
-        <div class="products-slider" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave">
+        <div v-if="renderFeatured" class="products-slider" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave">
           <div class="slider-wrapper" ref="sliderWrapper" :style="{ transform: `translateX(${-currentSlide * 100}%)` }">
             <div v-for="product in featuredProducts" :key="product.id" class="product-slide">
               <div class="product-content">
@@ -180,12 +184,13 @@
             />
           </div>
         </div>
+        <div v-else class="section-placeholder" aria-hidden="true"></div>
       </div>
     </section>
 
-    <section class="cta-section">
+    <section ref="ctaSectionEl" class="cta-section">
       <div class="container">
-        <div class="cta-wrapper">
+        <div v-if="renderCta" class="cta-wrapper">
           <div class="cta-content">
             <div class="cta-header">
               <span class="section-tag">专业支持</span>
@@ -308,6 +313,7 @@
             </div>
           </div>
         </div>
+        <div v-else class="section-placeholder" aria-hidden="true"></div>
       </div>
     </section>
   </div>
@@ -315,7 +321,7 @@
 
 <script setup lang="ts">
 import HomeHero from '@/components/HomeHero.vue';
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { getAssetUrl } from '@/utils/assets';
 import LazyPicture from '@/components/LazyPicture.vue';
@@ -335,6 +341,25 @@ const router = useRouter();
 const featuredProducts = ref(top10Products);
 
 const activeIndustry = ref<number | null>(null);
+
+const partnersSectionEl = ref<HTMLElement | null>(null);
+const industriesSectionEl = ref<HTMLElement | null>(null);
+const mainProductsSectionEl = ref<HTMLElement | null>(null);
+const servicesSectionEl = ref<HTMLElement | null>(null);
+const featuredSectionEl = ref<HTMLElement | null>(null);
+const ctaSectionEl = ref<HTMLElement | null>(null);
+
+const renderPartners = ref(false);
+const renderIndustries = ref(false);
+const renderMainProducts = ref(false);
+const renderServices = ref(false);
+const renderFeatured = ref(false);
+const renderCta = ref(false);
+
+const partnersInView = ref(false);
+const featuredInView = ref(false);
+
+const prefersReducedMotion = ref(false);
 
 const currentSlide = ref(0);
 
@@ -387,13 +412,10 @@ const handleMouseLeave = () => {
   isHovering.value = false;
 };
 
-// 组件挂载时启动自动播放，卸载时清除
-onMounted(() => {
-  startAutoPlay();
-});
-
-onUnmounted(() => {
-  stopAutoPlay();
+watch([renderFeatured, featuredInView, prefersReducedMotion], ([mounted, visible, reduce]) => {
+  if (!mounted) return;
+  if (reduce || !visible) stopAutoPlay();
+  else startAutoPlay();
 });
 
 // 在 script setup 中添加
@@ -516,41 +538,169 @@ const handlePartnerMouseLeave = () => {
   isPartnerHovering.value = false;
 };
 
+watch([renderPartners, partnersInView, prefersReducedMotion], ([mounted, visible, reduce]) => {
+  if (!mounted) return;
+  if (reduce || !visible) stopPartnerAutoPlay();
+  else startPartnerAutoPlay();
+});
+
+let revealObserver: IntersectionObserver | null = null;
+let visibilityObserver: IntersectionObserver | null = null;
+let tiltRaf = 0;
+let lastTiltEvent: MouseEvent | null = null;
+let tiltCard: HTMLElement | null = null;
+let tiltEnabled = false;
+
+const resetTilt = (card: HTMLElement) => {
+  card.style.setProperty('--rotate-x', '0');
+  card.style.setProperty('--rotate-y', '0');
+};
+
+const handleTiltMove = (e: MouseEvent) => {
+  lastTiltEvent = e;
+  if (tiltRaf) return;
+  tiltRaf = requestAnimationFrame(() => {
+    tiltRaf = 0;
+    if (!tiltEnabled) return;
+    if (!lastTiltEvent) return;
+    const target = lastTiltEvent.target as HTMLElement | null;
+    const card = target?.closest?.('.partner-card') as HTMLElement | null;
+    if (!card || card.classList.contains('empty-card')) {
+      if (tiltCard) resetTilt(tiltCard);
+      tiltCard = null;
+      return;
+    }
+
+    if (tiltCard && tiltCard !== card) resetTilt(tiltCard);
+    tiltCard = card;
+
+    const rect = card.getBoundingClientRect();
+    const x = lastTiltEvent.clientX - rect.left;
+    const y = lastTiltEvent.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = (y - centerY) / 10;
+    const rotateY = (centerX - x) / 10;
+
+    card.style.setProperty('--rotate-x', rotateX.toString());
+    card.style.setProperty('--rotate-y', rotateY.toString());
+    card.style.setProperty('--mouse-x', `${(x / rect.width) * 100}%`);
+    card.style.setProperty('--mouse-y', `${(y / rect.height) * 100}%`);
+  });
+};
+
+const handleTiltLeave = () => {
+  if (tiltCard) resetTilt(tiltCard);
+  tiltCard = null;
+};
+
+const setupPartnerTilt = () => {
+  const root = partnersSectionEl.value;
+  if (!root) return;
+  if (!tiltEnabled) return;
+  root.addEventListener('mousemove', handleTiltMove);
+  root.addEventListener('mouseleave', handleTiltLeave);
+};
+
+const teardownPartnerTilt = () => {
+  const root = partnersSectionEl.value;
+  if (root) {
+    root.removeEventListener('mousemove', handleTiltMove);
+    root.removeEventListener('mouseleave', handleTiltLeave);
+  }
+  if (tiltRaf) cancelAnimationFrame(tiltRaf);
+  tiltRaf = 0;
+  lastTiltEvent = null;
+  if (tiltCard) resetTilt(tiltCard);
+  tiltCard = null;
+};
+
+watch([renderPartners, partnersInView, prefersReducedMotion], ([mounted, visible, reduce]) => {
+  if (!mounted || reduce || !visible) {
+    teardownPartnerTilt();
+    return;
+  }
+  setupPartnerTilt();
+});
+
+const mountWhenNearViewport = () => {
+  if (!('IntersectionObserver' in window)) {
+    renderPartners.value = true;
+    renderIndustries.value = true;
+    renderMainProducts.value = true;
+    renderServices.value = true;
+    renderFeatured.value = true;
+    renderCta.value = true;
+    partnersInView.value = true;
+    featuredInView.value = true;
+    return;
+  }
+
+  revealObserver = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        const el = entry.target as HTMLElement;
+
+        if (el === partnersSectionEl.value) renderPartners.value = true;
+        else if (el === industriesSectionEl.value) renderIndustries.value = true;
+        else if (el === mainProductsSectionEl.value) renderMainProducts.value = true;
+        else if (el === servicesSectionEl.value) renderServices.value = true;
+        else if (el === featuredSectionEl.value) renderFeatured.value = true;
+        else if (el === ctaSectionEl.value) renderCta.value = true;
+
+        revealObserver?.unobserve(el);
+      }
+    },
+    { root: null, rootMargin: '280px 0px', threshold: 0.01 },
+  );
+
+  const revealEls = [
+    partnersSectionEl.value,
+    industriesSectionEl.value,
+    mainProductsSectionEl.value,
+    servicesSectionEl.value,
+    featuredSectionEl.value,
+    ctaSectionEl.value,
+  ].filter(Boolean) as HTMLElement[];
+
+  revealEls.forEach((el) => revealObserver?.observe(el));
+
+  visibilityObserver = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        const el = entry.target as HTMLElement;
+        if (el === partnersSectionEl.value) partnersInView.value = entry.isIntersecting;
+        if (el === featuredSectionEl.value) featuredInView.value = entry.isIntersecting;
+      }
+    },
+    { root: null, threshold: 0.12 },
+  );
+
+  if (partnersSectionEl.value) visibilityObserver.observe(partnersSectionEl.value);
+  if (featuredSectionEl.value) visibilityObserver.observe(featuredSectionEl.value);
+};
+
 onMounted(() => {
-  startPartnerAutoPlay();
+  const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
+  prefersReducedMotion.value = reduce;
+
+  const canHover =
+    (window.matchMedia?.('(hover: hover) and (pointer: fine)')?.matches ?? false) &&
+    !prefersReducedMotion.value;
+  tiltEnabled = canHover;
+
+  mountWhenNearViewport();
 });
 
 onUnmounted(() => {
+  stopAutoPlay();
   stopPartnerAutoPlay();
-});
-
-// 添加鼠标移动跟踪效果
-onMounted(() => {
-  const cards = document.querySelectorAll('.partner-card');
-
-  cards.forEach(card => {
-    card.addEventListener('mousemove', (e) => {
-      const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      const centerX = rect.width / 2;
-      const centerY = rect.height / 2;
-
-      const rotateX = (y - centerY) / 10;
-      const rotateY = (centerX - x) / 10;
-
-      card.style.setProperty('--rotate-x', rotateX.toString());
-      card.style.setProperty('--rotate-y', rotateY.toString());
-      card.style.setProperty('--mouse-x', `${(x / rect.width) * 100}%`);
-      card.style.setProperty('--mouse-y', `${(y / rect.height) * 100}%`);
-    });
-
-    card.addEventListener('mouseleave', () => {
-      card.style.setProperty('--rotate-x', '0');
-      card.style.setProperty('--rotate-y', '0');
-    });
-  });
+  revealObserver?.disconnect();
+  visibilityObserver?.disconnect();
+  revealObserver = null;
+  visibilityObserver = null;
+  teardownPartnerTilt();
 });
 </script>
 
@@ -577,6 +727,40 @@ $bg-gradients: (
 // 主题色变量
 $primary-green: #83B735;
 $primary-black: #000000;
+
+.section-placeholder {
+  width: 100%;
+  min-height: 240px;
+  border-radius: 18px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: linear-gradient(135deg, rgba($primary-green, 0.06), rgba(0, 0, 0, 0.02));
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.25) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    transform: translateX(-60%);
+    animation: placeholder-sweep 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes placeholder-sweep {
+  0% {
+    transform: translateX(-60%);
+  }
+  100% {
+    transform: translateX(60%);
+  }
+}
 
 // 更新 section-background mixin
 @mixin section-background {
@@ -987,6 +1171,11 @@ $primary-black: #000000;
     &:disabled {
       opacity: 0.3;
       cursor: not-allowed;
+      transform: translateY(-50%);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(-50%) scale(0.96);
     }
 
     &.prev {
@@ -2887,7 +3076,7 @@ $primary-black: #000000;
 }
 
 // 添加鼠标跟踪效果
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   .partner-card {
     &:hover {
       .card-inner {
@@ -2921,6 +3110,10 @@ $primary-black: #000000;
     transform: translateY(-50%) scale(1.1);
   }
 
+  &:active:not(:disabled) {
+    transform: translateY(-50%) scale(0.96);
+  }
+
   &.prev {
     left: -60px;
   }
@@ -2932,6 +3125,7 @@ $primary-black: #000000;
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    transform: translateY(-50%);
   }
 
   i {
@@ -2981,6 +3175,10 @@ $primary-black: #000000;
 
     &:hover:not(.active) {
       background: rgba(255, 255, 255, 0.3);
+    }
+
+    &:active:not(.active) {
+      transform: scale(0.96);
     }
   }
 }

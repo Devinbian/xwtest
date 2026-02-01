@@ -15,11 +15,22 @@
 
           <!-- 产品类型选择器 -->
           <div class="product-type-selector">
-            <button class="type-btn" :class="{ active: route.query.type === 'new' }" @click="toggleProductType('new')">
+            <button
+              type="button"
+              class="type-btn"
+              :class="{ active: route.query.type === 'new' }"
+              :aria-pressed="route.query.type === 'new'"
+              @click="toggleProductType('new')"
+            >
               产品
             </button>
-            <button class="type-btn" :class="{ active: route.query.type === 'used' }"
-              @click="toggleProductType('used')">
+            <button
+              type="button"
+              class="type-btn"
+              :class="{ active: route.query.type === 'used' }"
+              :aria-pressed="route.query.type === 'used'"
+              @click="toggleProductType('used')"
+            >
               中古品
             </button>
           </div>
@@ -27,13 +38,25 @@
           <!-- 分类列表 -->
           <div class="category-group">
             <div v-for="category in categories" :key="category.id" class="category-item">
-              <div class="category-header" @click="toggleCategory(category.id)">
+              <button
+                type="button"
+                class="category-header"
+                :aria-expanded="isCategoryActive(category.id)"
+                @click="toggleCategory(category.id)"
+              >
                 <span>{{ category.name }}</span>
                 <i :class="['fas', isCategoryActive(category.id) ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
-              </div>
+              </button>
               <div class="brands-list" :class="{ active: isCategoryActive(category.id) }">
-                <button v-for="brand in category.brands" :key="brand" class="brand-link"
-                  :class="{ active: isBrandSelected(category.id, brand) }" @click="toggleBrand(category.id, brand)">
+                <button
+                  v-for="brand in category.brands"
+                  :key="brand"
+                  type="button"
+                  class="brand-link"
+                  :class="{ active: isBrandSelected(category.id, brand) }"
+                  :aria-pressed="isBrandSelected(category.id, brand)"
+                  @click="toggleBrand(category.id, brand)"
+                >
                   {{ brand }}
                 </button>
               </div>
@@ -87,12 +110,22 @@
             <div class="filter-group">
               <h3>产品类型</h3>
               <div class="filter-options">
-                <button class="filter-btn" :class="{ active: route.query.type === 'new' }"
-                  @click="toggleProductType('new')">
+                <button
+                  type="button"
+                  class="filter-btn"
+                  :class="{ active: route.query.type === 'new' }"
+                  :aria-pressed="route.query.type === 'new'"
+                  @click="toggleProductType('new')"
+                >
                   产品
                 </button>
-                <button class="filter-btn" :class="{ active: route.query.type === 'used' }"
-                  @click="toggleProductType('used')">
+                <button
+                  type="button"
+                  class="filter-btn"
+                  :class="{ active: route.query.type === 'used' }"
+                  :aria-pressed="route.query.type === 'used'"
+                  @click="toggleProductType('used')"
+                >
                   中古品
                 </button>
               </div>
@@ -101,8 +134,15 @@
             <div v-for="category in categories" :key="category.id" class="filter-group">
               <div class="section-title">{{ category.name }}</div>
               <div class="brand-list">
-                <button v-for="brand in category.brands" :key="brand" class="brand-item"
-                  :class="{ active: isBrandSelected(category.id, brand) }" @click="toggleBrand(category.id, brand)">
+                <button
+                  v-for="brand in category.brands"
+                  :key="brand"
+                  type="button"
+                  class="brand-item"
+                  :class="{ active: isBrandSelected(category.id, brand) }"
+                  :aria-pressed="isBrandSelected(category.id, brand)"
+                  @click="toggleBrand(category.id, brand)"
+                >
                   <img
                     :src="getAssetUrl(`/images/brands/${brand.toLowerCase()}/logo.png`)"
                     :alt="brand"
@@ -700,6 +740,11 @@ const clearFilters = () => {
 
 		const filterChips = computed<FilterChip[]>(() => {
 		  const chips: FilterChip[] = [];
+		  const brandCategoryIds = new Set(
+		    selectedBrands.value
+		      .filter((b) => Number.isFinite(b.categoryId) && !!b.brand)
+		      .map((b) => String(b.categoryId)),
+		  );
 
 		  const type = route.query.type as string | undefined;
 		  if (type === 'new' || type === 'used') {
@@ -714,7 +759,7 @@ const clearFilters = () => {
 		  if (brandJump) {
 		    chips.push({
 		      key: `brandJump:${brandJump}`,
-		      label: `品牌：${brandJump}`,
+		      label: `全分类品牌：${brandJump}`,
 		      remove: () => removeQueryKey('brand')
 		    });
 		  }
@@ -729,6 +774,7 @@ const clearFilters = () => {
 		  }
 
 		  for (const id of selectedCategories.value) {
+		    if (brandCategoryIds.has(String(id))) continue;
 		    const category = typedCategories.find((c) => String(c.id) === String(id));
 		    chips.push({
 		      key: `cat:${id}`,
@@ -737,13 +783,32 @@ const clearFilters = () => {
 		    });
 		  }
 
+		  const brandGroups = new Map<number, string[]>();
 		  for (const b of selectedBrands.value) {
-		    const category = typedCategories.find((c) => c.id === b.categoryId);
+		    if (!Number.isFinite(b.categoryId) || !b.brand) continue;
+		    const list = brandGroups.get(b.categoryId) ?? [];
+		    list.push(b.brand);
+		    brandGroups.set(b.categoryId, list);
+		  }
+
+		  for (const [categoryId, brands] of brandGroups.entries()) {
+		    const category = typedCategories.find((c) => c.id === categoryId);
+		    const categoryName = category?.name ?? `分类${categoryId}`;
+		    const uniq = Array.from(new Set(brands));
+
+		    const label =
+		      uniq.length <= 1
+		        ? `品牌：${categoryName} / ${uniq[0]}`
+		        : `品牌：${categoryName} / ${uniq[0]} +${uniq.length - 1}`;
+
 		    chips.push({
-		      key: `brand:${b.categoryId}:${b.brand}`,
-		      label: `品牌：${b.brand}`,
-		      title: category ? `${category.name} / ${b.brand}` : b.brand,
-		      remove: () => toggleBrand(b.categoryId, b.brand)
+		      key: `brandGroup:${categoryId}`,
+		      label,
+		      title: `品牌：${categoryName} / ${uniq.join('、')}`,
+		      remove: () => {
+		        selectedBrands.value = selectedBrands.value.filter((b) => b.categoryId !== categoryId);
+		        updateQueryParams();
+		      }
 		    });
 		  }
 
@@ -1140,6 +1205,10 @@ const closeQuoteDialog = () => {
 	      padding: var(--space-2);
 	      cursor: pointer;
 	      border-radius: 6px;
+	      width: 100%;
+	      border: none;
+	      background: transparent;
+	      text-align: left;
 		      transition: transform 0.2s ease, opacity 0.2s ease;
 
 	      &:hover {
@@ -1356,6 +1425,22 @@ const closeQuoteDialog = () => {
 				      font-size: var(--text-xs);
 				      cursor: pointer;
 				      white-space: nowrap;
+				      transition: transform 0.18s ease, opacity 0.18s ease;
+
+				      &:hover {
+				        transform: translateY(-1px);
+				      }
+
+				      &:active {
+				        transform: translateY(0) scale(0.98);
+				      }
+
+				      .chip-label {
+				        max-width: min(520px, 48vw);
+				        overflow: hidden;
+				        text-overflow: ellipsis;
+				        white-space: nowrap;
+				      }
 
 				      i {
 				        font-size: 0.75rem;
@@ -1377,6 +1462,10 @@ const closeQuoteDialog = () => {
 
 				      &:hover {
 				        transform: translateY(-1px);
+				      }
+
+				      &:active {
+				        transform: translateY(0) scale(0.98);
 				      }
 				    }
 				  }
@@ -1472,6 +1561,15 @@ const closeQuoteDialog = () => {
 			        border: 1px solid rgba(vars.$primary-green, 0.16);
 			        white-space: nowrap;
 			        cursor: pointer;
+			        transition: transform 0.18s ease, opacity 0.18s ease;
+
+			        &:hover {
+			          transform: translateY(-1px);
+			        }
+
+			        &:active {
+			          transform: translateY(0) scale(0.98);
+			        }
 
 			        i {
 			          font-size: 0.75rem;
@@ -1548,20 +1646,20 @@ const closeQuoteDialog = () => {
 		    }
 		  }
 
-		  .products-grid {
-		    display: grid;
-		    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-		    gap: var(--space-4);
-		    margin-top: var(--space-4);
+			  .products-grid {
+			    display: grid;
+			    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+			    gap: var(--space-4);
+			    margin-top: var(--space-4);
 
-		    .product-card {
-	      background: white;
-	      border-radius: 16px;
-	      overflow: hidden;
-	      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-		      position: relative;
-		      cursor: pointer;
-		      transition: transform 0.25s ease, opacity 0.25s ease;
+			    .product-card {
+		      background: white;
+		      border-radius: 16px;
+		      overflow: hidden;
+		      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+			      position: relative;
+			      cursor: default;
+			      transition: transform 0.25s ease, opacity 0.25s ease;
 
       .image-wrapper {
         position: relative;
@@ -1785,24 +1883,30 @@ const closeQuoteDialog = () => {
 	          }
 	        }
 
-	        .card-actions {
-	          display: flex;
-	          gap: var(--space-2);
-	          margin-top: var(--space-2);
+		        .card-actions {
+		          display: flex;
+		          gap: var(--space-2);
+		          margin-top: var(--space-2);
 
-	          .view-details-btn,
-	          .quote-btn {
-            flex: 1;
-	            display: flex;
-	            align-items: center;
-	            justify-content: center;
-	            gap: var(--space-1);
-	            padding: var(--space-2) var(--space-3);
-	            border-radius: 6px;
-	            font-weight: 500;
-		            transition: transform 0.2s ease, opacity 0.2s ease;
-		            cursor: pointer;
-	          }
+		          .view-details-btn,
+		          .quote-btn {
+	            flex: 1;
+		            display: flex;
+		            align-items: center;
+		            justify-content: center;
+		            gap: var(--space-1);
+		            padding: 9px 12px;
+		            border-radius: 6px;
+		            font-weight: 500;
+		            font-size: var(--text-sm);
+		            min-height: 38px;
+			            transition: transform 0.2s ease, opacity 0.2s ease;
+			            cursor: pointer;
+
+		            i {
+		              font-size: 0.9rem;
+		            }
+		          }
 
 		          .view-details-btn {
             background: vars.$primary-green;
@@ -1895,15 +1999,26 @@ const closeQuoteDialog = () => {
 	          font-size: 0.75rem;
 	        }
 
-	        .product-brand {
-	          font-size: 0.9rem;
-	          padding: 0.4rem 0.8rem;
+		        .product-brand {
+		          font-size: 0.9rem;
+		          padding: 0.4rem 0.8rem;
 
-          &::before {
-            font-size: 0.75rem;
-          }
-        }
-      }
+	          &::before {
+	            font-size: 0.75rem;
+	          }
+	        }
+
+	        .card-actions {
+	          gap: var(--space-1);
+
+	          .view-details-btn,
+	          .quote-btn {
+	            padding: 8px 10px;
+	            min-height: 36px;
+	            font-size: var(--text-xs);
+	          }
+	        }
+	      }
 
       .condition-tag {
         top: 20px;

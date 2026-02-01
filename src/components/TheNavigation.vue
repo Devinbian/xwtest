@@ -188,7 +188,7 @@ import { useRouter } from 'vue-router';
 import { getAssetUrl } from '@/utils/assets';
 
 //获取产品下拉菜单数据
-import { topBrands } from '../data/navigation/menuForNewProds.js';
+import { topBrands } from '@/data/navigation/menuForNewProds';
 
 const router = useRouter();
 
@@ -412,10 +412,14 @@ onUnmounted(() => {
         display: flex;
         align-items: center;
         gap: var(--space-1);
-        transition: color 0.3s;
+        transition: color 0.3s, transform 0.18s ease, opacity 0.18s ease;
 
         &:hover {
           color: vars.$primary-green;
+        }
+
+        &:active {
+          transform: translateY(1px);
         }
 
         i {
@@ -481,7 +485,7 @@ onUnmounted(() => {
   text-decoration: none;
   font-weight: 500;
   font-size: var(--text-md);
-  transition: color 0.3s;
+  transition: color 0.3s, transform 0.18s ease, opacity 0.18s ease;
   background: none;
   border: none;
   cursor: pointer;
@@ -509,6 +513,10 @@ onUnmounted(() => {
 
   &:hover {
     color: vars.$primary-green;
+  }
+
+  &:active {
+    transform: translateY(1px);
   }
 }
 
@@ -808,6 +816,11 @@ onUnmounted(() => {
   border: none;
   cursor: pointer;
   padding: 14px 12px;
+  transition: transform 0.18s ease, opacity 0.18s ease;
+
+  &:active {
+    transform: scale(0.96);
+  }
 
   span {
     display: block;
