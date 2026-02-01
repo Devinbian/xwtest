@@ -15,7 +15,7 @@
             <div class="brands-grid">
               <div v-for="brand in displayedBrands" :key="brand.name" class="brand-card">
                 <div class="brand-logo">
-                  <img :src="brand.logo" :alt="brand.name">
+                  <img :src="brand.logo" :alt="brand.name" loading="lazy" decoding="async">
                 </div>
                 <div class="brand-info">
                   <h3>{{ brand.name }}</h3>
@@ -65,7 +65,7 @@ $primary-black: #333;
 
 .brands-page {
   min-height: calc(100vh - 80px);
-  padding-top: calc(var(--top-bar-height) + var(--nav-height));
+  padding-top: 0;
 }
 
 .container {
@@ -125,7 +125,7 @@ $primary-black: #333;
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 1.5rem;
-      transition: all 0.3s ease;
+      transition: transform 0.3s ease, opacity 0.3s ease;
 
       @media (max-width: 1024px) {
         grid-template-columns: repeat(3, 1fr);
@@ -135,7 +135,7 @@ $primary-black: #333;
         grid-template-columns: repeat(2, 1fr);
       }
 
-      @media (max-width: 480px) {
+      @media (max-width: 640px) {
         grid-template-columns: repeat(2, 1fr);
       }
     }
@@ -145,7 +145,7 @@ $primary-black: #333;
       border-radius: 12px;
       padding: 1.5rem;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-      transition: all 0.3s ease;
+      transition: transform 0.3s ease, opacity 0.3s ease;
 
       &:hover {
         transform: translateY(-5px);
@@ -204,7 +204,7 @@ $primary-black: #333;
       color: #666;
       font-size: 1rem;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: transform 0.3s ease, opacity 0.3s ease;
 
       &:hover {
         background: rgba($primary-green, 0.1);

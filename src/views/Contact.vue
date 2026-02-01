@@ -23,7 +23,7 @@
                 </div>
               </div>
               <div class="qrcode-wrapper">
-                <img :src="getAssetUrl('/images/qrcode.png')" alt="微信二维码">
+                <img :src="getAssetUrl('/images/qrcode.png')" alt="微信二维码" loading="lazy" decoding="async">
               </div>
             </div>
             <div class="decoration">
@@ -82,7 +82,7 @@ $primary-black: #333;
 
 .contact-page {
   min-height: calc(100vh - 80px);
-  padding-top: calc(var(--top-bar-height) + var(--nav-height));
+  padding-top: 0;
 }
 
 .container {
@@ -134,7 +134,7 @@ $primary-black: #333;
     padding: 2rem;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease;
 
     &.primary {
       grid-area: primary;
@@ -226,7 +226,7 @@ $primary-black: #333;
           border-radius: 20px;
           padding: 1.5rem;
           border: 1px solid rgba(255, 255, 255, 0.2);
-          transition: all 0.3s ease;
+          transition: transform 0.3s ease, opacity 0.3s ease;
 
           &:hover {
             transform: translateY(-5px);
@@ -272,7 +272,7 @@ $primary-black: #333;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.3s ease;
+      transition: transform 0.3s ease, opacity 0.3s ease;
 
       i {
         font-size: 1.5rem;
@@ -329,7 +329,7 @@ $primary-black: #333;
       i {
         position: absolute;
         color: rgba(255, 255, 255, 0.1);
-        transition: all 0.5s ease;
+        transition: transform 0.5s ease, opacity 0.5s ease;
 
         &.fa-circle {
           font-size: 20rem;

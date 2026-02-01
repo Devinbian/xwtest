@@ -1,9 +1,9 @@
 <template>
-    <div class="shop">
-        <div class="hero-section">
-            <h1>电商平台</h1>
-            <p>便捷的在线采购体验</p>
-        </div>
+	    <div class="shop">
+	        <div class="hero-section">
+	            <h1>产品展示</h1>
+	            <p>价格/交期/质保/是否现货/服务承诺均需咨询确认</p>
+	        </div>
 
         <div class="container">
             <div class="filters">
@@ -41,7 +41,7 @@ import { ref, computed } from 'vue';
 import ProductCard from '@/components/ProductCard.vue';
 import { getAssetUrl } from '@/utils/assets';
 
-// 模拟数据
+	// 示例数据（展示用：不展示价格，主目标为引导咨询）
 const categories = [
     { id: 1, name: '数字万用表/源表' },
     { id: 2, name: '电压/电流源' },
@@ -56,71 +56,64 @@ const categories = [
     { id: 11, name: '理化分析' }
 ];
 
-const products = ref([
-    {
-        id: 1,
-        title: 'KEITHLEY 2450',
-        image: getAssetUrl('/images/products/keithley-2450.jpg'),
-        brand: 'KEITHLEY',
-        description: '高精度数字源表',
-        category: 1,
-        price: '¥39,999'
-    },
-    {
-        id: 2,
-        title: 'KIKUSUI PWX1500L',
-        image: getAssetUrl('/images/products/kikusui-pwx1500l.jpg'),
-        brand: 'KIKUSUI',
-        description: '可编程直流电源',
-        category: 2,
-        price: '¥12,999'
-    },
-    {
-        id: 3,
-        title: 'ADC 7461',
-        image: getAssetUrl('/images/products/adc-7461.jpg'),
-        brand: 'ADC',
-        description: '高精度数字万用表',
-        category: 1,
-        price: '¥29,999'
-    },
-    {
-        id: 4,
-        title: 'RIGOL DM3068',
-        image: getAssetUrl('/images/products/rigol-dm3068.jpg'),
-        brand: 'RIGOL',
-        description: '6½ 位数字万用表',
-        category: 1,
-        price: '¥19,999'
-    },
-    {
-        id: 5,
-        title: 'Tektronix MSO46',
-        image: getAssetUrl('/images/products/tektronix-mso46.jpg'),
-        brand: 'Tektronix',
-        description: '混合信号示波器',
-        category: 4,
-        price: '¥89,999'
-    },
-    {
-        id: 6,
-        title: 'Keysight DSOX1204G',
-        image: getAssetUrl('/images/products/keysight-dsox1204g.jpg'),
-        brand: 'Keysight',
-        description: '数字示波器',
-        category: 4,
-        price: '¥49,999'
-    },
-    {
-        id: 7,
-        title: 'CHROMA 62000P',
-        image: getAssetUrl('/images/products/chroma-62000p.jpg'),
-        brand: 'CHROMA',
-        description: '可编程直流电源',
-        category: 2,
-        price: '¥15,999'
-    }
-]);
+	const products = ref([
+	    {
+	        id: 1,
+	        title: 'KEITHLEY 2450',
+	        image: getAssetUrl('/images/products/keithley-2450.jpg'),
+	        brand: 'KEITHLEY',
+	        description: '高精度数字源表',
+	        category: 1
+	    },
+	    {
+	        id: 2,
+	        title: 'KIKUSUI PWX1500L',
+	        image: getAssetUrl('/images/products/kikusui-pwx1500l.jpg'),
+	        brand: 'KIKUSUI',
+	        description: '可编程直流电源',
+	        category: 2
+	    },
+	    {
+	        id: 3,
+	        title: 'ADC 7461',
+	        image: getAssetUrl('/images/products/adc-7461.jpg'),
+	        brand: 'ADC',
+	        description: '高精度数字万用表',
+	        category: 1
+	    },
+	    {
+	        id: 4,
+	        title: 'RIGOL DM3068',
+	        image: getAssetUrl('/images/products/rigol-dm3068.jpg'),
+	        brand: 'RIGOL',
+	        description: '6½ 位数字万用表',
+	        category: 1
+	    },
+	    {
+	        id: 5,
+	        title: 'Tektronix MSO46',
+	        image: getAssetUrl('/images/products/tektronix-mso46.jpg'),
+	        brand: 'Tektronix',
+	        description: '混合信号示波器',
+	        category: 4
+	    },
+	    {
+	        id: 6,
+	        title: 'Keysight DSOX1204G',
+	        image: getAssetUrl('/images/products/keysight-dsox1204g.jpg'),
+	        brand: 'Keysight',
+	        description: '数字示波器',
+	        category: 4
+	    },
+	    {
+	        id: 7,
+	        title: 'CHROMA 62000P',
+	        image: getAssetUrl('/images/products/chroma-62000p.jpg'),
+	        brand: 'CHROMA',
+	        description: '可编程直流电源',
+	        category: 2
+	    }
+	]);
 
 const searchQuery = ref('');
 const selectedCategory = ref<number | null>(null);
@@ -222,7 +215,7 @@ const changePage = (page: number) => {
             border-radius: 20px;
             background: white;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: transform 0.3s ease, opacity 0.3s ease;
 
             &:hover {
                 background: #f5f5f5;
@@ -258,7 +251,7 @@ const changePage = (page: number) => {
         border-radius: 4px;
         background: white;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: transform 0.3s ease, opacity 0.3s ease;
 
         &:hover:not(:disabled) {
             background: var(--primary-color);

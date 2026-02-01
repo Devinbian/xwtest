@@ -1,9 +1,30 @@
+@use 'sass:map';
+
 // 主题颜色
 $primary-green: #83B735;  // Logo中的绿色
 $primary-dark: #2C3E50;   // Logo中的深色
 $accent-green: #6FA22E;   // 深绿色，用于悬停效果
 $accent-dark: #1A2633;    // 更深的灰色，用于强调
 $primary-black: #000000;    // 黑色
+
+// 8px spacing system
+$space-unit: 8px;
+@function space($n) {
+  @return $n * $space-unit;
+}
+
+// Responsive breakpoints
+$breakpoints: (
+  sm: 640px,
+  md: 768px,
+  lg: 1024px,
+  xl: 1280px
+);
+
+$bp-sm: map.get($breakpoints, sm);
+$bp-md: map.get($breakpoints, md);
+$bp-lg: map.get($breakpoints, lg);
+$bp-xl: map.get($breakpoints, xl);
 
 // 辅助颜色
 $gray-100: #F8F9FA;
@@ -52,6 +73,27 @@ $z-index-popover: 1060;
 $z-index-tooltip: 1070;
 
 :root {
+  // Header layout (set by TheNavigation at runtime)
+  --top-bar-height: 40px;
+  --nav-height: 80px;
+  --header-offset: calc(var(--top-bar-height) + var(--nav-height));
+
+  // Spacing scale (8px grid)
+  --space-0: 0px;
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+  --space-6: 48px;
+  --space-7: 56px;
+  --space-8: 64px;
+  --space-9: 72px;
+  --space-10: 80px;
+  --space-12: 96px;
+  --space-14: 112px;
+  --space-16: 128px;
+
   // 颜色
   --primary-green: #{$primary-green};
   --primary-dark: #{$primary-dark};
@@ -67,6 +109,18 @@ $z-index-tooltip: 1070;
   --text-primary: #{$primary-dark};
   --text-secondary: #{$gray-600};
   --text-light: #{$gray-500};
+
+  // Typography scale
+  --font-family-base: #{$font-family-base};
+  --line-height-base: #{$line-height-base};
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: clamp(1.25rem, 1.15rem + 0.4vw, 1.5rem);
+  --text-2xl: clamp(1.5rem, 1.3rem + 1vw, 2.25rem);
+  --text-3xl: clamp(2rem, 1.6rem + 2vw, 3.5rem);
+  --text-4xl: clamp(2.5rem, 2rem + 2.5vw, 4rem);
   
   // 边框颜色
   --border-color: #{$gray-300};
@@ -85,8 +139,10 @@ $z-index-tooltip: 1070;
   --shadow-lg: #{$shadow-lg};
   --shadow-hover: #{$shadow-hover};
 
-  --primary-color: #1976d2;
-  --primary-color-dark: #1565c0;
-  --secondary-color: #424242;
-  --text-color: #333333;
+  // Legacy tokens kept for compatibility (mapped to brand palette)
+  --primary-color: #{$primary-green};
+  --primary-color-dark: #{$accent-green};
+  --secondary-color: #{$accent-green};
+  --text-color: var(--text-primary);
+  --background-color: #ffffff;
 } 

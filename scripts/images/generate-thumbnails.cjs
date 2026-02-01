@@ -12,6 +12,13 @@ const CONFIG = {
   blur: 0.3, // 模糊程度
 };
 
+function isUpToDate(srcPath, outPath) {
+  if (!fs.existsSync(outPath)) return false;
+  const srcStat = fs.statSync(srcPath);
+  const outStat = fs.statSync(outPath);
+  return outStat.mtimeMs >= srcStat.mtimeMs;
+}
+
 async function generateThumbnail(imagePath) {
   try {
     const ext = path.extname(imagePath);
@@ -19,11 +26,19 @@ async function generateThumbnail(imagePath) {
     const dirname = path.dirname(imagePath);
     const thumbnailPath = path.join(dirname, `${basename}-small${ext}`);
 
-    await sharp(imagePath)
+    if (isUpToDate(imagePath, thumbnailPath)) return;
+
+    const pipeline = sharp(imagePath)
+      .rotate()
       .resize(CONFIG.width) // 调整大小
-      .blur(CONFIG.blur) // 轻微模糊
-      .jpeg({ quality: CONFIG.quality }) // 压缩质量
-      .toFile(thumbnailPath);
+      .blur(CONFIG.blur); // 轻微模糊
+
+    const lowerExt = ext.toLowerCase();
+    if (lowerExt === ".png") {
+      await pipeline.png({ compressionLevel: 8, adaptiveFiltering: true }).toFile(thumbnailPath);
+    } else {
+      await pipeline.jpeg({ quality: CONFIG.quality }).toFile(thumbnailPath);
+    }
 
     console.log(`✅ Generated: ${thumbnailPath}`);
   } catch (error) {
@@ -40,7 +55,7 @@ async function processDirectory(dir) {
 
     if (stat.isDirectory()) {
       await processDirectory(filePath);
-    } else if (/\.(jpg|jpeg|png|avif|webp)$/i.test(file) && !file.includes("-small")) {
+    } else if (/\.(jpg|jpeg|png)$/i.test(file) && !file.includes("-small")) {
       await generateThumbnail(filePath);
     }
   }

@@ -21,7 +21,7 @@ export default defineConfig(({ command }) => {
         scss: {
           charset: false,
           // Use Dart Sass modern JS API (Dart Sass 2.0 removes legacy API)
-          api: 'modern'
+          api: 'modern-compiler'
         }
       }
     },

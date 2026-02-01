@@ -1,42 +1,32 @@
-src
---data
-----home
-------productCategories.js    首页，主营产品板块数据源
-------industries.js           首页，八大行业板块数据源
-------services.js             首页，我们的服务板块数据源
-------partners.js             首页、关于我们页面，合作品牌板块的数据源
-------top10Products.js        首页，热门产品板块数据源
+# 项目结构（关键目录）
 
-----navigation
-------menuForNewProds.js      主导航，产品菜单数据源，目前维护了3个品牌的数据，每个品牌提供2个产品
+`src/data/`
+- `src/data/home/`：首页数据源（主营产品、行业、服务、合作品牌、热门产品等）
+- `src/data/navigation/`：主导航菜单数据源
+- `src/data/products/`：产品页数据源（`products.js`、`categories.js`）
 
-----products
-------products.js             产品页面，产品的数据源
-------categories.js           产品页面，左侧菜单数据源
+`scripts/`
+- `scripts/images/generate-thumbnails.cjs`：生成图片缩略图（`*-small.jpg`）
+- `scripts/images/generate-modern-images.cjs`：生成 WebP/AVIF + 缺失的 JPG 兜底
+- `scripts/code-health/`：粗略扫描未使用组件/页面
 
+# 本地启动
 
-scripts
---images
-----generate-thumbnails.cjs   生成缩略图，遍历 images 下的所有图片，生成缩略图，方便加载显示
-----process_img800x800.*      图片批处理脚本（Windows）
---code-health
-----find-unused-components.cjs  查找未使用的组件（粗略扫描）
-----find-unused-views.cjs       查找未使用的页面（粗略扫描）
+## 1) Node 版本
+- 推荐使用 `nvm`：执行 `nvm use`（版本见 `.nvmrc`，当前为 `22.21.1`）
 
-## 开发环境
-- Node：建议使用 nvm，并执行 `nvm use`（版本见 `.nvmrc`）
-- 启动：`npm install`，然后 `npm run dev`
+## 2) 安装依赖
+- `npm install`（或 `npm ci`）
 
+## 3) 启动开发服务器
+- `npm run dev`
+- 默认端口：`5174`（见 `vite.config.ts`），访问 `http://localhost:5174`
 
-# 产品卡片右上角的角标，在Products.vue中定义的函数
-//角标的标签内容对应products.js中的condition字段
-const getConditionText = (condition: string) => {
-  const conditionMap = {
-    new: '全新',
-    used: '二手',
-    refurbished: '翻新',
-    sale:'促销',
-    discount:'50%'
-  } as const;
-  return conditionMap[condition as keyof typeof conditionMap] || '未知';
-};
+> 说明：`dev/build` 会先自动执行图片处理脚本（`predev`/`prebuild`），用于懒加载与现代格式输出。
+
+# 构建与预览
+- 构建：`npm run build`
+- 预览：`npm run preview`
+
+# 体验优化计划
+- 见：`docs/ux-optimization-plan.md`

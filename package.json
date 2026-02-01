@@ -3,11 +3,17 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
-    "generate-thumbnails": "ts-node scripts/images/generate-thumbnails.cjs",
+    "generate-thumbnails": "node scripts/images/generate-thumbnails.cjs",
+    "generate-modern-images": "node scripts/images/generate-modern-images.cjs",
+    "predev": "npm run generate-thumbnails && npm run generate-modern-images",
+    "prebuild": "npm run generate-thumbnails && npm run generate-modern-images",
     "find-unused-components": "node scripts/code-health/find-unused-components.cjs",
     "find-unused-views": "node scripts/code-health/find-unused-views.cjs"
   },

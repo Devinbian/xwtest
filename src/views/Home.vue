@@ -14,9 +14,9 @@
                 <div v-for="partner in group" :key="partner.id" class="partner-card"
                   :class="{ 'empty-card': partner.isEmpty }">
                   <a v-if="!partner.isEmpty" :href="partner.website" target="_blank" class="card-content">
-                    <div class="card-inner">
-                      <div class="logo-wrapper">
-                        <img :src="partner.logo" :alt="partner.name" />
+                      <div class="card-inner">
+                        <div class="logo-wrapper">
+                        <img :src="partner.logo" :alt="partner.name" loading="lazy" decoding="async" />
                       </div>
                       <div class="card-glow"></div>
                       <div class="card-border"></div>
@@ -26,17 +26,35 @@
               </div>
             </div>
           </div>
-          <button class="slider-nav prev" @click="prevPartnerSlide" :disabled="currentPartnerSlide === 0">
+          <button
+            type="button"
+            class="slider-nav prev"
+            aria-label="上一组品牌"
+            @click="prevPartnerSlide"
+            :disabled="currentPartnerSlide === 0"
+          >
             <i class="fas fa-chevron-left"></i>
           </button>
-          <button class="slider-nav next" @click="nextPartnerSlide"
-            :disabled="currentPartnerSlide === partnerGroups.length - 1">
+          <button
+            type="button"
+            class="slider-nav next"
+            aria-label="下一组品牌"
+            @click="nextPartnerSlide"
+            :disabled="currentPartnerSlide === partnerGroups.length - 1"
+          >
             <i class="fas fa-chevron-right"></i>
           </button>
           <div class="slider-dots">
-            <button v-for="(_, index) in partnerGroups" :key="index" class="dot"
-              :class="{ active: currentPartnerSlide === index }" @click="goToPartnerSlide(index)">
-            </button>
+            <button
+              v-for="(_, index) in partnerGroups"
+              :key="index"
+              type="button"
+              class="dot"
+              :class="{ active: currentPartnerSlide === index }"
+              :aria-label="`切换到第 ${index + 1} 组品牌`"
+              :aria-current="currentPartnerSlide === index ? 'true' : undefined"
+              @click="goToPartnerSlide(index)"
+            />
           </div>
         </div>
       </div>
@@ -51,7 +69,8 @@
             @mouseenter="activeIndustry = index" @mouseleave="activeIndustry = null"
             @touchstart="(e) => handleIndustryTouchStart(e, index)" @touchend="handleIndustryTouchEnd"
             @touchcancel="handleIndustryTouchCancel">
-            <div class="slider-bg" :style="{ backgroundImage: `url(${industry.image})` }">
+            <div class="slider-bg">
+              <LazyPicture :src="industry.image" :placeholder="generatePlaceholderUrl(industry.image)" :alt="industry.name" />
               <div class="slider-content">
                 <h3>{{ industry.name }}</h3>
               </div>
@@ -94,15 +113,16 @@
 
     <section class="services-section">
       <div class="container">
-        <h2 class="section-title">我们的服务</h2>
-        <div class="services-grid">
-          <div v-for="service in services" :key="service.id" class="service-card"
-            @touchstart="(e) => handleTouchStart(e.currentTarget)" @touchend="(e) => handleTouchEnd(e.currentTarget)"
-            @touchcancel="(e) => handleTouchEnd(e.currentTarget)">
-            <div class="service-icon">
-              <i :class="service.icon"></i>
-            </div>
-            <h3>{{ service.title }}</h3>
+	        <h2 class="section-title">我们的服务</h2>
+	        <div class="services-grid">
+	          <div v-for="service in services" :key="service.id" class="service-card"
+	            @touchstart="(e) => handleTouchStart(e.currentTarget)" @touchend="(e) => handleTouchEnd(e.currentTarget)"
+	            @touchcancel="(e) => handleTouchEnd(e.currentTarget)">
+	            <i class="service-decor" :class="service.icon" aria-hidden="true"></i>
+	            <div class="service-icon">
+	              <i :class="service.icon"></i>
+	            </div>
+	            <h3>{{ service.title }}</h3>
             <p>{{ service.description }}</p>
             <div class="service-features">
               <ul>
@@ -125,28 +145,39 @@
             <div v-for="product in featuredProducts" :key="product.id" class="product-slide">
               <div class="product-content">
                 <div class="product-image">
-                  <img :src="product.image" :alt="product.title">
+                  <LazyPicture :src="product.image" :placeholder="generatePlaceholderUrl(product.image)" :alt="product.title" />
                 </div>
                 <div class="product-info">
                   <span class="product-brand">{{ product.brand }}</span>
                   <h3 class="product-title">{{ product.title }}</h3>
                   <p class="product-description">{{ product.description }}</p>
-                  <button class="product-link" @click="goToProduct(product.brand)">
+                  <button type="button" class="product-link" :aria-label="`了解更多：${product.title}`"
+                    @click="goToProduct(product.brand)">
                     了解更多
                   </button>
                 </div>
               </div>
             </div>
           </div>
-          <button class="slider-nav prev" @click="prevSlide" :disabled="currentSlide === 0">
+          <button type="button" class="slider-nav prev" aria-label="上一项热门产品" @click="prevSlide"
+            :disabled="currentSlide === 0">
             <span>←</span>
           </button>
-          <button class="slider-nav next" @click="nextSlide" :disabled="currentSlide === featuredProducts.length - 1">
+          <button type="button" class="slider-nav next" aria-label="下一项热门产品" @click="nextSlide"
+            :disabled="currentSlide === featuredProducts.length - 1">
             <span>→</span>
           </button>
           <div class="slider-dots">
-            <button v-for="(_, index) in featuredProducts" :key="index" class="dot"
-              :class="{ active: currentSlide === index }" @click="goToSlide(index)"></button>
+            <button
+              v-for="(_, index) in featuredProducts"
+              :key="index"
+              type="button"
+              class="dot"
+              :class="{ active: currentSlide === index }"
+              :aria-label="`切换到第 ${index + 1} 个热门产品`"
+              :aria-current="currentSlide === index ? 'true' : undefined"
+              @click="goToSlide(index)"
+            />
           </div>
         </div>
       </div>
@@ -246,7 +277,7 @@
               <!-- 右侧二维码 -->
               <div class="contact-right">
                 <div class="contact-qr">
-                  <img :src="getAssetUrl('/images/qrcode.png')" alt="扫码咨询">
+                  <img :src="getAssetUrl('/images/qrcode.png')" alt="扫码咨询" loading="lazy" decoding="async">
                   <span>扫码添加客服</span>
                 </div>
               </div>
@@ -254,7 +285,11 @@
           </div>
 
           <div class="cta-image">
-            <img :src="getAssetUrl('/images/support-team.jpg')" alt="专业支持团队">
+            <LazyPicture
+              :src="getAssetUrl('/images/support-team.jpg')"
+              :placeholder="generatePlaceholderUrl(getAssetUrl('/images/support-team.jpg'))"
+              alt="专业支持团队"
+            />
             <div class="image-overlay">
               <div class="stats-grid">
                 <div class="stat-item">
@@ -283,6 +318,8 @@ import HomeHero from '@/components/HomeHero.vue';
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { getAssetUrl } from '@/utils/assets';
+import LazyPicture from '@/components/LazyPicture.vue';
+import { generatePlaceholderUrl } from '@/utils/image';
 
 import { partners } from '../data/home/partners.js';
 //获取10大热门产品数据
@@ -626,7 +663,7 @@ $primary-black: #000000;
   @include section-transition;
   @include decorative-lines;
   position: relative;
-  padding: 8rem 0;
+  padding: var(--space-16) 0;
   margin-top: -2px;
 
   // 添加侧边装饰
@@ -665,7 +702,7 @@ $primary-black: #000000;
   .featured-brands,
   .featured-products,
   .cta-section {
-    padding: 4rem 0;
+    padding: var(--space-8) 0;
 
     &::before,
     &::after {
@@ -678,8 +715,8 @@ $primary-black: #000000;
 @mixin section-title {
   color: var(--section-text-color, #000000);
   text-align: center;
-  font-size: 2.8rem;
-  margin-bottom: 5rem;
+  font-size: var(--text-3xl);
+  margin-bottom: var(--space-10);
   font-weight: 300;
   position: relative;
   display: inline-block;
@@ -698,7 +735,7 @@ $primary-black: #000000;
         rgba($primary-green, 0.2),
         rgba($primary-green, 0.1),
         transparent);
-    bottom: -1rem;
+    bottom: calc(-1 * var(--space-2));
     left: 0;
   }
 
@@ -765,11 +802,11 @@ $primary-black: #000000;
 .container-fluid {
   max-width: 1920px;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0 var(--space-4);
 }
 
 .featured-brands {
-  padding: 8rem 0;
+  padding: var(--space-16) 0;
   margin-top: -2px;
   background: linear-gradient(135deg, map.get(map.get($bg-gradients, brands), start), map.get(map.get($bg-gradients, brands), end));
   color: $primary-black;
@@ -781,12 +818,12 @@ $primary-black: #000000;
   .brands-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 2rem;
+    gap: var(--space-4);
     align-items: center;
   }
 
   .brand-card {
-    padding: 1rem;
+    padding: var(--space-2);
     text-align: center;
 
     img {
@@ -805,7 +842,7 @@ $primary-black: #000000;
 }
 
 .featured-products {
-  padding: 8rem 0;
+  padding: var(--space-16) 0;
   background: linear-gradient(135deg, map.get(map.get($bg-gradients, featured), start), map.get(map.get($bg-gradients, featured), end));
   color: white;
   @include section-background;
@@ -813,7 +850,7 @@ $primary-black: #000000;
 
   .section-title {
     @include section-title;
-    margin-bottom: 4rem;
+    margin-bottom: var(--space-8);
   }
 
   .products-slider {
@@ -821,7 +858,7 @@ $primary-black: #000000;
     max-width: 1400px;
     margin: 0 auto;
     overflow: hidden;
-    padding: 0 2rem;
+    padding: 0 var(--space-4);
   }
 
   .slider-wrapper {
@@ -832,16 +869,16 @@ $primary-black: #000000;
 
   .product-slide {
     flex: 0 0 100%;
-    padding: 0 1rem;
+    padding: 0 var(--space-2);
   }
 
   .product-content {
     display: flex;
-    gap: 4rem;
+    gap: var(--space-8);
     align-items: center;
     background: rgba(255, 255, 255, 0.03);
     border-radius: 24px;
-    padding: 3rem;
+    padding: var(--space-6);
     border: 1px solid rgba($primary-green, 0.1);
     backdrop-filter: blur(10px);
   }
@@ -851,21 +888,23 @@ $primary-black: #000000;
     border-radius: 16px;
     overflow: hidden;
 
-    img {
+    :deep(.lazy-picture) {
       width: 100%;
       height: 400px;
-      object-fit: cover;
-      transition: transform 0.6s ease;
+    }
 
-      &:hover {
-        transform: scale(1.05);
-      }
+    :deep(.main-image) {
+      transition: transform 0.6s ease;
+    }
+
+    &:hover :deep(.main-image) {
+      transform: scale(1.05);
     }
   }
 
   .product-info {
     flex: 1;
-    padding: 2rem 0;
+    padding: var(--space-4) 0;
   }
 
   .product-brand {
@@ -874,13 +913,13 @@ $primary-black: #000000;
     color: $primary-green;
     text-transform: uppercase;
     letter-spacing: 2px;
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-2);
   }
 
   .product-title {
     font-size: 2.5rem;
     color: white;
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--space-3);
     font-weight: 500;
   }
 
@@ -888,7 +927,7 @@ $primary-black: #000000;
     font-size: 1.1rem;
     line-height: 1.8;
     color: rgba(255, 255, 255, 0.8);
-    margin-bottom: 2rem;
+    margin-bottom: var(--space-4);
   }
 
   .product-link {
@@ -899,11 +938,11 @@ $primary-black: #000000;
     text-transform: uppercase;
     letter-spacing: 1px;
     border: 1px solid rgba($primary-green, 0.3);
-    padding: 0.8rem 2rem;
+    padding: 0.8rem var(--space-4);
     border-radius: 8px;
     background: transparent;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease;
 
     &:hover {
       background: rgba($primary-green, 0.1);
@@ -913,7 +952,7 @@ $primary-black: #000000;
 
     &::after {
       content: '→';
-      margin-left: 1rem;
+      margin-left: var(--space-2);
       transition: transform 0.3s ease;
     }
 
@@ -936,7 +975,7 @@ $primary-black: #000000;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease;
     backdrop-filter: blur(10px);
     z-index: 10;
 
@@ -966,40 +1005,57 @@ $primary-black: #000000;
   .slider-dots {
     display: flex;
     justify-content: center;
-    gap: 1rem;
-    margin-top: 2rem;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
 
     .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.2);
+      width: 48px;
+      height: 48px;
+      border-radius: 999px;
+      background: transparent;
       border: none;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+
+      &::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.2);
+        transition: transform 0.3s ease, opacity 0.3s ease;
+      }
 
       &:hover {
-        background: rgba($primary-green, 0.5);
+        &::before {
+          background: rgba($primary-green, 0.5);
+        }
       }
 
       &.active {
-        width: 24px;
-        border-radius: 4px;
+        &::before {
+          width: 24px;
+          height: 8px;
+          border-radius: 4px;
+        }
       }
     }
   }
 
-  @media (max-width: 1200px) {
+  @media (max-width: 1280px) {
     .product-content {
       flex-direction: column;
-      gap: 2rem;
-      padding: 2rem;
+      gap: var(--space-4);
+      padding: var(--space-4);
     }
 
     .product-image {
       flex: 0 0 100%;
-
-      img {
+      :deep(.lazy-picture) {
         height: 300px;
       }
     }
@@ -1014,17 +1070,17 @@ $primary-black: #000000;
   }
 
   @media (max-width: 768px) {
-    padding: 4rem 0;
+    padding: var(--space-8) 0;
 
     .products-slider {
-      padding: 0 1rem;
+      padding: 0 var(--space-2);
     }
 
     .product-content {
-      padding: 1.5rem;
+      padding: var(--space-3);
     }
 
-    .product-image img {
+    .product-image :deep(.lazy-picture) {
       height: 250px;
     }
 
@@ -1048,63 +1104,64 @@ $primary-black: #000000;
 }
 
 .cta-section {
-  padding: 6rem 0;
+  // Keep this section compact so it can fit within one viewport on common screens.
+  padding: clamp(40px, 5.5vh, 72px) 0;
   background: linear-gradient(135deg, #f8f9fa, #ffffff);
   position: relative;
 
   .cta-wrapper {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 2rem;
+    padding: 0 var(--space-4);
     display: grid;
     grid-template-columns: 1.2fr 0.8fr;
-    gap: 4rem;
-    align-items: start;
+    gap: var(--space-6);
+    align-items: center;
 
-    @media (max-width: 992px) {
+    @media (max-width: 1024px) {
       grid-template-columns: 1fr;
-      gap: 2rem;
-      padding: 0 1.5rem;
+      gap: var(--space-4);
+      padding: 0 var(--space-3);
 
-      .cta-image {
-        display: block;
-        width: 100%;
-        min-height: 300px;
-        margin-top: 2rem;
-      }
-    }
+	      .cta-image {
+	        display: block;
+	        width: 100%;
+	        min-height: 300px;
+	        margin-top: var(--space-4);
+	      }
+	    }
 
-    @media (max-width: 480px) {
-      padding: 0 1rem;
-      gap: 1.5rem;
+    @media (max-width: 640px) {
+      padding: 0 var(--space-2);
+      gap: var(--space-3);
 
       .cta-image {
         min-height: 400px;
 
-        .image-overlay {
-          padding: 2rem 1.5rem;
-          display: flex;
-          align-items: flex-end;
-          min-height: 100%;
+		    .image-overlay {
+	          padding: var(--space-4) var(--space-3);
+	          display: flex;
+	          align-items: flex-end;
+	          min-height: 100%;
 
-          .stats-grid {
-            grid-template-columns: 1fr;
-            gap: 1.5rem;
-            width: 100%;
-            padding: 1.5rem;
-            background: rgba(0, 0, 0, 0.6);
-            border-radius: 12px;
-            backdrop-filter: blur(8px);
+	          .stats-grid {
+	            grid-template-columns: 1fr;
+	            gap: var(--space-3);
+	            width: 100%;
+	            padding: var(--space-3);
+	            background: rgba(0, 0, 0, 0.6);
+	            border-radius: 12px;
+	            backdrop-filter: blur(8px);
 
-            .stat-item {
-              padding: 1rem;
-              text-align: center;
+	            .stat-item {
+	              padding: var(--space-2);
+	              text-align: center;
 
-              &:not(:last-child) {
-                border-bottom: 1px solid rgba($primary-green, 0.2);
-                padding-bottom: 1.5rem;
-                margin-bottom: 0.5rem;
-              }
+	              &:not(:last-child) {
+	                border-bottom: 1px solid rgba($primary-green, 0.2);
+	                padding-bottom: var(--space-3);
+	                margin-bottom: 0.5rem;
+	              }
 
               &::after {
                 display: none;
@@ -1143,11 +1200,11 @@ $primary-black: #000000;
       border-radius: 30px;
       font-size: 0.9rem;
       font-weight: 500;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
     }
 
     h2 {
-      font-size: 2.8rem;
+      font-size: clamp(2rem, 2.2vw, 2.6rem);
       font-weight: 600;
       color: $primary-black;
       margin-bottom: 1rem;
@@ -1158,23 +1215,23 @@ $primary-black: #000000;
       font-size: 1.1rem;
       color: rgba($primary-black, 0.7);
       line-height: 1.6;
-      margin-bottom: 2.5rem;
+      margin-bottom: 1.6rem;
     }
 
     .cta-features {
       display: grid;
-      gap: 1rem;
-      margin-bottom: 2.5rem;
+      gap: 0.85rem;
+      margin-bottom: 1.6rem;
 
       .feature-item {
         display: flex;
         align-items: center;
         gap: 1rem;
-        padding: 1.2rem;
+        padding: 1rem;
         background: white;
         border-radius: 12px;
         border: 1px solid rgba($primary-green, 0.1);
-        transition: all 0.3s ease;
+        transition: transform 0.3s ease, opacity 0.3s ease;
 
         &:hover {
           transform: translateX(10px);
@@ -1196,7 +1253,7 @@ $primary-black: #000000;
           align-items: center;
           justify-content: center;
           color: $primary-green;
-          transition: all 0.3s ease;
+          transition: transform 0.3s ease, opacity 0.3s ease;
 
           svg {
             width: 100%;
@@ -1221,32 +1278,32 @@ $primary-black: #000000;
       }
     }
 
-    .cta-actions {
+		    .cta-actions {
       background: white;
       border-radius: 16px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-      overflow: hidden;
-      display: flex;
-      gap: 2rem;
-      height: 100%;
+		      overflow: hidden;
+		      display: flex;
+		      gap: var(--space-3);
+		      height: 100%;
 
       // 左侧联系信息
-      .contact-left {
-        flex: 1;
-        padding: 2rem;
+		      .contact-left {
+		        flex: 1;
+		        padding: var(--space-4);
         display: flex;
         flex-direction: column;
-        gap: 1.5rem;
+        gap: 1.1rem;
         justify-content: space-between;
 
         .contact-item {
           display: flex;
           align-items: center;
           gap: 1rem;
-          padding: 1.2rem;
+          padding: 1rem;
           background: rgba($primary-green, 0.03);
           border-radius: 12px;
-          transition: all 0.3s ease;
+          transition: transform 0.3s ease, opacity 0.3s ease;
 
           &:hover {
             background: rgba($primary-green, 0.08);
@@ -1293,12 +1350,12 @@ $primary-black: #000000;
           align-items: center;
           justify-content: center;
           gap: 0.5rem;
-          padding: 1rem;
+          padding: 0.9rem;
           background: $primary-green;
           color: white;
           border-radius: 8px;
           font-weight: 500;
-          transition: all 0.3s ease;
+          transition: transform 0.3s ease, opacity 0.3s ease;
 
 	          &:hover {
 	            background: color.adjust($primary-green, $lightness: -5%);
@@ -1319,12 +1376,12 @@ $primary-black: #000000;
       }
 
       // 右侧二维码
-      .contact-right {
-        width: 200px;
-        padding: 2rem;
-        background: rgba($primary-green, 0.02);
-        border-left: 1px solid rgba($primary-black, 0.05);
-        display: flex;
+	      .contact-right {
+	        width: 200px;
+	        padding: var(--space-4);
+	        background: rgba($primary-green, 0.02);
+	        border-left: 1px solid rgba($primary-black, 0.05);
+	        display: flex;
         align-items: center;
         justify-content: center;
 
@@ -1346,7 +1403,7 @@ $primary-black: #000000;
           }
         }
 
-        @media (max-width: 992px) {
+        @media (max-width: 1024px) {
           width: auto;
           flex: 1;
           border-left: none;
@@ -1370,7 +1427,7 @@ $primary-black: #000000;
           }
         }
 
-        @media (max-width: 480px) {
+        @media (max-width: 640px) {
           padding: 1.2rem;
 
           .contact-qr img {
@@ -1385,14 +1442,13 @@ $primary-black: #000000;
   .cta-image {
     position: relative;
     height: 100%;
-    min-height: 480px;
+    min-height: clamp(360px, 46vh, 440px);
     border-radius: 20px;
     overflow: hidden;
 
-    img {
+    :deep(.lazy-picture) {
       width: 100%;
       height: 100%;
-      object-fit: cover;
     }
 
     .image-overlay {
@@ -1400,17 +1456,17 @@ $primary-black: #000000;
       bottom: 0;
       left: 0;
       right: 0;
-      padding: 3rem;
+		      padding: var(--space-5);
       background: linear-gradient(to top,
           rgba(0, 0, 0, 0.95) 0%,
           rgba(0, 0, 0, 0.8) 40%,
           rgba(0, 0, 0, 0.4) 80%,
           transparent 100%);
 
-      .stats-grid {
+	      .stats-grid {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 1.5rem;
+	        gap: var(--space-3);
         width: 100%;
 
         .stat-item {
@@ -1447,13 +1503,13 @@ $primary-black: #000000;
             }
           }
 
-          .stat-label {
-            font-size: 1rem;
-            color: rgba(white, 0.9);
-            font-weight: 500;
-            position: relative;
-            padding-bottom: 0.5rem;
-            white-space: nowrap;
+	          .stat-label {
+	            font-size: 1rem;
+	            color: rgba(white, 0.9);
+	            font-weight: 500;
+	            position: relative;
+	            padding-bottom: var(--space-1);
+	            white-space: nowrap;
 
             &::after {
               content: '';
@@ -1471,9 +1527,9 @@ $primary-black: #000000;
       }
     }
 
-    @media (max-width: 1200px) {
-      .image-overlay {
-        padding: 2.5rem;
+	    @media (max-width: 1280px) {
+	      .image-overlay {
+	        padding: var(--space-5);
 
         .stats-grid .stat-item .stat-number {
           font-size: 2.5rem;
@@ -1481,7 +1537,7 @@ $primary-black: #000000;
       }
     }
 
-    @media (max-width: 992px) {
+    @media (max-width: 1024px) {
       .image-overlay {
         .stats-grid .stat-item .stat-number {
           font-size: 2.2rem;
@@ -1489,12 +1545,12 @@ $primary-black: #000000;
       }
     }
 
-    @media (max-width: 768px) {
-      .image-overlay {
-        padding: 2rem;
+	    @media (max-width: 768px) {
+	      .image-overlay {
+	        padding: var(--space-4);
 
-        .stats-grid {
-          gap: 1rem;
+	        .stats-grid {
+	          gap: var(--space-2);
 
           .stat-item {
             .stat-number {
@@ -1513,7 +1569,7 @@ $primary-black: #000000;
       }
     }
 
-    @media (max-width: 480px) {
+    @media (max-width: 640px) {
       & {
         min-height: 400px;
         border-radius: 20px;
@@ -1595,13 +1651,15 @@ $primary-black: #000000;
 }
 
 .industries-section {
-  padding: 8rem 0;
+  padding: var(--space-16) 0;
   background: linear-gradient(135deg, map.get(map.get($bg-gradients, industries), start), map.get(map.get($bg-gradients, industries), end));
   position: relative;
   color: $primary-black;
 
   .section-title {
     @include section-title;
+    color: $primary-black;
+    font-weight: 400;
   }
 
   .industries-slider {
@@ -1615,7 +1673,7 @@ $primary-black: #000000;
     position: relative;
     flex: 1;
     min-width: calc(8% + 1px);
-    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
     cursor: pointer;
 
@@ -1641,9 +1699,14 @@ $primary-black: #000000;
       left: 0;
       width: 100%;
       height: 100%;
-      background-size: cover;
-      background-position: center;
+      overflow: hidden;
       transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1);
+
+      :deep(.lazy-picture) {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+      }
 
       &::after {
         content: '';
@@ -1655,13 +1718,14 @@ $primary-black: #000000;
         background: linear-gradient(to bottom,
             rgba($primary-green, 0.2),
             rgba($primary-black, 0.6));
-        opacity: 0;
+        opacity: 0.35;
         transition: opacity 0.8s ease;
+        z-index: 1;
       }
     }
 
     &:hover .slider-bg::after {
-      opacity: 1;
+      opacity: 0.65;
     }
 
     .slider-content {
@@ -1675,32 +1739,35 @@ $primary-black: #000000;
       h3 {
         color: white;
         font-size: 1.2rem;
-        font-weight: 300;
+        font-weight: 400;
         writing-mode: vertical-lr;
         transform: translateY(0);
-        transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-        opacity: 0.8;
+        transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        opacity: 1;
         text-transform: uppercase;
         letter-spacing: 4px;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        padding: 1rem;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+        padding: 1rem 0.9rem;
+        background: rgba(0, 0, 0, 0.28);
+        backdrop-filter: blur(6px);
+        border-radius: 10px;
       }
     }
   }
 
   @media (max-width: 768px) {
-    padding: 4rem 0;
+    padding: var(--space-8) 0;
 
     .section-title {
       font-size: 2.8rem;
-      margin-bottom: 2rem;
+      margin-bottom: var(--space-4);
     }
 
     .industries-slider {
       height: auto;
       flex-wrap: wrap;
-      gap: 1rem;
-      padding: 0 1rem;
+      gap: var(--space-2);
+      padding: 0 var(--space-2);
     }
 
     .slider-item {
@@ -1746,7 +1813,7 @@ $primary-black: #000000;
 
     .slider-item.touch-active {
       transform: scale(0.98) translateY(-2px);
-      transition: all 0.2s ease;
+      transition: transform 0.2s ease, opacity 0.2s ease;
 
       .slider-bg {
         transform: scale(1.05);
@@ -1777,12 +1844,12 @@ $primary-black: #000000;
       transition: background 0.3s ease;
 
       h3 {
-        transition: all 0.3s ease;
+        transition: transform 0.3s ease, opacity 0.3s ease;
       }
     }
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: 640px) {
     .industries-slider {
       gap: 1.2rem;
     }
@@ -1805,7 +1872,7 @@ $primary-black: #000000;
 }
 
 .main-products-section {
-  padding: 8rem 0;
+  padding: var(--space-16) 0;
   margin-top: -2px; // 防止出现缝隙
   background: linear-gradient(135deg, map.get(map.get($bg-gradients, products), start), map.get(map.get($bg-gradients, products), end));
   color: $primary-black;
@@ -1817,13 +1884,13 @@ $primary-black: #000000;
   // 主营产品需要更宽的内容区，避免子项换行
   .container {
     max-width: 1600px;
-    padding: 0 2rem;
+    padding: 0 var(--space-4);
   }
 
   .products-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(360px, 1fr));
-    gap: 2.5rem;
+    gap: var(--space-5);
     margin: 0 auto;
     padding: 0;
     position: relative;
@@ -1842,7 +1909,7 @@ $primary-black: #000000;
       border-radius: 16px;
       backdrop-filter: blur(10px);
       overflow: hidden;
-      transition: all 0.4s ease;
+      transition: transform 0.4s ease, opacity 0.4s ease;
       display: flex;
       flex-direction: column;
       height: 100%;
@@ -1865,13 +1932,13 @@ $primary-black: #000000;
     }
 
     .category-header {
-      padding: 2rem;
+      padding: var(--space-4);
       position: relative;
 
       .header-content {
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: var(--space-2);
       }
 
       .category-number {
@@ -1913,11 +1980,11 @@ $primary-black: #000000;
       }
     }
 
-    .category-content {
-      padding: 0 2rem 2rem;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
+	    .category-content {
+	      padding: 0 var(--space-4) var(--space-4);
+	      flex: 1;
+	      display: flex;
+	      flex-direction: column;
 
       .items-wrapper {
         display: grid;
@@ -1935,7 +2002,7 @@ $primary-black: #000000;
           padding: 0.8rem 1rem;
           background: rgba(255, 255, 255, 0.03);
           border-radius: 8px;
-          transition: all 0.3s ease;
+          transition: transform 0.3s ease, opacity 0.3s ease;
 
           &:hover {
             background: rgba($primary-green, 0.1);
@@ -1954,7 +2021,7 @@ $primary-black: #000000;
           background: rgba(255, 255, 255, 0.3);
           border-radius: 50%;
           flex-shrink: 0;
-          transition: all 0.3s ease;
+          transition: transform 0.3s ease, opacity 0.3s ease;
         }
 
         .item-text {
@@ -1970,21 +2037,21 @@ $primary-black: #000000;
     }
   }
 
-  @media (max-width: 1200px) {
+  @media (max-width: 1280px) {
     .products-grid {
       grid-template-columns: repeat(2, 1fr);
     }
   }
 
-  @media (max-width: 768px) {
-    &.main-products-section {
-      padding: 4rem 0;
-    }
+	  @media (max-width: 768px) {
+	    &.main-products-section {
+	      padding: var(--space-8) 0;
+	    }
 
-    .section-title {
-      font-size: 2.8rem;
-      margin-bottom: 3rem;
-    }
+	    .section-title {
+	      font-size: 2.8rem;
+	      margin-bottom: var(--space-6);
+	    }
 
     .products-grid {
       grid-template-columns: 1fr;
@@ -2005,7 +2072,7 @@ $primary-black: #000000;
           transform: translateY(-2px);
           border-color: rgba($primary-green, 0.3);
           background: rgba($primary-green, 0.05);
-          transition: all 0.2s ease;
+          transition: transform 0.2s ease, opacity 0.2s ease;
 
           .category-header {
             .tech-line {
@@ -2045,7 +2112,7 @@ $primary-black: #000000;
 }
 
 .services-section {
-  padding: 8rem 0;
+  padding: var(--space-16) 0;
   margin-top: -2px;
   background: linear-gradient(135deg, map.get(map.get($bg-gradients, brands), start), map.get(map.get($bg-gradients, brands), end));
   color: $primary-black;
@@ -2055,7 +2122,7 @@ $primary-black: #000000;
   // 与上方主营产品保持同宽
   .container {
     max-width: 1600px;
-    padding: 0 2rem;
+    padding: 0 var(--space-4);
   }
 
   .section-title {
@@ -2065,27 +2132,28 @@ $primary-black: #000000;
   .services-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(360px, 1fr));
-    gap: 2.5rem;
+    gap: var(--space-5);
     margin: 0 auto;
     padding: 0;
     grid-auto-rows: 1fr;
   }
 
-  .service-card {
-    background: rgba(255, 255, 255, 0.5);
-    border: 1px solid rgba($primary-green, 0.1);
-    border-radius: 16px;
-    padding: 2.5rem;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+	  .service-card {
+	    background: rgba(255, 255, 255, 0.5);
+	    border: 1px solid rgba($primary-green, 0.1);
+	    border-radius: 16px;
+	    padding: var(--space-5);
+	    transition: transform 0.3s ease, opacity 0.3s ease;
+	    backdrop-filter: blur(10px);
+	    position: relative;
+	    overflow: hidden;
+	    display: flex;
+	    flex-direction: column;
+	    isolation: isolate;
 
-    &::before {
-      content: '';
-      position: absolute;
+	    &::before {
+	      content: '';
+	      position: absolute;
       top: 0;
       left: 0;
       right: 0;
@@ -2104,17 +2172,36 @@ $primary-black: #000000;
         opacity: 1;
       }
 
-      .service-icon {
-        color: $primary-green;
-        transform: scale(1.1);
-      }
-    }
+	      .service-icon {
+	        color: $primary-green;
+	        transform: scale(1.1);
+	      }
+	    }
 
-    .service-icon {
-      font-size: 2.5rem;
-      color: $primary-black;
-      margin-bottom: 1.5rem;
-      transition: all 0.3s ease;
+	    .service-decor {
+	      position: absolute;
+	      right: 22px;
+	      bottom: 18px;
+	      font-size: 10.5rem;
+	      line-height: 1;
+	      color: rgba($primary-green, 0.10);
+	      transform: rotate(-12deg);
+	      pointer-events: none;
+	      z-index: 0;
+	      filter: saturate(1.1);
+	      text-shadow: 0 18px 40px rgba($primary-green, 0.06);
+	    }
+
+	    > *:not(.service-decor) {
+	      position: relative;
+	      z-index: 1;
+	    }
+
+	    .service-icon {
+	      font-size: 2.5rem;
+	      color: $primary-black;
+	      margin-bottom: 1.5rem;
+      transition: transform 0.3s ease, opacity 0.3s ease;
     }
 
     h3 {
@@ -2165,26 +2252,33 @@ $primary-black: #000000;
     }
   }
 
-  @media (max-width: 1200px) {
+  @media (max-width: 1280px) {
     .services-grid {
       grid-template-columns: repeat(2, minmax(360px, 1fr));
     }
   }
 
-  @media (max-width: 768px) {
-    padding: 4rem 0;
+	  @media (max-width: 768px) {
+	    padding: var(--space-8) 0;
 
-    .services-grid {
-      grid-template-columns: 1fr;
-      gap: 1.5rem;
-    }
+	    .services-grid {
+	      grid-template-columns: 1fr;
+	      gap: var(--space-3);
+	    }
 
-    .service-card {
-      padding: 2rem;
+		    .service-card {
+		      padding: var(--space-4);
 
-      .service-icon {
-        font-size: 2rem;
-      }
+		      .service-decor {
+		        font-size: 8.5rem;
+		        right: 16px;
+		        bottom: 12px;
+		        opacity: 0.9;
+		      }
+
+	      .service-icon {
+	        font-size: 2rem;
+	      }
 
       h3 {
         font-size: 1.3rem;
@@ -2234,11 +2328,11 @@ $primary-black: #000000;
   }
 }
 
-@media (max-width: 992px) {
+@media (max-width: 1024px) {
   .cta-wrapper {
     grid-template-columns: 1fr;
-    gap: 2rem;
-    padding: 0 1.5rem;
+    gap: var(--space-4);
+    padding: 0 var(--space-3);
   }
 
   .cta-content {
@@ -2250,9 +2344,9 @@ $primary-black: #000000;
       font-size: 1rem;
     }
 
-    .cta-features {
-      .feature-item {
-        padding: 1rem;
+      .cta-features {
+        .feature-item {
+          padding: var(--space-2);
 
         .feature-icon {
           width: 40px;
@@ -2275,11 +2369,11 @@ $primary-black: #000000;
       flex-direction: column;
 
       .contact-left {
-        padding: 1.5rem;
-        gap: 1rem;
+        padding: var(--space-3);
+        gap: var(--space-2);
 
         .contact-item {
-          padding: 1rem;
+          padding: var(--space-2);
 
           .contact-icon {
             width: 38px;
@@ -2300,7 +2394,7 @@ $primary-black: #000000;
 
       .contact-right {
         width: 100%;
-        padding: 1.5rem;
+        padding: var(--space-3);
         border-left: none;
         border-top: 1px solid rgba($primary-black, 0.05);
 
@@ -2322,7 +2416,7 @@ $primary-black: #000000;
     min-height: 350px;
 
     .image-overlay {
-      padding: 2rem;
+      padding: var(--space-4);
 
       .stats-grid {
         gap: 1.2rem;
@@ -2345,16 +2439,16 @@ $primary-black: #000000;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .cta-wrapper {
-    padding: 0 1rem;
-    gap: 1.5rem;
+    padding: 0 var(--space-2);
+    gap: var(--space-3);
   }
 
   .cta-content {
     .section-tag {
       font-size: 0.8rem;
-      padding: 0.5rem 1rem;
+      padding: var(--space-1) var(--space-2);
     }
 
     h2 {
@@ -2412,27 +2506,27 @@ $primary-black: #000000;
     min-height: 400px;
 
     .image-overlay {
-      padding: 2rem 1.5rem;
+      padding: var(--space-4) var(--space-3);
       display: flex;
       align-items: flex-end;
       min-height: 100%;
 
       .stats-grid {
         grid-template-columns: 1fr;
-        gap: 1.5rem;
+        gap: var(--space-3);
         width: 100%;
-        padding: 1.5rem;
+        padding: var(--space-3);
         background: rgba(0, 0, 0, 0.6);
         border-radius: 12px;
         backdrop-filter: blur(8px);
 
         .stat-item {
-          padding: 1rem;
+          padding: var(--space-2);
           text-align: center;
 
           &:not(:last-child) {
             border-bottom: 1px solid rgba($primary-green, 0.2);
-            padding-bottom: 1.5rem;
+            padding-bottom: var(--space-3);
             margin-bottom: 0.5rem;
           }
 
@@ -2482,7 +2576,7 @@ $primary-black: #000000;
       transform: translateY(-2px);
       border-color: rgba($primary-green, 0.3);
       background: rgba($primary-green, 0.05);
-      transition: all 0.2s ease;
+      transition: transform 0.2s ease, opacity 0.2s ease;
 
       .category-header {
         .tech-line::before {
@@ -2579,14 +2673,14 @@ $primary-black: #000000;
 }
 
 .partners-section {
-  padding: 4rem 0;
+  padding: var(--space-8) 0;
   background: vars.$primary-black;
   color: white;
 
   .section-title {
     text-align: center;
     font-size: 2.8rem;
-    margin-bottom: 5rem;
+    margin-bottom: var(--space-10);
     font-weight: 300;
     position: relative;
     color: white;
@@ -2599,7 +2693,7 @@ $primary-black: #000000;
       background: linear-gradient(90deg, transparent, vars.$primary-green, transparent);
       width: 10%;
       height: 2px;
-      bottom: calc(-1rem - 0.5px);
+      bottom: calc(-1 * var(--space-2) - 0.5px);
       left: 45%;
     }
   }
@@ -2609,7 +2703,7 @@ $primary-black: #000000;
   .partners-section {
     .section-title {
       font-size: 2rem;
-      margin-bottom: 3rem;
+      margin-bottom: var(--space-6);
 
       &::after {
         width: 20%; // 在移动端增加宽度比例
@@ -2619,11 +2713,11 @@ $primary-black: #000000;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .partners-section {
     .section-title {
       font-size: 2.8rem;
-      margin-bottom: 2.5rem;
+      margin-bottom: var(--space-5);
 
       &::after {
         width: 30%; // 在更小的屏幕上进一步增加宽度比例
@@ -2654,7 +2748,7 @@ $primary-black: #000000;
     grid-template-columns: repeat(5, 1fr); // 改为5列，这样每行显示更多
     grid-template-rows: repeat(2, 1fr);
     gap: 1.2rem; // 减小间距
-    padding: 0 1rem;
+    padding: 0 var(--space-2);
   }
 }
 
@@ -2676,7 +2770,7 @@ $primary-black: #000000;
     height: 100%;
     background: rgba(255, 255, 255, 0.95); // 改为白色背景
     border-radius: 8px; // 减小圆角
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
 
     &::before {
@@ -2786,7 +2880,7 @@ $primary-black: #000000;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .partners-grid {
     grid-template-columns: repeat(2, 1fr); // 超小屏幕2列
   }
@@ -2809,8 +2903,8 @@ $primary-black: #000000;
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border: none;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.1);
@@ -2819,7 +2913,7 @@ $primary-black: #000000;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease, opacity 0.3s ease;
   backdrop-filter: blur(8px);
 
   &:hover {
@@ -2853,17 +2947,36 @@ $primary-black: #000000;
   margin-top: 2.5rem;
 
   .dot {
-    width: 8px;
-    height: 8px;
+    width: 48px;
+    height: 48px;
     border: none;
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    background: transparent;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+
+    &::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.2);
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
 
     &.active {
-      width: 24px;
-      background: vars.$primary-green;
+      &::before {
+        width: 24px;
+        background: vars.$primary-green;
+      }
+    }
+
+    &:hover:not(.active)::before {
+      background: rgba(vars.$primary-green, 0.6);
     }
 
     &:hover:not(.active) {

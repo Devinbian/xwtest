@@ -29,6 +29,6 @@ import BackToTop from '@/components/BackToTop.vue';
 
 .main-content {
   flex: 1;
-  margin-top: 128px; // 为固定导航栏留出空间
+  padding-top: var(--header-offset); // 为固定导航栏留出空间（动态高度）
 }
 </style>

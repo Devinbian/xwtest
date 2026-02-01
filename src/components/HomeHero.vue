@@ -4,7 +4,13 @@
       <div v-for="(slide, index) in slides" :key="index" class="hero-slide"
         :class="{ 'active': currentSlide === index, 'prev': isPrevSlide(index), 'next': isNextSlide(index) }">
         <div class="slide-background">
-          <LazyImage :src="slide.image" :placeholder="slide.imagePlaceholder" :alt="slide.title" />
+          <LazyPicture
+            v-if="shouldRenderSlideImage(index)"
+            :src="slide.image"
+            :placeholder="slide.imagePlaceholder"
+            :alt="slide.title"
+            :eager="currentSlide === index"
+          />
         </div>
         <div class="slide-content">
           <h2>{{ slide.title }}</h2>
@@ -16,12 +22,20 @@
       </div>
     </div>
     <div class="slider-controls">
-      <button class="prev" @click="prevSlide">‹</button>
-      <div class="dots">
-        <span v-for="(_, index) in slides" :key="index" :class="{ active: currentSlide === index }"
-          @click="goToSlide(index)"></span>
+      <button type="button" class="prev" aria-label="上一张" @click="prevSlide">‹</button>
+      <div class="dots" role="tablist" aria-label="轮播切换">
+        <button
+          v-for="(_, index) in slides"
+          :key="index"
+          type="button"
+          class="dot"
+          :class="{ active: currentSlide === index }"
+          :aria-label="`切换到第 ${index + 1} 张`"
+          :aria-current="currentSlide === index ? 'true' : undefined"
+          @click="goToSlide(index)"
+        />
       </div>
-      <button class="next" @click="nextSlide">›</button>
+      <button type="button" class="next" aria-label="下一张" @click="nextSlide">›</button>
     </div>
   </div>
 </template>
@@ -30,7 +44,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { getAssetUrl } from '@/utils/assets';
 import { generatePlaceholderUrl } from '@/utils/image';
-import LazyImage from '@/components/LazyImage.vue';
+import LazyPicture from '@/components/LazyPicture.vue';
 
 const slides = [
   {
@@ -65,7 +79,6 @@ let autoplayInterval: number;
 
 const nextSlide = () => {
   currentSlide.value = (currentSlide.value + 1) % slides.length;
-  preloadNextSlide();
 };
 
 const prevSlide = () => {
@@ -107,21 +120,13 @@ const isNextSlide = (index: number) => {
   return index === currentSlide.value + 1;
 };
 
-const preloadImages = () => {
-  slides.forEach(slide => {
-    const img = new Image();
-    img.src = slide.image;
-  });
-};
-
-const preloadNextSlide = () => {
-  const nextIndex = (currentSlide.value + 1) % slides.length;
-  const img = new Image();
-  img.src = slides[nextIndex].image;
+const shouldRenderSlideImage = (index: number) => {
+  // 只渲染当前与下一张，避免所有 slide 同时触发图片加载
+  if (currentSlide.value === index) return true;
+  return isNextSlide(index);
 };
 
 onMounted(() => {
-  preloadImages();
   startAutoplay();
 });
 
@@ -131,9 +136,12 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
+@use '../styles/variables' as vars;
+
 .hero-section {
   position: relative;
-  height: calc(100vh - 80px);
+  height: calc(100dvh - var(--header-offset));
+  height: calc(100vh - var(--header-offset));
   overflow: hidden;
   background: #000;
 }
@@ -149,7 +157,7 @@ onUnmounted(() => {
   height: 100%;
   opacity: 0;
   transform: scale(1.05);
-  transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: transform, opacity;
   visibility: visible;
   z-index: 1;
@@ -198,7 +206,7 @@ onUnmounted(() => {
     height: 100%;
     z-index: 0;
 
-    :deep(.lazy-image) {
+    :deep(.lazy-picture) {
       width: 100%;
       height: 100%;
 
@@ -230,7 +238,7 @@ onUnmounted(() => {
     color: white;
     opacity: 0;
     transform: translateY(20px);
-    transition: all 0.8s ease;
+    transition: transform 0.8s ease, opacity 0.8s ease;
     will-change: transform, opacity;
     background: radial-gradient(ellipse at center,
                 rgba(0, 0, 0, 0.4) 0%,
@@ -238,7 +246,7 @@ onUnmounted(() => {
                 transparent 100%);
 
     h2 {
-      font-size: 3.5rem;
+      font-size: var(--text-4xl);
       font-weight: 700;
       margin-bottom: 1.5rem;
       text-shadow: 0 4px 12px rgba(0, 0, 0, 0.9),
@@ -248,7 +256,7 @@ onUnmounted(() => {
     }
 
     p {
-      font-size: 1.5rem;
+      font-size: var(--text-xl);
       margin-bottom: 2rem;
       opacity: 0.95;
       text-shadow: 0 3px 10px rgba(0, 0, 0, 0.9),
@@ -265,9 +273,9 @@ onUnmounted(() => {
       color: white;
       text-decoration: none;
       border-radius: 4px;
-      font-size: 1.1rem;
+      font-size: var(--text-lg);
       font-weight: 500;
-      transition: all 0.3s ease;
+      transition: transform 0.3s ease, opacity 0.3s ease;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 
       &:hover {
@@ -292,16 +300,16 @@ onUnmounted(() => {
       text-align: center;
 
       h2 {
-        font-size: 2rem;
+        font-size: var(--text-2xl);
       }
 
       p {
-        font-size: 1rem;
+        font-size: var(--text-md);
       }
 
       .cta-button {
         padding: 0.8rem 2rem;
-        font-size: 1rem;
+        font-size: var(--text-md);
       }
     }
   }
@@ -319,8 +327,8 @@ onUnmounted(() => {
   z-index: 3;
 
   button {
-    width: 32px;
-    height: 32px;
+    width: 48px;
+    height: 48px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
     color: white;
@@ -330,7 +338,7 @@ onUnmounted(() => {
     align-items: center;
     justify-content: center;
     font-size: 1.2rem;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease;
     backdrop-filter: blur(4px);
 
     &:hover {
@@ -346,20 +354,32 @@ onUnmounted(() => {
     border-radius: 2rem;
     backdrop-filter: blur(4px);
 
-    span {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.3);
+    .dot {
+      width: 48px;
+      height: 48px;
+      border: none;
+      background: transparent;
       cursor: pointer;
-      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
 
-      &.active {
+      &::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.3);
+        transition: transform 0.3s ease, opacity 0.3s ease;
+      }
+
+      &.active::before {
         background: white;
         transform: scale(1.2);
       }
 
-      &:hover:not(.active) {
+      &:hover:not(.active)::before {
         background: rgba(255, 255, 255, 0.5);
       }
     }

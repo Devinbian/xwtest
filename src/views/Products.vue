@@ -1,21 +1,5 @@
 <template>
   <div>
-    <!-- 筛选结果提示 -->
-    <Teleport to="body">
-      <div class="filter-result-container">
-        <Transition name="fade">
-          <div v-show="showFilterResult" class="filter-result-tip">
-            <template v-if="filteredProducts.length > 0">
-              找到 {{ filteredProducts.length }} 个符合条件的产品
-            </template>
-            <template v-else>
-              没有找到符合条件的产品
-            </template>
-          </div>
-        </Transition>
-      </div>
-    </Teleport>
-
     <div class="products-page">
       <!-- PC端左侧分类菜单 -->
       <aside v-if="!isMobile" class="categories-menu">
@@ -119,7 +103,12 @@
               <div class="brand-list">
                 <button v-for="brand in category.brands" :key="brand" class="brand-item"
                   :class="{ active: isBrandSelected(category.id, brand) }" @click="toggleBrand(category.id, brand)">
-                  <img :src="getAssetUrl(`/images/brands/${brand.toLowerCase()}/logo.png`)" :alt="brand">
+                  <img
+                    :src="getAssetUrl(`/images/brands/${brand.toLowerCase()}/logo.png`)"
+                    :alt="brand"
+                    loading="lazy"
+                    decoding="async"
+                  >
                   <span>{{ brand }}</span>
                 </button>
               </div>
@@ -133,33 +122,133 @@
         <div class="products-header">
           <h2>{{ currentCategory?.name || '全部产品' }}</h2>
           <div class="filters">
-            <!-- 可以添加排序和筛选选项 -->
+            <div class="search-box" role="search" aria-label="搜索产品">
+              <i class="fas fa-search search-icon" aria-hidden="true"></i>
+              <input
+                v-model="searchQuery"
+                class="search-input"
+                type="search"
+                inputmode="search"
+                placeholder="搜索产品 / 型号 / 品牌"
+                @input="onSearchInput"
+                @keydown.enter.prevent="commitSearch()"
+              />
+              <button
+                v-if="searchQuery.trim()"
+                type="button"
+                class="clear-search"
+                aria-label="清除搜索"
+                @click="clearSearch"
+              >
+                <i class="fas fa-times" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+	        </div>
+
+	        <div v-if="filterChips.length > 0" class="selected-filters-bar" aria-label="已选筛选项">
+	          <div class="chips">
+	            <button
+	              v-for="chip in filterChips"
+	              :key="chip.key"
+	              type="button"
+	              class="chip"
+	              :title="chip.title || chip.label"
+	              @click.stop="chip.remove()"
+	            >
+	              <span class="chip-label">{{ chip.label }}</span>
+	              <i class="fas fa-times" aria-hidden="true"></i>
+	            </button>
+	          </div>
+	          <button type="button" class="chips-clear" @click.stop="clearFilters">
+	            清空
+	          </button>
+	        </div>
+
+	        <div v-if="filteredProducts.length === 0" class="empty-products">
+	          <div class="empty-card">
+	            <div class="empty-icon" aria-hidden="true">
+	              <i class="fas fa-search"></i>
+            </div>
+	            <h3>未找到产品</h3>
+	            <p class="empty-desc">当前筛选条件下暂无匹配结果，可尝试清除筛选或直接咨询客服获取推荐。</p>
+
+	            <div v-if="filterChips.length > 0" class="active-tags" aria-label="当前筛选条件">
+	              <button
+	                v-for="chip in filterChips"
+	                :key="chip.key"
+	                type="button"
+	                class="tag-chip"
+	                :title="chip.title || chip.label"
+	                @click.stop="chip.remove()"
+	              >
+	                {{ chip.label }}
+	                <i class="fas fa-times" aria-hidden="true"></i>
+	              </button>
+	            </div>
+
+	            <div class="empty-actions">
+	              <button type="button" class="empty-btn secondary" @click="clearFiltersAndClose">
+	                <i class="fas fa-times"></i>
+                清除筛选
+              </button>
+              <button type="button" class="empty-btn primary" @click="openQuoteDialog()">
+                <i class="fas fa-comments"></i>
+                立即咨询
+              </button>
+            </div>
           </div>
         </div>
 
-        <div class="products-grid">
-          <div v-for="product in filteredProducts" :key="product.id" class="product-card" @click="handleProductClick(product)">
+	        <div v-else class="products-grid">
+	          <div v-for="product in filteredProducts" :key="product.id" class="product-card" @click="handleProductClick(product)">
             <div class="condition-tag" :class="product.condition">
               {{ getConditionText(product.condition) }}
             </div>
             <div class="image-wrapper">
-              <LazyImage :src="product.image" :alt="product.name"
-                :placeholder="getProductPreviewUrl(product)" />
+	              <LazyPicture :src="product.image" :alt="product.name"
+	                :placeholder="generatePlaceholderUrl(product.image)" />
             </div>
             <div class="product-info">
-              <h3>{{ product.name }}</h3>
+	              <h3 :title="product.name">{{ product.name }}</h3>
               <p>{{ product.description }}</p>
-              <div class="specs-list">
-                <span v-for="(spec, index) in product.specs" 
-                      :key="index" 
-                      class="spec-tag"
-                      v-html="formatSpec(spec)">
-                </span>
-              </div>
-              <div class="product-brand">
-                {{ product.brandDisplay }}
-              </div>
-              <div class="card-actions">
+	              <div class="specs-row" v-if="product.specs?.length">
+	                <div
+	                  class="specs-list"
+	                  :id="`specs-${product.id}`"
+	                  :class="{ expanded: isSpecsExpanded(product.id) }"
+	                >
+	                  <span
+	                    v-for="(spec, index) in product.specs"
+	                    :key="index"
+	                    class="spec-tag"
+	                    v-show="isSpecsExpanded(product.id) || index < 3"
+	                    v-html="formatSpec(spec)"
+	                  ></span>
+	                </div>
+	                <button
+	                  v-if="product.specs.length > 3"
+	                  type="button"
+	                  class="specs-more-btn"
+	                  :aria-controls="`specs-${product.id}`"
+	                  :aria-expanded="isSpecsExpanded(product.id)"
+	                  @click.stop="toggleSpecsExpanded(product.id)"
+	                >
+	                  {{ isSpecsExpanded(product.id) ? '收起' : `更多+${product.specs.length - 3}` }}
+	                </button>
+	              </div>
+	              <div class="consult-hints" aria-label="咨询获取信息">
+	                <span class="hint-label">咨询获取：</span>
+	                <span class="hint-item">价格</span>
+	                <span class="hint-item">交期</span>
+	                <span class="hint-item">质保</span>
+	                <span class="hint-item">是否现货</span>
+	                <span class="hint-item">服务承诺</span>
+	              </div>
+	              <div class="product-brand">
+	                {{ product.brandDisplay }}
+	              </div>
+	              <div class="card-actions">
                 <a :href="product.link" 
                    target="_blank" 
                    class="view-details-btn"
@@ -167,34 +256,35 @@
                   <span>查看详情</span>
                   <i class="fas fa-external-link-alt"></i>
                 </a>
-                <button class="quote-btn" 
-                        @click.stop="openQuoteDialog(product)">
-                  <span>索要报价</span>
-                  <i class="fas fa-comment-dollar"></i>
-                </button>
-              </div>
-            </div>
-          </div>
+	                <button class="quote-btn" 
+	                        @click.stop="openQuoteDialog(product)">
+	                  <span>立即咨询</span>
+	                  <i class="fas fa-comments"></i>
+	                </button>
+	              </div>
+	            </div>
+	          </div>
         </div>
       </main>
     </div>
 
     <!-- 添加报价对话框 -->
-    <QuoteDialog 
-      :show="showQuoteDialog"
-      :product="selectedProduct"
-      @close="closeQuoteDialog"
-    />
-  </div>
-</template>
+	    <QuoteDialog 
+	      :show="showQuoteDialog"
+	      :product="selectedProduct"
+	      :contextText="consultContextText"
+	      @close="closeQuoteDialog"
+	    />
+	  </div>
+	</template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, Teleport, nextTick } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { getAssetUrl } from '@/utils/assets';
-import { preloadImage } from '@/utils/image';
-import LazyImage from '@/components/LazyImage.vue';
-import QuoteDialog from '@/components/QuoteDialog.vue';
+	import { reactive, ref, computed, onMounted, onUnmounted, watch } from 'vue';
+	import { useRoute, useRouter } from 'vue-router';
+	import { getAssetUrl } from '@/utils/assets';
+	import { generatePlaceholderUrl, preloadImage } from '@/utils/image';
+	import LazyPicture from '@/components/LazyPicture.vue';
+	import QuoteDialog from '@/components/QuoteDialog.vue';
 
 // 导入数据
 // @ts-ignore
@@ -236,16 +326,102 @@ const typedProducts = products as Product[];
 const route = useRoute();
 const router = useRouter();
 
+type SelectedBrand = { categoryId: number; brand: string };
+
+const findCategoryForBrand = (brand: string): { categoryId: number; brand: string } | null => {
+  const needle = brand.trim().toLowerCase();
+  if (!needle) return null;
+
+  for (const category of typedCategories) {
+    const canonical = category.brands?.find((b) => String(b).trim().toLowerCase() === needle);
+    if (canonical) return { categoryId: category.id, brand: canonical };
+  }
+
+  return null;
+};
+
+const normalizeSelectedBrands = (brands: SelectedBrand[]): SelectedBrand[] => {
+  const seen = new Set<string>();
+  const normalized: SelectedBrand[] = [];
+
+  for (const entry of brands) {
+    const rawBrand = String(entry.brand ?? '').trim();
+    if (!rawBrand) continue;
+
+    let categoryId = entry.categoryId;
+    let brand = rawBrand;
+
+    // If categoryId is invalid or doesn't match current data, try to recover it from categories list.
+    const category = Number.isFinite(categoryId)
+      ? typedCategories.find((c) => c.id === categoryId)
+      : undefined;
+
+    if (category) {
+      const canonical =
+        category.brands?.find((b) => String(b).trim().toLowerCase() === brand.toLowerCase()) ??
+        null;
+      if (canonical) {
+        brand = canonical;
+      } else {
+        const recovered = findCategoryForBrand(brand);
+        if (recovered) {
+          categoryId = recovered.categoryId;
+          brand = recovered.brand;
+        } else {
+          continue;
+        }
+      }
+    } else {
+      const recovered = findCategoryForBrand(brand);
+      if (recovered) {
+        categoryId = recovered.categoryId;
+        brand = recovered.brand;
+      } else {
+        continue;
+      }
+    }
+
+    if (!Number.isFinite(categoryId)) continue;
+    const key = `${categoryId}:${brand}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    normalized.push({ categoryId, brand });
+  }
+
+  return normalized;
+};
+
+const parseBrandsParam = (value: unknown): SelectedBrand[] => {
+  if (typeof value !== 'string' || !value.trim()) return [];
+  return value
+    .split(',')
+    .map((raw) => raw.trim())
+    .filter(Boolean)
+    .map((raw) => {
+      const idx = raw.indexOf(':');
+      if (idx === -1) return { categoryId: Number.NaN, brand: raw };
+      const categoryIdRaw = raw.slice(0, idx);
+      const brand = raw.slice(idx + 1);
+      return { categoryId: Number(categoryIdRaw), brand };
+    });
+};
+
+const serializeBrandsParam = (brands: SelectedBrand[]): string => {
+  return brands
+    .filter((b) => Number.isFinite(b.categoryId) && !!String(b.brand ?? '').trim())
+    .map((b) => `${b.categoryId}:${String(b.brand).trim()}`)
+    .join(',');
+};
+
 // 获取路由中的筛选参数
 const getQueryParams = () => {
+  const normalizedBrands = normalizeSelectedBrands(parseBrandsParam(route.query.brands));
   return {
     categories: (route.query.categories as string || '').split(',').filter(Boolean),
-    brands: (route.query.brands as string || '').split(',').filter(Boolean).map(b => {
-      const [categoryId, brand] = b.split(':');
-      return { categoryId: Number(categoryId), brand };
-    }),
+    brands: normalizedBrands,
     newProduct: route.query.id as string || '',
-    type: route.query.type as string || ''
+    type: route.query.type as string || '',
+    q: route.query.q as string || ''
   };
 };
 
@@ -255,16 +431,27 @@ const initializeFilters = () => {
   selectedCategories.value = params.categories;
   selectedBrands.value = params.brands;
   selectedNewProduct.value = params.newProduct;
+  selectedType.value = params.type;
+  searchQuery.value = params.q;
+
+  // Auto-clean invalid/duplicate brands query (e.g. `NaN:KIKUSUI`), so users can always remove filters.
+  const rawBrands = typeof route.query.brands === 'string' ? route.query.brands : '';
+  const nextBrands = serializeBrandsParam(params.brands);
+  if ((rawBrands || '') !== (nextBrands || '')) {
+    const nextQuery: Record<string, any> = { ...route.query };
+    if (nextBrands) nextQuery.brands = nextBrands;
+    else delete nextQuery.brands;
+    router.replace({ query: nextQuery });
+  }
 };
 
 // 初始化状态
 const selectedCategories = ref<string[]>(getQueryParams().categories);
-const selectedBrands = ref<Array<{ categoryId: number; brand: string; }>>(getQueryParams().brands);
+const selectedBrands = ref<SelectedBrand[]>(getQueryParams().brands);
 const selectedNewProduct = ref<string>(getQueryParams().newProduct);
 const selectedType = ref<string>(getQueryParams().type);
-const showFilterResult = ref(false);
-let filterTipTimer: number | null = null;
-const lastCount = ref(0);
+const searchQuery = ref<string>(getQueryParams().q);
+let searchCommitTimer: number | null = null;
 
 // 当前选中的分类
 const currentCategory = computed(() =>
@@ -311,32 +498,54 @@ const filteredProducts = computed(() => {
     result = result.filter(product => product.id === productId);
   }
 
+  // 关键词搜索（名称/品牌/描述/规格/分类）
+  const q = searchQuery.value.trim().toLowerCase();
+  if (q) {
+    result = result.filter((product) => {
+      const categoryName =
+        typedCategories.find((c) => c.id === product.categoryId)?.name ?? '';
+      const haystack = [
+        product.name,
+        product.brandDisplay,
+        product.brand,
+        product.description,
+        categoryName,
+        ...(product.specs ?? [])
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }
+
   return result;
 });
 
-// 获取产品预览图
-const getProductPreviewUrl = (product: Product) => {
-  const imagePath = product.image.replace(/\.[^.]+$/, '-small$&');
-  return imagePath;
+const commitSearch = () => {
+  const q = searchQuery.value.trim();
+  const newQuery: Record<string, any> = { ...route.query };
+
+  if (q) newQuery.q = q;
+  else delete newQuery.q;
+
+  if (newQuery.id) delete newQuery.id;
+  selectedNewProduct.value = '';
+
+  router.replace({ query: newQuery });
 };
 
-// 监听筛选结果变化并显示提示
-watch(
-  () => filteredProducts.value.length,
-  (newCount, oldCount) => {
-    // 如果数量有变化，显示提示
-    if (oldCount !== undefined && newCount !== oldCount) {
-      if (filterTipTimer) {
-        clearTimeout(filterTipTimer);
-      }
-      showFilterResult.value = true;
-      filterTipTimer = window.setTimeout(() => {
-        showFilterResult.value = false;
-      }, 3000);
-    }
-  },
-  { immediate: false }
-);
+const onSearchInput = () => {
+  if (searchCommitTimer) window.clearTimeout(searchCommitTimer);
+  searchCommitTimer = window.setTimeout(() => {
+    commitSearch();
+  }, 240);
+};
+
+const clearSearch = () => {
+  searchQuery.value = '';
+  commitSearch();
+};
 
 // 检查是否为移动端
 const isMobile = ref(false);
@@ -352,10 +561,6 @@ onMounted(() => {
   checkMobile();
   window.addEventListener('resize', checkMobile);
   initializeFilters();
-  // 设置初始产品数量
-  nextTick(() => {
-    console.log('Initial products count:', filteredProducts.value.length);
-  });
 });
 
 // 检查分类是否处于激活状态
@@ -367,15 +572,6 @@ const isCategoryActive = (categoryId: number) => {
 const toggleCategory = (categoryId: number) => {
   // 清除产品筛选条件
   selectedNewProduct.value = '';
-  // 清除类型筛选条件
-  if (route.query.type) {
-    router.replace({
-      query: {
-        ...route.query,
-        type: undefined
-      }
-    });
-  }
 
   const categoryIdStr = String(categoryId);
   const index = selectedCategories.value.indexOf(categoryIdStr);
@@ -391,18 +587,17 @@ const toggleCategory = (categoryId: number) => {
 const toggleBrand = (categoryId: number, brand: string) => {
   // 清除产品筛选条件
   selectedNewProduct.value = '';
-  // 清除类型筛选条件
-  if (route.query.type) {
-    router.replace({
-      query: {
-        ...route.query,
-        type: undefined
-      }
-    });
+
+  // Defensive: if URL already contains invalid category ids (NaN),
+  // allow removing them without re-adding duplicates.
+  if (!Number.isFinite(categoryId)) {
+    selectedBrands.value = selectedBrands.value.filter((b) => b.brand !== brand);
+    updateQueryParams();
+    return;
   }
 
   const index = selectedBrands.value.findIndex(
-    b => b.categoryId === categoryId && b.brand === brand
+    (b) => b.categoryId === categoryId && b.brand === brand
   );
 
   if (index === -1) {
@@ -416,9 +611,10 @@ const toggleBrand = (categoryId: number, brand: string) => {
 
 // 检查品牌是否被选中
 const isBrandSelected = (categoryId: number, brand: string) => {
-  return selectedBrands.value.some(
-    b => b.categoryId === categoryId && b.brand === brand
-  );
+  if (!Number.isFinite(categoryId)) {
+    return selectedBrands.value.some((b) => b.brand === brand && !Number.isFinite(b.categoryId));
+  }
+  return selectedBrands.value.some((b) => b.categoryId === categoryId && b.brand === brand);
 };
 
 // 监听路由变化，更新选中状态
@@ -458,27 +654,24 @@ const toggleProductType = (type: string) => {
 
 // 计算已选择的筛选项数量
 const activeFiltersCount = computed(() => {
-  // 只统计品牌选择的数量
-  return selectedBrands.value.length;
+  let count = 0;
+  if (route.query.type) count += 1;
+  if (route.query.brand) count += 1;
+  if (searchQuery.value.trim()) count += 1;
+  count += selectedCategories.value.length;
+  count += selectedBrands.value.length;
+  if (selectedNewProduct.value) count += 1;
+  return count;
 });
 
 // 清除筛选
 const clearFilters = () => {
-  // 检查是否是从产品菜单进入
-  const isFromNewMenu = route.query.type === 'new' && 
-                       route.query.category && 
-                       route.query.filters;
-
-  if (isFromNewMenu) {
-    // 如果是从产品菜单进入，不执行清除操作
-    return;
-  }
-
   // 清除所有状态
   selectedType.value = '';
   selectedBrands.value = [];
   selectedCategories.value = [];
   selectedNewProduct.value = '';
+  searchQuery.value = '';
 
   // 清除路由中的所有筛选参数
   router.push({
@@ -486,6 +679,91 @@ const clearFilters = () => {
     query: {} // 清空所有查询参数
   });
 };
+
+		const clearFiltersAndClose = () => {
+		  showFilter.value = false;
+		  clearFilters();
+		};
+
+		type FilterChip = {
+		  key: string;
+		  label: string;
+		  title?: string;
+		  remove: () => void;
+		};
+
+		const removeQueryKey = (key: string) => {
+		  const newQuery: Record<string, any> = { ...route.query };
+		  delete newQuery[key];
+		  router.replace({ query: newQuery });
+		};
+
+		const filterChips = computed<FilterChip[]>(() => {
+		  const chips: FilterChip[] = [];
+
+		  const type = route.query.type as string | undefined;
+		  if (type === 'new' || type === 'used') {
+		    chips.push({
+		      key: `type:${type}`,
+		      label: `类型：${getTypeLabel(type)}`,
+		      remove: () => toggleProductType(type)
+		    });
+		  }
+
+		  const brandJump = route.query.brand as string | undefined;
+		  if (brandJump) {
+		    chips.push({
+		      key: `brandJump:${brandJump}`,
+		      label: `品牌：${brandJump}`,
+		      remove: () => removeQueryKey('brand')
+		    });
+		  }
+
+		  const q = searchQuery.value.trim();
+		  if (q) {
+		    chips.push({
+		      key: `q:${q}`,
+		      label: `搜索：${q}`,
+		      remove: () => clearSearch()
+		    });
+		  }
+
+		  for (const id of selectedCategories.value) {
+		    const category = typedCategories.find((c) => String(c.id) === String(id));
+		    chips.push({
+		      key: `cat:${id}`,
+		      label: category ? `分类：${category.name}` : `分类：${id}`,
+		      remove: () => toggleCategory(Number(id))
+		    });
+		  }
+
+		  for (const b of selectedBrands.value) {
+		    const category = typedCategories.find((c) => c.id === b.categoryId);
+		    chips.push({
+		      key: `brand:${b.categoryId}:${b.brand}`,
+		      label: `品牌：${b.brand}`,
+		      title: category ? `${category.name} / ${b.brand}` : b.brand,
+		      remove: () => toggleBrand(b.categoryId, b.brand)
+		    });
+		  }
+
+		  if (selectedNewProduct.value) {
+		    const id = selectedNewProduct.value;
+		    const p = typedProducts.find((x) => String(x.id) === String(id));
+		    chips.push({
+		      key: `id:${id}`,
+		      label: p ? `产品：${p.name}` : `ID：${id}`,
+		      remove: () => {
+		        selectedNewProduct.value = '';
+		        updateQueryParams();
+		      }
+		    });
+		  }
+
+		  const uniq = new Map<string, FilterChip>();
+		  for (const c of chips) uniq.set(c.key, c);
+		  return Array.from(uniq.values());
+		});
 
 // 添加成色文本转换函数
 const getConditionText = (condition: string) => {
@@ -523,7 +801,10 @@ const updateQueryParams = () => {
     newQuery.categories = selectedCategories.value.join(',');
   }
   if (selectedBrands.value.length > 0) {
-    newQuery.brands = selectedBrands.value.map(b => `${b.categoryId}:${b.brand}`).join(',');
+    newQuery.brands = selectedBrands.value
+      .filter((b) => Number.isFinite(b.categoryId) && !!b.brand)
+      .map((b) => `${b.categoryId}:${b.brand}`)
+      .join(',');
   }
 
   // 添加产品ID（如果有）
@@ -536,6 +817,11 @@ const updateQueryParams = () => {
     newQuery.type = route.query.type as string;
   }
 
+  const q = searchQuery.value.trim();
+  if (q) {
+    newQuery.q = q;
+  }
+
   router.replace({
     query: newQuery
   });
@@ -543,25 +829,14 @@ const updateQueryParams = () => {
 
 // 组件卸载时清理
 onUnmounted(() => {
-  if (filterTipTimer) {
-    clearTimeout(filterTipTimer);
-  }
+  if (searchCommitTimer) window.clearTimeout(searchCommitTimer);
   window.removeEventListener('resize', checkMobile);
 });
 
-// 监听路由变化
-watch(
-  () => route.query.type,
-  (newType) => {
-    console.log('Product type changed:', newType); // 添加调试日志
-  }
-);
-
-// 添加产品点击处理函数
+// 产品卡点击：打开官方详情页（如有）
 const handleProductClick = (product: Product) => {
-  if (product.link) {
-    window.open(product.link, '_blank');
-  }
+  if (!product.link) return;
+  window.open(product.link, '_blank');
 };
 
 // 添加格式化规格的函数
@@ -575,13 +850,86 @@ const formatSpec = (spec: string) => {
   return spec.replace(/(\d+)×10(\d+)/g, '$1×10<sup>$2</sup>');
 };
 
-// 添加状态
-const showQuoteDialog = ref(false);
-const selectedProduct = ref<Product | null>(null);
+	// 添加状态
+	const showQuoteDialog = ref(false);
+	const selectedProduct = ref<Product | null>(null);
 
-// 添加方法
-const openQuoteDialog = (product: Product) => {
-  selectedProduct.value = product;
+	const expandedSpecIds = reactive(new Set<number>());
+	const isSpecsExpanded = (id: number) => expandedSpecIds.has(id);
+	const toggleSpecsExpanded = (id: number) => {
+	  if (expandedSpecIds.has(id)) {
+	    expandedSpecIds.delete(id);
+	    return;
+	  }
+	  expandedSpecIds.add(id);
+	};
+
+		function getTypeLabel(type?: string): string {
+		  if (type === 'new') return '产品';
+		  if (type === 'used') return '中古品';
+		  return '全部';
+		}
+
+		const consultContextText = computed(() => {
+		  const lines: string[] = [];
+
+		  lines.push('【产品信息】');
+		  if (selectedProduct.value) {
+		    const product = selectedProduct.value;
+		    lines.push(`名称：${product.name}`);
+		    lines.push(`品牌：${product.brandDisplay || product.brand}`);
+		    lines.push(`成色：${getConditionText(product.condition)}`);
+		    if (product.link) lines.push(`详情链接：${product.link}`);
+		  } else {
+		    lines.push('未指定（请补充型号/参数/用途）');
+		  }
+
+	  lines.push('');
+	  lines.push('【当前筛选】');
+	  lines.push(`类型：${getTypeLabel(route.query.type as string | undefined)}`);
+
+	  const categoryNames = selectedCategories.value
+	    .map((id) => typedCategories.find((c) => c.id === Number(id))?.name)
+	    .filter(Boolean) as string[];
+	  lines.push(`分类：${categoryNames.length ? categoryNames.join('、') : '全部'}`);
+
+	  const brandGroups = new Map<number, string[]>();
+	  for (const b of selectedBrands.value) {
+	    const list = brandGroups.get(b.categoryId) ?? [];
+	    list.push(b.brand);
+	    brandGroups.set(b.categoryId, list);
+	  }
+	  const brandText = Array.from(brandGroups.entries())
+	    .map(([categoryId, brands]) => {
+	      const categoryName = typedCategories.find((c) => c.id === categoryId)?.name ?? `分类${categoryId}`;
+	      const uniq = Array.from(new Set(brands));
+	      return `${categoryName}：${uniq.join('、')}`;
+	    });
+	  lines.push(`品牌：${brandText.length ? brandText.join('；') : '全部'}`);
+
+	  if (route.query.brand) {
+	    lines.push(`品牌跳转：${route.query.brand as string}`);
+	  }
+	  if (filteredProducts.value.length) {
+	    lines.push(`当前列表数量：${filteredProducts.value.length}`);
+	  }
+
+	  lines.push('');
+	  lines.push('【咨询内容】价格 / 交期 / 质保 / 是否现货 / 服务承诺');
+
+	  try {
+	    lines.push('');
+	    lines.push(`页面：${window.location.href}`);
+	  } catch {
+	    // ignore
+	  }
+
+	  return lines.join('\n');
+	});
+	
+	// 添加方法
+const openQuoteDialog = (product?: Product | null) => {
+  selectedProduct.value = product ?? null;
   showQuoteDialog.value = true;
 };
 
@@ -595,32 +943,32 @@ const closeQuoteDialog = () => {
 @use 'sass:color';
 @use '../styles/variables' as vars;
 
-.products-page {
+	.products-page {
   // 定义全局变量
   --top-bar-height: 40px;
   --nav-height: 38px;
 
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 2rem;
-  padding: 2rem;
-  min-height: 100vh;
-  background: #f8f8f8;
+	  display: grid;
+	  grid-template-columns: 280px 1fr;
+	  gap: var(--space-4);
+	  padding: var(--space-4);
+	  min-height: 100vh;
+	  background: #f8f8f8;
 
   @media (max-width: 768px) {
     display: block;
-    padding-top: calc(var(--nav-height) + 60px + 1px);
+    padding: 1rem;
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
 }
 
-.categories-menu {
+	.categories-menu {
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  padding: 1.5rem;
-  height: fit-content;
-  position: sticky;
+	  padding: var(--space-3);
+	  height: fit-content;
+	  position: sticky;
   // top: calc(var(--top-bar-height) + var(--nav-height) + 2rem);
 
   @media (max-width: 768px) {
@@ -636,7 +984,7 @@ const closeQuoteDialog = () => {
     z-index: 999;
 
     // 筛选面板内容
-    .filter-content {
+	    .filter-content {
       position: fixed;
       left: 0;
       right: 0;
@@ -646,14 +994,14 @@ const closeQuoteDialog = () => {
       border-radius: 20px 20px 0 0;
       transform: translateY(100%);
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      padding: 1rem;
+	      padding: var(--space-2);
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       pointer-events: auto;
     }
 
     // 筛选按钮固定在底部
-    .mobile-filter-header {
+	    .mobile-filter-header {
       position: fixed;
       left: 0;
       right: 0;
@@ -664,25 +1012,25 @@ const closeQuoteDialog = () => {
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0 1rem;
+	      padding: 0 var(--space-2);
       padding-bottom: env(safe-area-inset-bottom);
       box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
       pointer-events: auto;
       z-index: 1000;
 
-      h3 {
-        margin: 0;
-        font-size: 1.1rem;
-        font-weight: 500;
-      }
+	      h3 {
+	        margin: 0;
+	        font-size: var(--text-lg);
+	        font-weight: 500;
+	      }
 
-      .close-filter-btn {
-        position: absolute;
-        right: 1rem;
-        padding: 0.5rem;
-        color: #666;
-      }
-    }
+		      .close-filter-btn {
+		        position: absolute;
+		        right: var(--space-2);
+		        padding: var(--space-1);
+		        color: #666;
+		      }
+	    }
 
     // 显示状态
     &.show {
@@ -694,68 +1042,70 @@ const closeQuoteDialog = () => {
     }
   }
 
-  .filter-status {
-    margin-bottom: 1.5rem;
-    padding: 1rem;
-    background: rgba(vars.$primary-green, 0.05);
-    border-radius: 8px;
-    display: flex;
+	  .filter-status {
+	    margin-bottom: var(--space-3);
+	    padding: var(--space-2);
+	    background: rgba(vars.$primary-green, 0.05);
+	    border-radius: 8px;
+	    display: flex;
     align-items: center;
     justify-content: space-between;
 
-    .status-text {
-      color: vars.$primary-green;
-      font-weight: 500;
-      font-size: 0.9rem;
-    }
+	    .status-text {
+	      color: vars.$primary-green;
+	      font-weight: 500;
+	      font-size: var(--text-sm);
+	    }
 
-    .clear-all-btn {
-      padding: 0.4rem 0.8rem;
-      background: white;
-      border: 1px solid rgba(vars.$primary-green, 0.2);
-      border-radius: 6px;
-      color: vars.$primary-green;
-      font-size: 0.85rem;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
+		    .clear-all-btn {
+	      padding: var(--space-1) var(--space-2);
+	      background: white;
+	      border: 1px solid rgba(vars.$primary-green, 0.2);
+	      border-radius: 6px;
+	      color: vars.$primary-green;
+	      font-size: var(--text-sm);
+	      display: flex;
+	      align-items: center;
+	      gap: var(--space-1);
+	      cursor: pointer;
+		      transition: transform 0.2s ease, opacity 0.2s ease;
 
       i {
         font-size: 0.8rem;
       }
 
-      &:hover {
-        background: vars.$primary-green;
-        color: white;
-      }
-    }
+	      &:hover {
+	        background: vars.$primary-green;
+	        color: white;
+	        transform: translateY(-1px);
+	      }
+	    }
   }
 
-  .product-type-selector {
-    margin-top: 1.5rem;
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+	  .product-type-selector {
+	    margin-top: var(--space-3);
+	    display: flex;
+	    gap: var(--space-2);
+	    margin-bottom: var(--space-4);
+	    padding-bottom: var(--space-2);
+	    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 
-    .type-btn {
-      flex: 1;
-      padding: 0.8rem;
-      border: 1px solid rgba(0, 0, 0, 0.1);
-      border-radius: 6px;
-      background: white;
-      color: #666;
-      font-size: 0.95rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
+		    .type-btn {
+	      flex: 1;
+	      padding: var(--space-2);
+	      border: 1px solid rgba(0, 0, 0, 0.1);
+	      border-radius: 6px;
+	      background: white;
+	      color: #666;
+	      font-size: var(--text-md);
+	      cursor: pointer;
+		      transition: transform 0.2s ease, opacity 0.2s ease;
 
-      &:hover {
-        border-color: vars.$primary-green;
-        color: vars.$primary-green;
-      }
+	      &:hover {
+	        border-color: vars.$primary-green;
+	        color: vars.$primary-green;
+	        transform: translateY(-1px);
+	      }
 
       &.active {
         background: vars.$primary-green;
@@ -765,36 +1115,37 @@ const closeQuoteDialog = () => {
     }
   }
 
-  .category-group {
-    &+.category-group {
-      margin-top: 2rem;
-      padding-top: 2rem;
-      border-top: 1px solid rgba(0, 0, 0, 0.08);
-    }
-  }
+	  .category-group {
+	    &+.category-group {
+	      margin-top: var(--space-4);
+	      padding-top: var(--space-4);
+	      border-top: 1px solid rgba(0, 0, 0, 0.08);
+	    }
+	  }
 
-  .category-title {
-    font-size: 1.2rem;
-    color: vars.$primary-black;
-    margin: 0 0 1.5rem;
-    font-weight: 500;
-  }
+	  .category-title {
+	    font-size: var(--text-lg);
+	    color: vars.$primary-black;
+	    margin: 0 0 var(--space-3);
+	    font-weight: 500;
+	  }
 
   .category-item {
     margin-bottom: 0.5rem;
 
-    .category-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.8rem;
-      cursor: pointer;
-      border-radius: 6px;
-      transition: all 0.3s ease;
+		    .category-header {
+	      display: flex;
+	      justify-content: space-between;
+	      align-items: center;
+	      padding: var(--space-2);
+	      cursor: pointer;
+	      border-radius: 6px;
+		      transition: transform 0.2s ease, opacity 0.2s ease;
 
-      &:hover {
-        background: rgba(vars.$primary-green, 0.05);
-      }
+	      &:hover {
+	        background: rgba(vars.$primary-green, 0.05);
+	        transform: translateY(-1px);
+	      }
 
       i {
         font-size: 0.8rem;
@@ -803,103 +1154,414 @@ const closeQuoteDialog = () => {
       }
     }
 
-    .brands-list {
-      display: none;
-      padding: 0.5rem 0 0.5rem 1.5rem;
+	    .brands-list {
+	      display: none;
+	      padding: var(--space-1) 0 var(--space-1) var(--space-3);
 
       &.active {
         display: block;
       }
 
-      .brand-link {
-        display: block;
-        padding: 0.5rem;
-        color: #666;
-        text-decoration: none;
-        border-radius: 4px;
-        transition: all 0.3s ease;
+		      .brand-link {
+	        display: block;
+	        padding: var(--space-1);
+	        color: #666;
+	        text-decoration: none;
+	        border-radius: 4px;
+	        transition: transform 0.2s ease, opacity 0.2s ease;
         border: none;
         background: none;
         width: 100%;
         text-align: left;
         cursor: pointer;
 
-        &:hover {
-          color: vars.$primary-green;
-          background: rgba(vars.$primary-green, 0.05);
-        }
+	        &:hover {
+	          color: vars.$primary-green;
+	          background: rgba(vars.$primary-green, 0.05);
+	          transform: translateX(2px);
+	        }
 
-        &.active {
-          color: vars.$primary-green;
-          font-weight: 500;
-          background: rgba(vars.$primary-green, 0.08);
-          position: relative;
-          padding-right: 2rem;
+	        &.active {
+	          color: vars.$primary-green;
+	          font-weight: 500;
+	          background: rgba(vars.$primary-green, 0.08);
+	          position: relative;
+	          padding-right: var(--space-4);
 
-          &::after {
-            content: '\f00c';
-            font-family: 'Font Awesome 5 Free';
-            font-weight: 900;
-            position: absolute;
-            right: 0.5rem;
-            font-size: 0.8rem;
-          }
-        }
-      }
-    }
-  }
+	          &::after {
+	            content: '\f00c';
+	            font-family: 'Font Awesome 5 Free';
+	            font-weight: 900;
+	            position: absolute;
+	            right: var(--space-1);
+	            font-size: 0.8rem;
+	          }
+	        }
+	      }
+	    }
+	  }
 
-  .filter-actions {
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid rgba(0, 0, 0, 0.08);
+	  .filter-actions {
+	    margin-top: var(--space-3);
+	    padding-top: var(--space-3);
+	    border-top: 1px solid rgba(0, 0, 0, 0.08);
 
-    .clear-btn {
-      width: 100%;
-      padding: 0.8rem;
-      background: #f5f5f5;
-      border: none;
-      border-radius: 6px;
-      color: #666;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
+	    .clear-btn {
+	      width: 100%;
+	      padding: var(--space-2);
+	      background: #f5f5f5;
+	      border: none;
+	      border-radius: 6px;
+	      color: #666;
+	      font-size: var(--text-sm);
+	      cursor: pointer;
+	      transition: transform 0.2s ease, opacity 0.2s ease;
 
-      &:hover {
-        background: rgba(vars.$primary-green, 0.08);
-        color: vars.$primary-green;
-      }
+	      &:hover {
+	        background: rgba(vars.$primary-green, 0.08);
+	        color: vars.$primary-green;
+	        transform: translateY(-1px);
+	      }
     }
   }
 }
 
-.products-content {
-  .products-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
+				.products-content {
+				  .products-header {
+			    display: flex;
+			    justify-content: space-between;
+			    align-items: center;
+			    margin-bottom: var(--space-4);
+			    gap: var(--space-2);
+			    flex-wrap: wrap;
 
-    h2 {
-      font-size: 1.5rem;
-      color: vars.$primary-black;
-      margin: 0;
-    }
-  }
+			    h2 {
+			      font-size: var(--text-xl);
+			      color: vars.$primary-black;
+			      margin: 0;
+			    }
 
-  .products-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 2rem;
-    margin-top: 2rem;
+			    .filters {
+			      display: flex;
+			      align-items: center;
+			      justify-content: flex-end;
+			      gap: var(--space-2);
+			      flex: 1 1 320px;
+			      min-width: 240px;
+			    }
 
-    .product-card {
-      background: white;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-      position: relative;
-      cursor: pointer;
+				    .search-box {
+			      position: relative;
+			      width: min(520px, 100%);
+			      flex: 1 1 360px;
+			      background: white;
+			      border: 1px solid rgba(0, 0, 0, 0.08);
+			      border-radius: 999px;
+			      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+			      display: flex;
+			      align-items: center;
+			      padding: 10px 12px;
+				      transition: transform 0.22s ease, opacity 0.22s ease;
+
+			      &:focus-within {
+			        border-color: rgba(vars.$primary-green, 0.45);
+			        box-shadow: 0 10px 28px rgba(vars.$primary-green, 0.14);
+			      }
+
+			      .search-icon {
+			        color: #888;
+			        margin-left: 2px;
+			        margin-right: 10px;
+			        flex: 0 0 auto;
+			      }
+
+				      .search-input {
+				        flex: 1 1 auto;
+				        border: none;
+				        outline: none;
+				        background: transparent;
+				        font-size: var(--text-sm);
+				        color: vars.$primary-black;
+				        min-width: 0;
+				        -webkit-appearance: none;
+				        appearance: none;
+
+				        &::placeholder {
+				          color: #9aa0a6;
+				        }
+
+				        &::-webkit-search-cancel-button,
+				        &::-webkit-search-decoration {
+				          -webkit-appearance: none;
+				          appearance: none;
+				          display: none;
+				        }
+
+				        &::-ms-clear {
+				          display: none;
+				        }
+				      }
+
+				      .clear-search {
+			        flex: 0 0 auto;
+			        width: 32px;
+			        height: 32px;
+			        border-radius: 999px;
+			        border: none;
+			        background: rgba(0, 0, 0, 0.06);
+			        color: #666;
+			        cursor: pointer;
+			        display: inline-flex;
+			        align-items: center;
+			        justify-content: center;
+				        transition: transform 0.18s ease, opacity 0.18s ease;
+
+			        &:hover {
+			          background: rgba(0, 0, 0, 0.1);
+			          transform: translateY(-1px);
+				    }
+				  }
+
+						}
+					  }
+
+				  .selected-filters-bar {
+				    display: flex;
+				    align-items: center;
+				    justify-content: space-between;
+				    gap: var(--space-2);
+				    padding: var(--space-2);
+				    margin-bottom: var(--space-4);
+				    background: white;
+				    border: 1px solid rgba(0, 0, 0, 0.08);
+				    border-radius: 12px;
+
+				    .chips {
+				      display: flex;
+				      flex-wrap: wrap;
+				      gap: 8px;
+				      min-width: 0;
+				      flex: 1;
+				    }
+
+				    .chip {
+				      display: inline-flex;
+				      align-items: center;
+				      gap: 6px;
+				      padding: 3px 10px;
+				      border-radius: 999px;
+				      border: 1px solid rgba(vars.$primary-green, 0.16);
+				      background: rgba(vars.$primary-green, 0.06);
+				      color: vars.$primary-green;
+				      font-size: var(--text-xs);
+				      cursor: pointer;
+				      white-space: nowrap;
+
+				      i {
+				        font-size: 0.75rem;
+				      }
+				    }
+
+				    .chips-clear {
+				      flex: 0 0 auto;
+				      height: 32px;
+				      padding: 0 12px;
+				      border-radius: 10px;
+				      border: 1px solid rgba(vars.$primary-green, 0.24);
+				      background: white;
+				      color: vars.$primary-green;
+				      font-size: var(--text-sm);
+				      font-weight: 600;
+				      cursor: pointer;
+				      transition: transform 0.2s ease, opacity 0.2s ease;
+
+				      &:hover {
+				        transform: translateY(-1px);
+				      }
+				    }
+				  }
+
+			  .empty-products {
+			    display: grid;
+			    place-items: center;
+			    padding: var(--space-6) var(--space-3);
+		    margin-top: var(--space-3);
+		    min-height: min(520px, 55vh);
+
+		    .empty-card {
+		      width: min(720px, 100%);
+		      background: white;
+		      border-radius: 18px;
+		      border: 1px solid rgba(0, 0, 0, 0.06);
+		      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
+		      padding: clamp(22px, 3vw, 44px);
+		      text-align: center;
+		      position: relative;
+		      overflow: hidden;
+
+		      &::before {
+		        content: '';
+		        position: absolute;
+		        top: -140px;
+		        right: -140px;
+		        width: 320px;
+		        height: 320px;
+		        background: radial-gradient(
+		          circle at 35% 35%,
+		          rgba(vars.$primary-green, 0.18),
+		          rgba(vars.$primary-green, 0) 60%
+		        );
+		        pointer-events: none;
+		      }
+		    }
+
+		    .empty-icon {
+		      width: 72px;
+		      height: 72px;
+		      border-radius: 999px;
+		      margin: 0 auto var(--space-3);
+		      display: flex;
+		      align-items: center;
+		      justify-content: center;
+		      color: vars.$primary-green;
+		      background: linear-gradient(
+		        180deg,
+		        rgba(vars.$primary-green, 0.14),
+		        rgba(vars.$primary-green, 0.06)
+		      );
+		      border: 1px solid rgba(vars.$primary-green, 0.22);
+		      box-shadow: 0 10px 24px rgba(vars.$primary-green, 0.14);
+
+		      i {
+		        font-size: 1.35rem;
+		      }
+		    }
+
+		    h3 {
+		      margin: 0 0 var(--space-2);
+		      font-size: var(--text-xl);
+		      color: vars.$primary-black;
+		      letter-spacing: 0.2px;
+		    }
+
+			    .empty-desc {
+		      margin: 0 auto;
+		      max-width: 520px;
+		      font-size: var(--text-md);
+		      line-height: 1.7;
+			      color: #666;
+			    }
+
+			    .active-tags {
+			      display: flex;
+			      flex-wrap: wrap;
+			      gap: 8px;
+			      justify-content: center;
+			      margin-top: var(--space-3);
+			      margin-bottom: var(--space-3);
+
+			      .tag-chip {
+			        display: inline-flex;
+			        align-items: center;
+			        gap: 6px;
+			        padding: 4px 10px;
+			        border-radius: 999px;
+			        font-size: var(--text-xs);
+			        color: vars.$primary-green;
+			        background: rgba(vars.$primary-green, 0.06);
+			        border: 1px solid rgba(vars.$primary-green, 0.16);
+			        white-space: nowrap;
+			        cursor: pointer;
+
+			        i {
+			          font-size: 0.75rem;
+			        }
+			      }
+			    }
+
+			    .empty-actions {
+			      display: flex;
+			      gap: var(--space-2);
+		      justify-content: center;
+		      margin-top: var(--space-3);
+		      flex-wrap: wrap;
+		    }
+
+			    .empty-btn {
+		      display: inline-flex;
+		      align-items: center;
+		      justify-content: center;
+		      gap: var(--space-1);
+		      padding: 10px 16px;
+		      border-radius: 12px;
+		      font-size: var(--text-sm);
+		      font-weight: 600;
+		      cursor: pointer;
+			      transition: transform 0.22s ease, opacity 0.22s ease;
+		      border: 1px solid transparent;
+		      user-select: none;
+
+		      i {
+		        font-size: 0.95rem;
+		      }
+
+		      &.primary {
+		        background: vars.$primary-green;
+		        color: white;
+		        box-shadow: 0 14px 28px rgba(vars.$primary-green, 0.22);
+
+		        &:hover {
+		          background: color.adjust(vars.$primary-green, $lightness: -4%);
+		          transform: translateY(-1px);
+		        }
+		      }
+
+		      &.secondary {
+		        background: white;
+		        color: vars.$primary-green;
+		        border-color: rgba(vars.$primary-green, 0.32);
+
+		        &:hover {
+		          background: rgba(vars.$primary-green, 0.06);
+		          transform: translateY(-1px);
+		        }
+		      }
+
+		      &:active {
+		        transform: translateY(0);
+		      }
+		    }
+
+		    @media (max-width: 768px) {
+		      padding: var(--space-5) var(--space-2);
+		      min-height: min(480px, 55vh);
+
+		      .empty-actions {
+		        width: 100%;
+		        gap: var(--space-2);
+		      }
+
+		      .empty-btn {
+		        flex: 1 1 0;
+		        min-width: 44%;
+		      }
+		    }
+		  }
+
+		  .products-grid {
+		    display: grid;
+		    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+		    gap: var(--space-4);
+		    margin-top: var(--space-4);
+
+		    .product-card {
+	      background: white;
+	      border-radius: 16px;
+	      overflow: hidden;
+	      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+		      position: relative;
+		      cursor: pointer;
+		      transition: transform 0.25s ease, opacity 0.25s ease;
 
       .image-wrapper {
         position: relative;
@@ -908,11 +1570,11 @@ const closeQuoteDialog = () => {
         overflow: hidden;
         background: #f0f0f0;
 
-        .lazy-image {
+        .lazy-picture {
           width: 100%;
           height: 100%;
 
-          :deep(img) {
+          :deep(.main-image) {
             width: 100%;
             height: 100%;
             object-fit: cover;
@@ -921,7 +1583,7 @@ const closeQuoteDialog = () => {
         }
 
         &:hover {
-          :deep(img) {
+          :deep(.main-image) {
             transform: scale(1.08);
           }
         }
@@ -981,109 +1643,188 @@ const closeQuoteDialog = () => {
         z-index: 1;
       }
 
-      .product-info {
-        padding: 1.5rem;
-        border-top: 1px solid rgba(0, 0, 0, 0.04);
+	      .product-info {
+	        padding: var(--space-3);
+	        border-top: 1px solid rgba(0, 0, 0, 0.04);
 
-        h3 {
-          font-size: 1.2rem;
-          margin: 0 0 0.8rem;
-          color: vars.$primary-black;
-          font-weight: 600;
-          line-height: 1.4;
-        }
+		        h3 {
+		          font-size: var(--text-lg);
+		          margin: 0 0 0.8rem;
+		          color: vars.$primary-black;
+		          font-weight: 600;
+		          line-height: 1.4;
+		          white-space: nowrap;
+		          overflow: hidden;
+		          text-overflow: ellipsis;
+		          min-height: calc(1.4em * 1);
+		        }
 
-        p {
-          font-size: 0.95rem;
-          color: #666;
-          margin: 0 0 1.2rem;
-          line-height: 1.6;
-        }
+	        p {
+	          font-size: 0.95rem;
+	          color: #666;
+	          margin: 0 0 1.2rem;
+	          line-height: 1.6;
+	          display: -webkit-box;
+	          -webkit-line-clamp: 2;
+	          -webkit-box-orient: vertical;
+	          overflow: hidden;
+	          min-height: calc(1.6em * 2);
+	        }
 
-        .specs-list {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.8rem;
-          margin-bottom: 1.2rem;
+		        .specs-row {
+		          display: flex;
+		          align-items: center;
+		          gap: 8px;
+		          margin-bottom: var(--space-2);
+		        }
 
-          .spec-tag {
-            padding: 0.5rem 1rem;
-            background: #f5f5f5;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            color: #555;
-            transition: all 0.3s ease;
+		        .specs-list {
+		          display: flex;
+		          flex: 1;
+		          flex-wrap: nowrap;
+		          gap: 6px;
+		          overflow: hidden;
+		          min-height: 22px;
 
-            &:hover {
-              background: rgba(vars.$primary-green, 0.08);
-              color: vars.$primary-green;
-            }
-          }
-        }
+		          &.expanded {
+		            flex-wrap: wrap;
+		            overflow: visible;
+		          }
 
-        .product-brand {
-          font-size: 1rem;
-          font-weight: 600;
-          color: vars.$primary-green;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.5rem 1rem;
-          background: rgba(vars.$primary-green, 0.06);
-          border-radius: 6px;
-          transition: all 0.3s ease;
+			          .spec-tag {
+		            flex: 0 0 auto;
+		            padding: 4px 10px;
+		            background: #f5f5f5;
+		            border-radius: 6px;
+		            font-size: var(--text-xs);
+		            color: #555;
+			            transition: transform 0.3s ease, opacity 0.3s ease;
+		            white-space: nowrap;
+
+		            &:hover {
+		              background: rgba(vars.$primary-green, 0.08);
+		              color: vars.$primary-green;
+		            }
+		          }
+		        }
+
+		        .specs-more-btn {
+		          flex: 0 0 auto;
+		          height: 22px;
+		          padding: 0 10px;
+		          border-radius: 999px;
+		          border: 1px solid rgba(vars.$primary-green, 0.18);
+		          background: white;
+		          color: vars.$primary-green;
+		          font-size: var(--text-xs);
+		          cursor: pointer;
+		          white-space: nowrap;
+
+		          &:hover {
+		            background: rgba(vars.$primary-green, 0.06);
+		          }
+		        }
+
+	        .consult-hints {
+	          display: flex;
+	          flex-wrap: nowrap;
+	          align-items: center;
+	          gap: 6px;
+	          margin-bottom: var(--space-2);
+	          color: #666;
+	          font-size: var(--text-xs);
+	          overflow: hidden;
+	          min-height: 20px;
+
+	          .hint-label {
+	            font-weight: 500;
+	            color: vars.$primary-black;
+	            flex: 0 0 auto;
+	            white-space: nowrap;
+	          }
+
+	          .hint-item {
+	            flex: 0 0 auto;
+	            padding: 1px 8px;
+	            border-radius: 999px;
+	            background: rgba(vars.$primary-green, 0.06);
+	            border: 1px solid rgba(vars.$primary-green, 0.12);
+	            color: vars.$primary-green;
+	            line-height: 1.35;
+	            white-space: nowrap;
+	          }
+
+	          .hint-item:nth-child(n + 5) {
+	            display: none;
+	          }
+	        }
+
+			        .product-brand {
+		          font-size: var(--text-sm);
+		          font-weight: 600;
+		          color: vars.$primary-green;
+		          display: inline-flex;
+		          align-items: center;
+		          gap: var(--space-1);
+		          padding: 2px 10px;
+		          background: rgba(vars.$primary-green, 0.06);
+		          border-radius: 6px;
+			          transition: transform 0.3s ease, opacity 0.3s ease;
+		          white-space: nowrap;
 
           &:hover {
             background: rgba(vars.$primary-green, 0.1);
             transform: translateY(-1px);
           }
 
-          &::before {
-            content: '品牌';
-            font-size: 0.8rem;
-            color: #666;
-            font-weight: normal;
-          }
-        }
+	          &::before {
+	            content: '品牌';
+	            font-size: var(--text-xs);
+	            color: #666;
+	            font-weight: normal;
+	          }
+	        }
 
-        .card-actions {
-          display: flex;
-          gap: 1rem;
-          margin-top: 1rem;
+	        .card-actions {
+	          display: flex;
+	          gap: var(--space-2);
+	          margin-top: var(--space-2);
 
-          .view-details-btn,
-          .quote-btn {
+	          .view-details-btn,
+	          .quote-btn {
             flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            padding: 0.8rem 1.2rem;
-            border-radius: 6px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            cursor: pointer;
-          }
+	            display: flex;
+	            align-items: center;
+	            justify-content: center;
+	            gap: var(--space-1);
+	            padding: var(--space-2) var(--space-3);
+	            border-radius: 6px;
+	            font-weight: 500;
+		            transition: transform 0.2s ease, opacity 0.2s ease;
+		            cursor: pointer;
+	          }
 
-	          .view-details-btn {
+		          .view-details-btn {
             background: vars.$primary-green;
             color: white;
             text-decoration: none;
 
-	            &:hover {
-	              background: color.adjust(vars.$primary-green, $lightness: -5%);
-	            }
-	          }
+		            &:hover {
+		              background: color.adjust(vars.$primary-green, $lightness: -5%);
+		              transform: translateY(-1px);
+		            }
+		          }
 
-          .quote-btn {
+	          .quote-btn {
             background: white;
             color: vars.$primary-green;
             border: 1px solid vars.$primary-green;
 
-            &:hover {
-              background: rgba(vars.$primary-green, 0.1);
-            }
-          }
+	            &:hover {
+	              background: rgba(vars.$primary-green, 0.1);
+	              transform: translateY(-1px);
+	            }
+	          }
         }
       }
 
@@ -1095,45 +1836,68 @@ const closeQuoteDialog = () => {
   }
 }
 
-@media (max-width: 768px) {
-  .products-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.2rem;
+		@media (max-width: 768px) {
+		  .products-content {
+		    .products-header {
+		      align-items: flex-start;
+
+		      .filters {
+		        width: 100%;
+		        justify-content: stretch;
+		        flex: 1 1 100%;
+		      }
+
+		      .search-box {
+		        width: 100%;
+		        flex: 1 1 100%;
+		      }
+		    }
+		  }
+
+		  .products-grid {
+		    grid-template-columns: repeat(2, 1fr);
+		    gap: var(--space-2);
 
     .product-card {
       .image-wrapper {
         height: 200px;
 
-        img {
-          padding: 1rem;
-        }
-      }
+	        img {
+	          padding: var(--space-2);
+	        }
+	      }
 
-      .product-info {
-        padding: 1.2rem;
+	      .product-info {
+	        padding: var(--space-3);
 
-        h3 {
-          font-size: 1.1rem;
-        }
+	        h3 {
+	          font-size: var(--text-lg);
+	        }
 
-        p {
-          font-size: 0.9rem;
-          margin-bottom: 1rem;
-        }
+	        p {
+	          font-size: 0.9rem;
+	          margin-bottom: var(--space-2);
+	        }
 
-        .specs-list {
-          gap: 0.6rem;
-          margin-bottom: 1.2rem;
+	        .specs-list {
+	          gap: 0.6rem;
+	          margin-bottom: 1.2rem;
 
-          .spec-tag {
-            padding: 0.4rem 0.8rem;
-            font-size: 0.85rem;
-          }
-        }
+	          .spec-tag {
+	            padding: 0.4rem 0.8rem;
+	            font-size: 0.85rem;
+	          }
+	        }
 
-        .product-brand {
-          font-size: 0.9rem;
-          padding: 0.4rem 0.8rem;
+	        .specs-more-btn {
+	          height: 22px;
+	          padding: 0 10px;
+	          font-size: 0.75rem;
+	        }
+
+	        .product-brand {
+	          font-size: 0.9rem;
+	          padding: 0.4rem 0.8rem;
 
           &::before {
             font-size: 0.75rem;
@@ -1157,12 +1921,12 @@ const closeQuoteDialog = () => {
   }
 }
 
-@media (max-width: 480px) {
-  .products-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-}
+	@media (max-width: 640px) {
+	  .products-grid {
+	    grid-template-columns: 1fr;
+	    gap: var(--space-2);
+	  }
+	}
 
 // 移动端筛选样式
 .mobile-filter {
@@ -1201,7 +1965,7 @@ const closeQuoteDialog = () => {
   }
 
   // 遮罩层样式
-  .menu-overlay {
+	  .menu-overlay {
     position: fixed;
     top: var(--nav-height);
     left: 0;
@@ -1210,7 +1974,7 @@ const closeQuoteDialog = () => {
     background: rgba(0, 0, 0, 0.3);
     opacity: 0;
     visibility: hidden;
-    transition: all 0.3s ease;
+	    transition: opacity 0.3s ease;
     z-index: 1000;
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
@@ -1365,11 +2129,11 @@ const closeQuoteDialog = () => {
       will-change: transform;
 
       // 筛选区块样式
-      .filter-section {
-        margin-bottom: 2rem;
-        background: white;
-        border-radius: 12px;
-        overflow: hidden;
+	      .filter-section {
+	        margin-bottom: var(--space-4);
+	        background: white;
+	        border-radius: 12px;
+	        overflow: hidden;
 
         &:last-child {
           margin-bottom: calc(env(safe-area-inset-bottom, 20px) + 80px); // 为最后一个区块增加更多底部边距
@@ -1388,7 +2152,7 @@ const closeQuoteDialog = () => {
           grid-template-columns: repeat(2, 1fr);
           gap: 0.8rem;
 
-          .filter-item {
+	          .filter-item {
             height: 44px;
             background: #f5f5f5;
             border: none;
@@ -1396,16 +2160,20 @@ const closeQuoteDialog = () => {
             color: #666;
             font-size: 0.95rem;
             font-weight: 500;
-            transition: all 0.3s ease;
+	            transition: transform 0.2s ease, opacity 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
 
-            &.active {
-              background: vars.$primary-green;
-              color: white;
-            }
+	            &:hover {
+	              transform: translateY(-1px);
+	            }
+
+	            &.active {
+	              background: vars.$primary-green;
+	              color: white;
+	            }
 
             &:active {
               opacity: 0.8;
@@ -1419,7 +2187,7 @@ const closeQuoteDialog = () => {
           grid-template-columns: repeat(2, 1fr);
           gap: 0.8rem;
 
-          .brand-item {
+	          .brand-item {
             height: 52px;
             padding: 0 1rem;
             background: #f5f5f5;
@@ -1428,8 +2196,8 @@ const closeQuoteDialog = () => {
             display: flex;
             align-items: center;
             gap: 0.8rem;
-            transition: all 0.3s ease;
-            cursor: pointer;
+	            transition: transform 0.2s ease, opacity 0.2s ease;
+	            cursor: pointer;
 
             img {
               width: 24px;
@@ -1443,8 +2211,12 @@ const closeQuoteDialog = () => {
               font-weight: 500;
             }
 
-            &.active {
-              background: rgba(vars.$primary-green, 0.1);
+	            &:hover {
+	              transform: translateY(-1px);
+	            }
+
+	            &.active {
+	              background: rgba(vars.$primary-green, 0.1);
 
               span {
                 color: vars.$primary-green;
@@ -1461,46 +2233,11 @@ const closeQuoteDialog = () => {
   }
 }
 
-.filter-result-container {
-  position: fixed;
-  top: 15%;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  padding-top: calc(var(--nav-height) + 20px);
-  pointer-events: none;
-  z-index: 9999;
-}
-
-.filter-result-tip {
-  background: rgba(0, 0, 0, 0.85);
-  color: white;
-  padding: 12px 24px;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  white-space: nowrap;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(-20px);
-}
-
 .filter-count {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 0.9rem;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
   color: #666;
 
   .clear-filters {
@@ -1510,11 +2247,12 @@ const closeQuoteDialog = () => {
     background: transparent;
     color: #666;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, opacity 0.2s ease;
 
     &:hover {
       background: #f5f5f5;
       border-color: #999;
+      transform: translateY(-1px);
     }
   }
 }
@@ -1527,30 +2265,31 @@ const closeQuoteDialog = () => {
 }
 
 .filter-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-3);
 
   h3 {
-    font-size: 1rem;
-    margin-bottom: 1rem;
+    font-size: var(--text-md);
+    margin-bottom: var(--space-2);
     color: #333;
   }
 
   .filter-options {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--space-1);
     flex-wrap: wrap;
   }
 
   .filter-btn {
-    padding: 0.5rem 1rem;
+    padding: var(--space-1) var(--space-2);
     border: 1px solid #ddd;
     border-radius: 4px;
     background: white;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, opacity 0.2s ease;
 
     &:hover {
       border-color: var(--primary-color);
+      transform: translateY(-1px);
     }
 
     &.active {

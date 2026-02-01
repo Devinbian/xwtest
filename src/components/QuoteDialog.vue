@@ -4,7 +4,7 @@
       <div v-if="show" class="quote-dialog-overlay" @click="handleOverlayClick">
         <div class="quote-dialog" @click.stop>
           <div class="dialog-header">
-            <h3>索要报价</h3>
+            <h3>立即咨询</h3>
             <button class="close-btn" @click="close">
               <i class="fas fa-times"></i>
             </button>
@@ -14,6 +14,27 @@
             <div class="product-info" v-if="product">
               <h4>{{ product.name }}</h4>
               <p>{{ product.description }}</p>
+            </div>
+
+            <div class="consult-scope" aria-label="咨询可获取的信息">
+              <div class="scope-title">咨询可获取：</div>
+              <div class="scope-items">
+                <span class="scope-item">价格</span>
+                <span class="scope-item">交期</span>
+                <span class="scope-item">质保</span>
+                <span class="scope-item">是否现货</span>
+                <span class="scope-item">服务承诺</span>
+              </div>
+            </div>
+
+            <div v-if="contextText" class="consult-context" aria-label="咨询上下文">
+              <div class="context-header">
+                <div class="context-title">咨询上下文（可复制给销售）</div>
+                <button type="button" class="copy-btn" @click="copyContext" :aria-label="copied ? '已复制' : '复制上下文'">
+                  {{ copied ? '已复制' : '复制' }}
+                </button>
+              </div>
+              <textarea class="context-box" readonly :value="contextText" aria-label="咨询上下文内容"></textarea>
             </div>
 
             <div class="contact-container">
@@ -39,7 +60,7 @@
               <!-- 右侧二维码 -->
               <div class="qr-code-container">
                 <div class="qr-code">
-                  <img :src="getAssetUrl('/images/qrcode.png')" alt="微信二维码">
+                  <img :src="getAssetUrl('/images/qrcode.png')" alt="微信二维码" loading="lazy" decoding="async">
                   <p>扫码添加客服微信</p>
                 </div>
               </div>
@@ -53,6 +74,7 @@
 
 <script setup lang="ts">
 import { getAssetUrl } from '@/utils/assets';
+import { onUnmounted, ref } from 'vue';
 
 interface Props {
   show: boolean;
@@ -60,10 +82,59 @@ interface Props {
     name: string;
     description: string;
   };
+  contextText?: string;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits(['close']);
+
+const copied = ref(false);
+let copiedTimer: number | null = null;
+
+const copyTextFallback = (text: string): boolean => {
+  try {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
+    textarea.style.top = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(textarea);
+    return ok;
+  } catch {
+    return false;
+  }
+};
+
+const copyContext = async () => {
+  if (!props.contextText) return;
+
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(props.contextText);
+    } else {
+      const ok = copyTextFallback(props.contextText);
+      if (!ok) return;
+    }
+
+    copied.value = true;
+    if (copiedTimer) window.clearTimeout(copiedTimer);
+    copiedTimer = window.setTimeout(() => {
+      copied.value = false;
+      copiedTimer = null;
+    }, 1600);
+  } catch {
+    // no-op: keep silent to avoid UX noise in a non-form dialog
+  }
+};
+
+onUnmounted(() => {
+  if (copiedTimer) window.clearTimeout(copiedTimer);
+  copiedTimer = null;
+});
 
 const close = () => {
   emit('close');
@@ -149,11 +220,12 @@ const handleOverlayClick = (e: MouseEvent) => {
       cursor: pointer;
       padding: 0.5rem;
       border-radius: 50%;
-      transition: all 0.3s;
+      transition: transform 0.2s ease, opacity 0.2s ease;
 
       &:hover {
         background: #f5f5f5;
         color: #333;
+        transform: translateY(-1px);
       }
     }
   }
@@ -175,6 +247,86 @@ const handleOverlayClick = (e: MouseEvent) => {
       p {
         color: #666;
         font-size: 0.9rem;
+      }
+    }
+
+    .consult-scope {
+      margin-bottom: 1.5rem;
+
+      .scope-title {
+        font-size: var(--text-sm);
+        font-weight: 600;
+        color: vars.$primary-black;
+        margin-bottom: 0.5rem;
+      }
+
+      .scope-items {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .scope-item {
+        display: inline-flex;
+        align-items: center;
+        padding: 1px 8px;
+        border-radius: 999px;
+        background: rgba(vars.$primary-green, 0.06);
+        border: 1px solid rgba(vars.$primary-green, 0.12);
+        color: vars.$primary-green;
+        font-size: var(--text-xs);
+        line-height: 1.35;
+      }
+    }
+
+    .consult-context {
+      margin-bottom: 1.5rem;
+      padding: 0.75rem;
+      border: 1px solid #eee;
+      border-radius: 10px;
+      background: #fafafa;
+
+      .context-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .context-title {
+        font-size: var(--text-sm);
+        font-weight: 600;
+        color: vars.$primary-black;
+      }
+
+      .copy-btn {
+        height: 36px;
+        padding: 0 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(vars.$primary-green, 0.25);
+        background: white;
+        color: vars.$primary-green;
+        font-size: var(--text-sm);
+        font-weight: 500;
+        cursor: pointer;
+
+        &:hover {
+          background: rgba(vars.$primary-green, 0.06);
+        }
+      }
+
+      .context-box {
+        width: 100%;
+        min-height: 120px;
+        resize: vertical;
+        border-radius: 8px;
+        border: 1px solid #eee;
+        padding: 10px 12px;
+        font-size: var(--text-sm);
+        line-height: 1.5;
+        color: #333;
+        background: white;
       }
     }
 
@@ -250,10 +402,10 @@ const handleOverlayClick = (e: MouseEvent) => {
 
 .fade-enter-active,
 .fade-leave-active {
-  transition: all 0.3s ease;
+  transition: opacity 0.3s ease;
 
   .quote-dialog {
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease;
   }
 }
 

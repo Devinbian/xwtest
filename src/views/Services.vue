@@ -192,7 +192,7 @@ $primary-black: #333;
 
 .services-page {
   min-height: calc(100vh - 80px);
-  padding-top: calc(var(--top-bar-height) + var(--nav-height));
+  padding-top: 0;
   background: #f8f9fa;
 }
 
@@ -328,7 +328,7 @@ $primary-black: #333;
   border-radius: 16px;
   padding: 2.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 
   &::before {
@@ -380,7 +380,7 @@ $primary-black: #333;
     align-items: center;
     justify-content: center;
     margin-bottom: 1.5rem;
-    transition: all 0.4s ease;
+    transition: transform 0.4s ease, opacity 0.4s ease;
 
     i {
       font-size: 2rem;
@@ -595,7 +595,7 @@ $primary-black: #333;
       background: white;
       border-radius: 12px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-      transition: all 0.3s ease;
+      transition: transform 0.3s ease, opacity 0.3s ease;
 
       &:hover {
         transform: translateX(5px);

@@ -138,7 +138,7 @@
                 class="brand-card"
               >
                 <div class="brand-logo">
-                  <img :src="brand.logo" :alt="brand.name" />
+                  <img :src="brand.logo" :alt="brand.name" loading="lazy" decoding="async" />
                 </div>
                 <div class="brand-info">
                   <h3>{{ brand.name }}</h3>
@@ -249,7 +249,7 @@ const changePage = (page: number) => {
 @use '../styles/variables' as vars;
 
 .about-page {
-  padding-top: calc(var(--top-bar-height) + var(--nav-height));
+  padding-top: 0;
 }
 
 .container {
@@ -386,7 +386,7 @@ section {
       grid-template-columns: repeat(2, 1fr);
     }
 
-    @media (max-width: 480px) {
+    @media (max-width: 640px) {
       grid-template-columns: 1fr;
     }
 
@@ -397,7 +397,7 @@ section {
       overflow: hidden;
       background: white;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-      transition: all 0.3s ease;
+      transition: transform 0.3s ease, opacity 0.3s ease;
 
       &:hover {
         transform: translateY(-5px);
@@ -422,7 +422,7 @@ section {
         align-items: center;
         justify-content: center;
         text-align: center;
-        transition: all 0.3s ease;
+        transition: transform 0.3s ease, opacity 0.3s ease;
         background: white;
 
         .icon-wrapper {
@@ -462,7 +462,7 @@ section {
         color: white;
         opacity: 0;
         transform: translateY(10px);
-        transition: all 0.3s ease;
+        transition: transform 0.3s ease, opacity 0.3s ease;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -506,7 +506,7 @@ section {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 1.5rem;
-      transition: all 0.3s ease;
+      transition: transform 0.3s ease, opacity 0.3s ease;
 
       @media (max-width: 1024px) {
         grid-template-columns: repeat(3, 1fr);
@@ -516,7 +516,7 @@ section {
         grid-template-columns: repeat(2, 1fr);
       }
 
-      @media (max-width: 480px) {
+      @media (max-width: 640px) {
         grid-template-columns: repeat(2, 1fr);
       }
     }
@@ -526,7 +526,7 @@ section {
       border-radius: 12px;
       padding: 1.5rem;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-      transition: all 0.3s ease;
+      transition: transform 0.3s ease, opacity 0.3s ease;
 
       &:hover {
         transform: translateY(-5px);
@@ -585,7 +585,7 @@ section {
       color: #666;
       font-size: 1rem;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: transform 0.3s ease, opacity 0.3s ease;
 
       &:hover {
         background: rgba(vars.$primary-green, 0.1);
@@ -627,7 +627,7 @@ section {
         padding: 2rem;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
         overflow: hidden;
-        transition: all 0.3s ease;
+        transition: transform 0.3s ease, opacity 0.3s ease;
 
         &.primary {
           grid-area: primary;
@@ -717,7 +717,7 @@ section {
               border-radius: 20px;
               padding: 1.5rem;
               border: 1px solid rgba(255, 255, 255, 0.2);
-              transition: all 0.3s ease;
+              transition: transform 0.3s ease, opacity 0.3s ease;
 
               &:hover {
                 transform: translateY(-5px);
@@ -763,7 +763,7 @@ section {
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: all 0.3s ease;
+          transition: transform 0.3s ease, opacity 0.3s ease;
 
           i {
             font-size: 1.5rem;
@@ -801,7 +801,7 @@ section {
           i {
             position: absolute;
             color: rgba(255, 255, 255, 0.1);
-            transition: all 0.5s ease;
+            transition: transform 0.5s ease, opacity 0.5s ease;
 
             &.fa-circle {
               font-size: 20rem;

@@ -9,7 +9,7 @@ export const generatePlaceholderUrl = (originalUrl: string): string => {
   const cleanUrl = originalUrl.replace(/^\/xwtest\//, '').replace(/^\//, '');
   
   // 生成小图URL
-  const smallImageUrl = cleanUrl.replace(/(\.[^.]+)$/, '-small$1');
+  const smallImageUrl = cleanUrl.replace(/(\.[^.]+)$/, '-small.jpg');
   
   // 添加正确的 base 路径
   return `${import.meta.env.BASE_URL}${smallImageUrl}`;
