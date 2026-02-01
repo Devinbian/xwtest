@@ -14,9 +14,15 @@
         <h2 class="section-title">公司简介</h2>
         <div class="intro-content">
           <div class="text-content">
-            <p>鑫万测电子科技（苏州）有限公司是集研发、营销、维修于一体的科技型企业。我们致力于使用先进的物联网和大数据技术，打造智能化的微环境系统，为各行业提供智能微环境管控系统解决方案。</p>
-            <p>公司经营销售进口电子测试仪器、环境试验设备、理化分析设备、材料试验设备、图像检测分析设备等，并提供中古设备、售后维修、设备保养、委托性试验、租赁服务等综合服务。</p>
-            <p>我们本着"诚信、公道、务实、求新"的经营原则，"共享、双赢、互利"的经营理念，不懈致力于员工素质之锤炼，为客户提供从进出口设备到售后服务的一站式业务服务。</p>
+            <p>
+              鑫万测电子科技（苏州）有限公司是集研发、营销、维修于一体的科技型企业。我们致力于使用先进的物联网和大数据技术，打造智能化的微环境系统，为各行业提供智能微环境管控系统解决方案。
+            </p>
+            <p>
+              公司经营销售进口电子测试仪器、环境试验设备、理化分析设备、材料试验设备、图像检测分析设备等，并提供中古设备、售后维修、设备保养、委托性试验、租赁服务等综合服务。
+            </p>
+            <p>
+              我们本着"诚信、公道、务实、求新"的经营原则，"共享、双赢、互利"的经营理念，不懈致力于员工素质之锤炼，为客户提供从进出口设备到售后服务的一站式业务服务。
+            </p>
           </div>
           <div class="stats-grid">
             <div class="stat-item">
@@ -126,9 +132,13 @@
         <div class="brands-wrapper">
           <div class="brands-scroll">
             <div class="brands-grid">
-              <div v-for="brand in displayedBrands" :key="brand.name" class="brand-card">
+              <div
+                v-for="brand in displayedBrands"
+                :key="brand.name"
+                class="brand-card"
+              >
                 <div class="brand-logo">
-                  <img :src="brand.logo" :alt="brand.name">
+                  <img :src="brand.logo" :alt="brand.name" />
                 </div>
                 <div class="brand-info">
                   <h3>{{ brand.name }}</h3>
@@ -138,8 +148,12 @@
             </div>
           </div>
           <div class="pagination">
-            <button v-for="page in totalPages" :key="page" :class="{ active: currentPage === page }"
-              @click="changePage(page)">
+            <button
+              v-for="page in totalPages"
+              :key="page"
+              :class="{ active: currentPage === page }"
+              @click="changePage(page)"
+            >
               {{ page }}
             </button>
           </div>
@@ -166,7 +180,10 @@
                   </div>
                 </div>
                 <div class="qrcode-wrapper">
-                  <img :src="getAssetUrl('/images/qrcode.png')" alt="微信二维码">
+                  <img
+                    :src="getAssetUrl('/images/qrcode.png')"
+                    alt="微信二维码"
+                  />
                 </div>
               </div>
               <div class="decoration">
@@ -183,7 +200,7 @@
                 </div>
                 <div class="text">
                   <h3>电话咨询</h3>
-                  <p class="phone">0512-88888888</p>
+                  <p class="phone">186-6258-5852</p>
                 </div>
               </div>
             </div>
@@ -208,7 +225,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { partners } from '../data/partners.js';
+import { partners } from '../data/home/partners.js';
 import { getAssetUrl } from '@/utils/assets';
 // 分页相关
 const currentPage = ref(1);
@@ -228,6 +245,7 @@ const changePage = (page: number) => {
 </script>
 
 <style lang="scss" scoped>
+@use 'sass:color';
 @use '../styles/variables' as vars;
 
 .about-page {
@@ -242,7 +260,11 @@ const changePage = (page: number) => {
 
 // 页面标题区域
 .page-header {
-  background: linear-gradient(135deg, darken(vars.$primary-green, 10%), vars.$primary-green);
+  background: linear-gradient(
+    135deg,
+    color.adjust(vars.$primary-green, $lightness: -10%),
+    vars.$primary-green
+  );
   color: white;
   padding: 4rem 0;
   margin-bottom: 4rem;
@@ -587,15 +609,15 @@ section {
     .contact-grid {
       display: grid;
       grid-template-areas:
-        "primary primary"
-        "phone email";
+        'primary primary'
+        'phone email';
       gap: 2rem;
 
       @media (max-width: 768px) {
         grid-template-areas:
-          "primary"
-          "phone"
-          "email";
+          'primary'
+          'phone'
+          'email';
       }
 
       .contact-item {
@@ -609,9 +631,11 @@ section {
 
         &.primary {
           grid-area: primary;
-          background: linear-gradient(135deg,
-              rgba(vars.$primary-green, 0.95),
-              darken(vars.$primary-green, 15%));
+          background: linear-gradient(
+            135deg,
+            rgba(vars.$primary-green, 0.95),
+            color.adjust(vars.$primary-green, $lightness: -15%)
+          );
           position: relative;
           overflow: hidden;
 
@@ -622,7 +646,13 @@ section {
             left: 0;
             right: 0;
             bottom: 0;
-            background: url('/images/pattern.png') repeat;
+            background-image: repeating-linear-gradient(
+              45deg,
+              rgba(255, 255, 255, 0.18) 0,
+              rgba(255, 255, 255, 0.18) 2px,
+              transparent 2px,
+              transparent 10px
+            );
             opacity: 0.1;
             mix-blend-mode: overlay;
           }

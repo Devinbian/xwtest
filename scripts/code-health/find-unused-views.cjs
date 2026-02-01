@@ -3,8 +3,9 @@ const fs = require('fs');
 const path = require('path');
 
 // 确保路径正确
-const viewsDir = path.join(__dirname, './src/views');
-const routerFile = path.join(__dirname, './src/router/index.ts'); // 假设路由配置在这里
+const projectRoot = path.resolve(__dirname, '..', '..');
+const viewsDir = path.join(projectRoot, 'src/views');
+const routerFile = path.join(projectRoot, 'src/router/index.ts'); // 假设路由配置在这里
 
 function getFiles(dir, files_) {
   files_ = files_ || [];

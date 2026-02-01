@@ -2,8 +2,9 @@
 const fs = require('fs');
 const path = require('path');
 
-const componentsDir = path.join(__dirname, './src/components');
-const srcDir = path.join(__dirname, './src');
+const projectRoot = path.resolve(__dirname, '..', '..');
+const componentsDir = path.join(projectRoot, 'src/components');
+const srcDir = path.join(projectRoot, 'src');
 
 function getFiles(dir, files_) {
   files_ = files_ || [];

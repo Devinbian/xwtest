@@ -19,7 +19,9 @@ export default defineConfig(({ command }) => {
     css: {
       preprocessorOptions: {
         scss: {
-          charset: false
+          charset: false,
+          // Use Dart Sass modern JS API (Dart Sass 2.0 removes legacy API)
+          api: 'modern'
         }
       }
     },

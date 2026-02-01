@@ -131,9 +131,9 @@
                   <span class="product-brand">{{ product.brand }}</span>
                   <h3 class="product-title">{{ product.title }}</h3>
                   <p class="product-description">{{ product.description }}</p>
-                  <router-link :to="`/products/${product.id}`" class="product-link">
+                  <button class="product-link" @click="goToProduct(product.brand)">
                     了解更多
-                  </router-link>
+                  </button>
                 </div>
               </div>
             </div>
@@ -281,18 +281,20 @@
 <script setup lang="ts">
 import HomeHero from '@/components/HomeHero.vue';
 import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { getAssetUrl } from '@/utils/assets';
 
-import { partners } from '../data/partners.js';
+import { partners } from '../data/home/partners.js';
 //获取10大热门产品数据
-import { top10Products } from '../data/top10Products.js';
+import { top10Products } from '../data/home/top10Products.js';
 //获取八大行业数据
-import { industries } from '../data/industries.js';
+import { industries } from '../data/home/industries.js';
 //获取主营产品
-import {productCategories} from '../data/coreprods.js'
+import {productCategories} from '../data/home/productCategories.js'
 //获取我们的服务
-import {services} from '../data/services.js'
+import {services} from '../data/home/services.js'
 
+const router = useRouter();
 const featuredProducts = ref(top10Products);
 
 const activeIndustry = ref<number | null>(null);
@@ -364,6 +366,27 @@ const handleTouchStart = (element: HTMLElement) => {
 
 const handleTouchEnd = (element: HTMLElement) => {
   element.classList.remove('active');
+};
+
+// 跳转到产品页面并显示对应分类
+const goToCategory = (categoryId: number) => {
+  router.push({
+    path: '/products',
+    query: {
+      categories: String(categoryId)
+    }
+  });
+};
+
+// 跳转到产品页面并显示对应品牌的产品
+const goToProduct = (brand: string) => {
+  // 热门产品通过品牌名称跳转，因为热门产品的ID和实际产品数据库的ID不一致
+  router.push({
+    path: '/products',
+    query: {
+      brand: brand
+    }
+  });
 };
 
 const handleIndustryTouchStart = (e: TouchEvent, index: number) => {
@@ -495,6 +518,8 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
+@use 'sass:color';
+@use 'sass:map';
 @use '../styles/variables' as vars;
 // 更新背景色变量
 $bg-gradients: (
@@ -746,7 +771,7 @@ $primary-black: #000000;
 .featured-brands {
   padding: 8rem 0;
   margin-top: -2px;
-  background: linear-gradient(135deg, map-get(map-get($bg-gradients, brands), start), map-get(map-get($bg-gradients, brands), end));
+  background: linear-gradient(135deg, map.get(map.get($bg-gradients, brands), start), map.get(map.get($bg-gradients, brands), end));
   color: $primary-black;
 
   h2 {
@@ -781,7 +806,7 @@ $primary-black: #000000;
 
 .featured-products {
   padding: 8rem 0;
-  background: linear-gradient(135deg, map-get(map-get($bg-gradients, featured), start), map-get(map-get($bg-gradients, featured), end));
+  background: linear-gradient(135deg, map.get(map.get($bg-gradients, featured), start), map.get(map.get($bg-gradients, featured), end));
   color: white;
   @include section-background;
   @include section-transition;
@@ -876,6 +901,8 @@ $primary-black: #000000;
     border: 1px solid rgba($primary-green, 0.3);
     padding: 0.8rem 2rem;
     border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
     transition: all 0.3s ease;
 
     &:hover {
@@ -1273,10 +1300,10 @@ $primary-black: #000000;
           font-weight: 500;
           transition: all 0.3s ease;
 
-          &:hover {
-            background: darken($primary-green, 5%);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba($primary-green, 0.2);
+	          &:hover {
+	            background: color.adjust($primary-green, $lightness: -5%);
+	            transform: translateY(-2px);
+	            box-shadow: 0 8px 20px rgba($primary-green, 0.2);
 
             .arrow-icon {
               transform: translateX(3px);
@@ -1487,10 +1514,12 @@ $primary-black: #000000;
     }
 
     @media (max-width: 480px) {
-      min-height: 400px;
-      border-radius: 20px;
-      overflow: hidden;
-      position: relative;
+      & {
+        min-height: 400px;
+        border-radius: 20px;
+        overflow: hidden;
+        position: relative;
+      }
 
       img {
         width: 100%;
@@ -1562,11 +1591,12 @@ $primary-black: #000000;
       }
     }
   }
+
 }
 
 .industries-section {
   padding: 8rem 0;
-  background: linear-gradient(135deg, map-get(map-get($bg-gradients, industries), start), map-get(map-get($bg-gradients, industries), end));
+  background: linear-gradient(135deg, map.get(map.get($bg-gradients, industries), start), map.get(map.get($bg-gradients, industries), end));
   position: relative;
   color: $primary-black;
 
@@ -1714,7 +1744,7 @@ $primary-black: #000000;
       }
     }
 
-    &.touch-active {
+    .slider-item.touch-active {
       transform: scale(0.98) translateY(-2px);
       transition: all 0.2s ease;
 
@@ -1777,25 +1807,34 @@ $primary-black: #000000;
 .main-products-section {
   padding: 8rem 0;
   margin-top: -2px; // 防止出现缝隙
-  background: linear-gradient(135deg, map-get(map-get($bg-gradients, products), start), map-get(map-get($bg-gradients, products), end));
+  background: linear-gradient(135deg, map.get(map.get($bg-gradients, products), start), map.get(map.get($bg-gradients, products), end));
   color: $primary-black;
 
   .section-title {
     @include section-title;
   }
 
+  // 主营产品需要更宽的内容区，避免子项换行
+  .container {
+    max-width: 1600px;
+    padding: 0 2rem;
+  }
+
   .products-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2rem;
-    max-width: 1400px;
+    grid-template-columns: repeat(3, minmax(360px, 1fr));
+    gap: 2.5rem;
     margin: 0 auto;
-    padding: 0 1rem;
+    padding: 0;
     position: relative;
+    grid-auto-rows: 1fr;
   }
 
   .product-category {
     position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
 
     .category-inner {
       background: rgba(255, 255, 255, 0.03);
@@ -1804,6 +1843,9 @@ $primary-black: #000000;
       backdrop-filter: blur(10px);
       overflow: hidden;
       transition: all 0.4s ease;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
 
       &:hover {
         transform: translateY(-5px);
@@ -1873,11 +1915,16 @@ $primary-black: #000000;
 
     .category-content {
       padding: 0 2rem 2rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
 
       .items-wrapper {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 1rem;
+        flex: 1;
+        align-content: start;
       }
 
       .item-card {
@@ -1885,7 +1932,7 @@ $primary-black: #000000;
           display: flex;
           align-items: center;
           gap: 0.8rem;
-          padding: 0.8rem;
+          padding: 0.8rem 1rem;
           background: rgba(255, 255, 255, 0.03);
           border-radius: 8px;
           transition: all 0.3s ease;
@@ -1906,13 +1953,18 @@ $primary-black: #000000;
           height: 6px;
           background: rgba(255, 255, 255, 0.3);
           border-radius: 50%;
+          flex-shrink: 0;
           transition: all 0.3s ease;
         }
 
         .item-text {
           font-size: 0.95rem;
           color: rgba(255, 255, 255, 0.8);
-          line-height: 1.4;
+          line-height: 1.5;
+          flex: 1;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
       }
     }
@@ -1925,7 +1977,9 @@ $primary-black: #000000;
   }
 
   @media (max-width: 768px) {
-    padding: 4rem 0;
+    &.main-products-section {
+      padding: 4rem 0;
+    }
 
     .section-title {
       font-size: 2.8rem;
@@ -1993,10 +2047,16 @@ $primary-black: #000000;
 .services-section {
   padding: 8rem 0;
   margin-top: -2px;
-  background: linear-gradient(135deg, map-get(map-get($bg-gradients, brands), start), map-get(map-get($bg-gradients, brands), end));
+  background: linear-gradient(135deg, map.get(map.get($bg-gradients, brands), start), map.get(map.get($bg-gradients, brands), end));
   color: $primary-black;
   @include section-background;
   @include section-transition;
+
+  // 与上方主营产品保持同宽
+  .container {
+    max-width: 1600px;
+    padding: 0 2rem;
+  }
 
   .section-title {
     @include section-title;
@@ -2004,11 +2064,11 @@ $primary-black: #000000;
 
   .services-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(360px, 1fr));
     gap: 2.5rem;
-    max-width: 1400px;
     margin: 0 auto;
-    padding: 0 1rem;
+    padding: 0;
+    grid-auto-rows: 1fr;
   }
 
   .service-card {
@@ -2020,6 +2080,8 @@ $primary-black: #000000;
     backdrop-filter: blur(10px);
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 
     &::before {
       content: '';
@@ -2060,15 +2122,27 @@ $primary-black: #000000;
       color: $primary-black;
       margin-bottom: 1rem;
       font-weight: 500;
+      min-height: 2em;
+      display: flex;
+      align-items: center;
     }
 
     p {
       color: rgba($primary-black, 0.8);
       margin-bottom: 1.5rem;
       line-height: 1.6;
+      min-height: 3.2em;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
 
     .service-features {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+
       ul {
         list-style: none;
         padding: 0;
@@ -2093,7 +2167,7 @@ $primary-black: #000000;
 
   @media (max-width: 1200px) {
     .services-grid {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(2, minmax(360px, 1fr));
     }
   }
 

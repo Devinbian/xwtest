@@ -7,8 +7,9 @@
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
-    "generate-assets": "node scripts/generate-assets.js",
-    "generate-thumbnails": "ts-node scripts/generate-thumbnails.cjs"
+    "generate-thumbnails": "ts-node scripts/images/generate-thumbnails.cjs",
+    "find-unused-components": "node scripts/code-health/find-unused-components.cjs",
+    "find-unused-views": "node scripts/code-health/find-unused-views.cjs"
   },
   "dependencies": {
     "@vueuse/core": "^12.5.0",
@@ -21,12 +22,12 @@
   "devDependencies": {
     "@types/node": "^18.15.0",
     "@types/sharp": "^0.31.1",
-    "@vitejs/plugin-vue": "^4.2.3",
+    "@vitejs/plugin-vue": "^5.0.0",
     "sass": "^1.69.7",
     "sharp": "^0.33.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.0.2",
-    "vite": "^4.4.5",
+    "vite": "^5.0.0",
     "vue-tsc": "^1.8.5"
   }
 }

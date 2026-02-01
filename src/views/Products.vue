@@ -198,9 +198,9 @@ import QuoteDialog from '@/components/QuoteDialog.vue';
 
 // 导入数据
 // @ts-ignore
-import { categories } from '../data/categories';
+import { categories } from '../data/products/categories.js';
 // @ts-ignore
-import { products } from '../data/products';
+import { products } from '../data/products/products.js';
 
 // 定义类型接口
 interface Category {
@@ -294,6 +294,14 @@ const filteredProducts = computed(() => {
       selectedBrands.value.some(
         b => b.categoryId === product.categoryId && b.brand === product.brand
       )
+    );
+  }
+
+  // 按品牌名称筛选（用于热门产品跳转）
+  if (route.query.brand) {
+    const brandName = route.query.brand as string;
+    result = result.filter(product =>
+      product.brandDisplay === brandName || product.brand === brandName
     );
   }
 
@@ -584,6 +592,7 @@ const closeQuoteDialog = () => {
 </script>
 
 <style lang="scss" scoped>
+@use 'sass:color';
 @use '../styles/variables' as vars;
 
 .products-page {
@@ -1056,15 +1065,15 @@ const closeQuoteDialog = () => {
             cursor: pointer;
           }
 
-          .view-details-btn {
+	          .view-details-btn {
             background: vars.$primary-green;
             color: white;
             text-decoration: none;
 
-            &:hover {
-              background: darken(vars.$primary-green, 5%);
-            }
-          }
+	            &:hover {
+	              background: color.adjust(vars.$primary-green, $lightness: -5%);
+	            }
+	          }
 
           .quote-btn {
             background: white;

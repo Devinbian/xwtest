@@ -90,7 +90,7 @@ import { useRouter } from 'vue-router';
 import { getAssetUrl } from '@/utils/assets';
 
 //获取产品下拉菜单数据
-import { topBrands } from '../data/menuforNewProds.js';
+import { topBrands } from '../data/navigation/menuForNewProds.js';
 
 const router = useRouter();
 

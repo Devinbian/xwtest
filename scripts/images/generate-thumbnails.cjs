@@ -2,7 +2,7 @@ const sharp = require("sharp");
 const path = require("path");
 const fs = require("fs");
 
-const PUBLIC_DIR = path.join(__dirname, "..", "public");
+const PUBLIC_DIR = path.join(__dirname, "..", "..", "public");
 const IMAGES_DIR = path.join(PUBLIC_DIR, "images");
 
 // 配置参数

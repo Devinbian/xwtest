@@ -32,11 +32,11 @@
                 <div class="footer-section">
                     <h3>产品分类</h3>
                     <ul>
-                        <li>数字万用表/源表</li>
-                        <li>电压/电流源</li>
-                        <li>微电流计/高阻计</li>
-                        <li>示波器</li>
-                        <li>电气安规试验</li>
+                        <li><router-link :to="{ path: '/products', query: { categories: '1' } }">数字万用表/源表</router-link></li>
+                        <li><router-link :to="{ path: '/products', query: { categories: '2' } }">电压/电流源</router-link></li>
+                        <li><router-link :to="{ path: '/products', query: { categories: '3' } }">超高电阻/微小电流计</router-link></li>
+                        <li><router-link :to="{ path: '/products', query: { categories: '4' } }">数字示波器</router-link></li>
+                        <li><router-link :to="{ path: '/products', query: { categories: '5' } }">电气安规测试</router-link></li>
                     </ul>
                 </div>
 

@@ -37,6 +37,7 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
+@use 'sass:color';
 @use '../styles/variables' as vars;
 
 .back-to-top {
@@ -72,7 +73,7 @@ onUnmounted(() => {
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-    background: darken(vars.$primary-green, 5%);
+    background: color.adjust(vars.$primary-green, $lightness: -5%);
   }
 
   &:active {

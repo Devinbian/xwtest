@@ -165,7 +165,7 @@ onUnmounted(() => {
     }
 
     &::before {
-      opacity: 0.4;
+      opacity: 0.5;
     }
   }
 
@@ -187,6 +187,7 @@ onUnmounted(() => {
     background: rgba(0, 0, 0, 0.5);
     opacity: 0;
     transition: opacity 0.6s ease;
+    z-index: 1;
   }
 
   .slide-background {
@@ -206,9 +207,9 @@ onUnmounted(() => {
         position: absolute;
         inset: 0;
         background: linear-gradient(to top,
-            rgba(0, 0, 0, 0.8) 0%,
-            rgba(0, 0, 0, 0) 60%);
-        opacity: 0.5;
+            rgba(0, 0, 0, 0.6) 0%,
+            rgba(0, 0, 0, 0.2) 50%,
+            rgba(0, 0, 0, 0.1) 100%);
         z-index: 1;
       }
     }
@@ -216,7 +217,7 @@ onUnmounted(() => {
 
   .slide-content {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     max-width: 800px;
     margin: 0 auto;
     height: 100%;
@@ -225,25 +226,36 @@ onUnmounted(() => {
     justify-content: center;
     align-items: center;
     text-align: center;
-    padding: 2rem;
+    padding: 3rem 2rem;
     color: white;
     opacity: 0;
     transform: translateY(20px);
     transition: all 0.8s ease;
     will-change: transform, opacity;
+    background: radial-gradient(ellipse at center,
+                rgba(0, 0, 0, 0.4) 0%,
+                rgba(0, 0, 0, 0.2) 50%,
+                transparent 100%);
 
     h2 {
       font-size: 3.5rem;
-      font-weight: 300;
+      font-weight: 700;
       margin-bottom: 1.5rem;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      text-shadow: 0 4px 12px rgba(0, 0, 0, 0.9),
+                   0 2px 6px rgba(0, 0, 0, 0.7),
+                   0 0 40px rgba(0, 0, 0, 0.5);
+      letter-spacing: 1px;
     }
 
     p {
       font-size: 1.5rem;
       margin-bottom: 2rem;
-      opacity: 0.9;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+      opacity: 0.95;
+      text-shadow: 0 3px 10px rgba(0, 0, 0, 0.9),
+                   0 2px 5px rgba(0, 0, 0, 0.7),
+                   0 0 30px rgba(0, 0, 0, 0.5);
+      line-height: 1.6;
+      font-weight: 400;
     }
 
     .cta-button {
@@ -256,10 +268,12 @@ onUnmounted(() => {
       font-size: 1.1rem;
       font-weight: 500;
       transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 
       &:hover {
         background: var(--primary-color-dark);
         transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
       }
     }
   }
