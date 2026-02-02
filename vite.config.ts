@@ -30,6 +30,9 @@ export default defineConfig(({ command }) => {
       port: 5174,
       strictPort: true,
       https: false,
+      proxy: {
+        '/api': 'http://localhost:5175',
+      },
     },
     // base: command === 'build' ? '/xwtest/' : '/',  //发布到GitHub Pages 用这个
     base: '/',//注意发布到阿里云服务器的时候，由于站点根目录是/home/app/xwtest/，所以需要设置base为 /;

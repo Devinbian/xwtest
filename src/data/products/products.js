@@ -12,6 +12,8 @@ export const products = [
     condition: "used",
     categoryId: 17,
     specs: ["GPIB-USB", "连接器", "KEYSIGHT"],
+    isHot: true,
+    hotRank: 7,
     link: "https://www.keysight.com.cn/cn/zh/product/82357B/usb-gpib-interface-high-speed-usb-2-0.html",
   },
   {
@@ -38,6 +40,8 @@ export const products = [
     condition: "new",
     categoryId: 1,
     specs: ["5½位", "USB", "GPIB",'RS232','LAN'],
+    isHot: true,
+    hotRank: 9,
     link: "https://www.adcmt.com/products/dmm/7355",
   },
   {
@@ -64,6 +68,8 @@ export const products = [
     condition: "new",
     categoryId: 10,
     specs: ["0.01 μm","X:1.2+4L/1000 μm","Y:2.0+4L/1000 μm","Z:1.2+5L/1000 μm"],
+    isHot: true,
+    hotRank: 10,
     link: "https://industry.nikon.com/zh-cn/products/cnc-video-measuring-systems/nexiv-vmz-s/",
   },
   {
@@ -312,6 +318,8 @@ export const products = [
     condition: "new",
     categoryId: 2,
     specs: ["100V 0.4A 40W"],
+    isHot: true,
+    hotRank: 8,
     link: "https://www.keysight.com.cn/cn/zh/product/E36106B/dc-power-supply-100v-0-4a-40w.html",
   }
   ,
@@ -340,6 +348,8 @@ export const products = [
     condition: "new",
     categoryId: 4,
     specs: ["8V 3A/20V 1.5A"],
+    isHot: true,
+    hotRank: 6,
     link: "https://www.tek.com.cn/products/oscilloscopes/tbs2000",
   }
   ,
@@ -354,6 +364,8 @@ export const products = [
     condition: "new",
     categoryId: 4,
     specs: ["8V 3A/20V 1.5A"],
+    isHot: true,
+    hotRank: 5,
     link: "https://www.tek.com.cn/products/oscilloscopes/2-series-mso-portable-oscilloscope",
   }
   ,
@@ -368,6 +380,8 @@ export const products = [
     condition: "new",
     categoryId: 4,
     specs: ["8V 3A/20V 1.5A"],
+    isHot: true,
+    hotRank: 4,
     link: "https://www.tek.com.cn/products/oscilloscopes/3-series-mdo",
   }
   ,
@@ -382,6 +396,8 @@ export const products = [
     condition: "new",
     categoryId: 4,
     specs: ["8V 3A/20V 1.5A"],
+    isHot: true,
+    hotRank: 3,
     link: "https://www.tek.com.cn/products/oscilloscopes/4-series-mso",
   }
   ,
@@ -396,6 +412,8 @@ export const products = [
     condition: "new",
     categoryId: 4,
     specs: ["8V 3A/20V 1.5A"],
+    isHot: true,
+    hotRank: 2,
     link: "https://www.tek.com.cn/products/oscilloscopes/5-series-mso",
   }
   ,
@@ -410,6 +428,8 @@ export const products = [
     condition: "new",
     categoryId: 4,
     specs: ["8V 3A/20V 1.5A"],
+    isHot: true,
+    hotRank: 1,
     link: "https://www.tek.com.cn/products/oscilloscopes/6-series-mso",
   }
 ];

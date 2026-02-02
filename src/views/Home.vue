@@ -144,7 +144,12 @@
     <section ref="featuredSectionEl" class="featured-products">
       <div class="container">
         <h2 class="section-title">热门产品</h2>
-        <div v-if="renderFeatured" class="products-slider" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave">
+        <div
+          v-if="renderFeatured && featuredProducts.length > 0"
+          class="products-slider"
+          @mouseenter="handleMouseEnter"
+          @mouseleave="handleMouseLeave"
+        >
           <div class="slider-wrapper" ref="sliderWrapper" :style="{ transform: `translateX(${-currentSlide * 100}%)` }">
             <div v-for="product in featuredProducts" :key="product.id" class="product-slide">
               <div class="product-content">
@@ -183,6 +188,9 @@
               @click="goToSlide(index)"
             />
           </div>
+        </div>
+        <div v-else-if="renderFeatured" class="featured-empty">
+          暂无热门产品
         </div>
         <div v-else class="section-placeholder" aria-hidden="true"></div>
       </div>
@@ -326,19 +334,83 @@ import { useRouter } from 'vue-router';
 import { getAssetUrl } from '@/utils/assets';
 import LazyPicture from '@/components/LazyPicture.vue';
 import { generatePlaceholderUrl } from '@/utils/image';
+import { HOT_PRODUCTS_CHANGED_EVENT, applyHotOverrides, fetchHotConfig } from '@/utils/hotProducts';
 
 import { partners } from '../data/home/partners.js';
-//获取10大热门产品数据
-import { top10Products } from '../data/home/top10Products.js';
 //获取八大行业数据
 import { industries } from '../data/home/industries.js';
 //获取主营产品
 import {productCategories} from '../data/home/productCategories.js'
 //获取我们的服务
 import {services} from '../data/home/services.js'
+// @ts-ignore
+import { products } from '../data/products/products.js';
 
 const router = useRouter();
-const featuredProducts = ref(top10Products);
+
+type FeaturedProduct = {
+  id: number;
+  title: string;
+  image: string;
+  brand: string;
+  description: string;
+};
+
+type ProductSource = {
+  id: number;
+  name: string;
+  image: string;
+  description: string;
+  brand?: string;
+  brandDisplay?: string;
+  isHot?: boolean;
+  hotRank?: number;
+};
+
+const toFeaturedProduct = (p: ProductSource): FeaturedProduct => ({
+  id: p.id,
+  title: p.name,
+  image: p.image,
+  brand: p.brandDisplay ?? p.brand ?? '',
+  description: p.description,
+});
+
+const hotConfig = ref<{ overrides: Record<string, { isHot?: boolean; hotRank?: number | null }>; disableAllHot: boolean }>({
+  overrides: {},
+  disableAllHot: false,
+});
+
+const loadHotOverrides = async () => {
+  const cfg = await fetchHotConfig();
+  hotConfig.value = { overrides: cfg.overrides ?? {}, disableAllHot: cfg.disableAllHot === true };
+};
+
+const pickFeaturedProducts = (): FeaturedProduct[] => {
+  const list = applyHotOverrides(
+    products as ProductSource[],
+    hotConfig.value.overrides,
+    hotConfig.value.disableAllHot,
+  ).slice();
+  const hot = list
+    .filter((p) => typeof p.hotRank === 'number' || p.isHot)
+    .sort((a, b) => {
+      const ar = typeof a.hotRank === 'number' ? a.hotRank : Number.POSITIVE_INFINITY;
+      const br = typeof b.hotRank === 'number' ? b.hotRank : Number.POSITIVE_INFINITY;
+      if (ar !== br) return ar - br;
+      return a.id - b.id;
+    })
+    .slice(0, 10)
+    .map(toFeaturedProduct);
+
+  if (hot.length) return hot;
+  if (hotConfig.value.disableAllHot) return [];
+  return list.slice(0, 10).map(toFeaturedProduct);
+};
+
+const featuredProducts = computed<FeaturedProduct[]>(() => {
+  hotConfig.value;
+  return pickFeaturedProducts();
+});
 
 const activeIndustry = ref<number | null>(null);
 
@@ -418,6 +490,10 @@ watch([renderFeatured, featuredInView, prefersReducedMotion], ([mounted, visible
   else startAutoPlay();
 });
 
+watch(featuredProducts, (nextList) => {
+  if (currentSlide.value > nextList.length - 1) currentSlide.value = 0;
+});
+
 // 在 script setup 中添加
 const handleTouchStart = (element: HTMLElement) => {
   element.classList.add('active');
@@ -439,7 +515,7 @@ const goToCategory = (categoryId: number) => {
 
 // 跳转到产品页面并显示对应品牌的产品
 const goToProduct = (brand: string) => {
-  // 热门产品通过品牌名称跳转，因为热门产品的ID和实际产品数据库的ID不一致
+  // 热门产品通过品牌名称跳转
   router.push({
     path: '/products',
     query: {
@@ -520,7 +596,7 @@ const startPartnerAutoPlay = () => {
         currentPartnerSlide.value = 0;
       }
     }
-  }, 5000);
+  }, 9000);
 };
 
 const stopPartnerAutoPlay = () => {
@@ -685,6 +761,9 @@ onMounted(() => {
   const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
   prefersReducedMotion.value = reduce;
 
+  loadHotOverrides();
+  window.addEventListener(HOT_PRODUCTS_CHANGED_EVENT, loadHotOverrides);
+
   const canHover =
     (window.matchMedia?.('(hover: hover) and (pointer: fine)')?.matches ?? false) &&
     !prefersReducedMotion.value;
@@ -694,6 +773,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  window.removeEventListener(HOT_PRODUCTS_CHANGED_EVENT, loadHotOverrides);
   stopAutoPlay();
   stopPartnerAutoPlay();
   revealObserver?.disconnect();
@@ -1035,6 +1115,19 @@ $primary-black: #000000;
   .section-title {
     @include section-title;
     margin-bottom: var(--space-8);
+  }
+
+  .featured-empty {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: var(--space-6);
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    text-align: center;
+    color: rgba(255, 255, 255, 0.82);
+    letter-spacing: 0.2px;
   }
 
   .products-slider {

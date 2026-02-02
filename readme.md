@@ -1,7 +1,7 @@
 # 项目结构（关键目录）
 
 `src/data/`
-- `src/data/home/`：首页数据源（主营产品、行业、服务、合作品牌、热门产品等）
+- `src/data/home/`：首页数据源（主营产品、行业、服务、合作品牌等）
 - `src/data/navigation/`：主导航菜单数据源
 - `src/data/products/`：产品页数据源（`products.js`、`categories.js`）
 
@@ -24,9 +24,19 @@
 
 > 说明：`dev/build` 会先自动执行图片处理脚本（`predev`/`prebuild`），用于懒加载与现代格式输出。
 
+## 4) （可选）启动热门产品配置 API
+- `HOT_EDITOR_TOKEN=你的口令 npm run api`
+- 默认端口：`5175`（见 `server/hot-products-server.mjs`），开发环境下 `/api` 会被代理到该端口
+
 # 构建与预览
 - 构建：`npm run build`
 - 预览：`npm run preview`
 
 # 体验优化计划
 - 见：`docs/ux-optimization-plan.md`
+
+# 图片更新流程
+- 见：`docs/image-workflow.md`
+
+# 热门产品编辑（隐藏开关）
+- 见：`docs/hot-products-editor.md`

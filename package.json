@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "vite --host 0.0.0.0",
+    "api": "node server/hot-products-server.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "generate-thumbnails": "node scripts/images/generate-thumbnails.cjs",

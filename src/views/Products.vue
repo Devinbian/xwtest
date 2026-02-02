@@ -183,6 +183,65 @@
                 <i class="fas fa-times" aria-hidden="true"></i>
               </button>
             </div>
+
+            <button
+              type="button"
+              class="hot-only-toggle"
+              :aria-pressed="hotOnly"
+              @click.stop="toggleHotOnly"
+            >
+              <i class="fas fa-fire" aria-hidden="true"></i>
+              热门
+            </button>
+
+            <div v-if="hotEditorUnlocked" class="hot-editor-gate" @click.stop>
+              <button
+                v-if="!hotEditorEnabled"
+                type="button"
+                class="hot-admin-enter"
+                :disabled="isSavingHotOverrides"
+                @click.stop="enterHotEdit"
+              >
+                <i class="fas fa-lock" aria-hidden="true"></i>
+                编辑热门
+              </button>
+              <div v-else class="hot-admin-editing">
+                <details ref="hotAdminMenu" class="hot-admin-menu">
+                  <summary class="hot-admin-actions">
+                    操作
+                    <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                  </summary>
+                  <div class="hot-admin-popover" @click.stop>
+                    <button
+                      type="button"
+                      class="hot-admin-item"
+                      :disabled="isSavingHotOverrides"
+                      @click.stop="restoreDefaultHot"
+                    >
+                      恢复默认
+                    </button>
+                    <button
+                      type="button"
+                      class="hot-admin-item danger"
+                      :disabled="isSavingHotOverrides"
+                      @click.stop="clearAllHot"
+                    >
+                      清空热门
+                    </button>
+                  </div>
+                </details>
+
+                <button
+                  type="button"
+                  class="hot-admin-done"
+                  :disabled="isSavingHotOverrides"
+                  @click.stop="exitHotEdit"
+                >
+                  <i class="fas fa-check" aria-hidden="true"></i>
+                  完成
+                </button>
+              </div>
+            </div>
           </div>
 	        </div>
 
@@ -241,11 +300,42 @@
         </div>
 
 	        <div v-else class="products-grid">
-	          <div v-for="product in filteredProducts" :key="product.id" class="product-card" @click="handleProductClick(product)">
+	          <div v-for="product in filteredProducts" :key="product.id" class="product-card">
             <div class="condition-tag" :class="product.condition">
               {{ getConditionText(product.condition) }}
             </div>
             <div class="image-wrapper">
+              <div v-if="product.isHot || typeof product.hotRank === 'number'" class="hot-tag" aria-label="热门产品">
+                <i class="fas fa-fire" aria-hidden="true"></i>
+                <span>热门</span>
+                <span v-if="typeof product.hotRank === 'number'" class="hot-rank">#{{ product.hotRank }}</span>
+              </div>
+
+              <div v-if="hotEditorEnabled && hotEditorAuthorized" class="hot-editor-card" @click.stop>
+                <label class="hot-editor-switch" @click.stop>
+                  <input
+                    type="checkbox"
+                    :checked="!!product.isHot"
+                    :disabled="isSavingHotOverrides"
+                    @change="(e) => setProductHot(product.id, (e.target as HTMLInputElement).checked)"
+                  />
+                  <span class="switch-ui" aria-hidden="true"></span>
+                  <span class="switch-label">热门</span>
+                </label>
+                <input
+                  class="hot-rank-input"
+                  type="number"
+                  min="1"
+                  max="10"
+                  step="1"
+                  inputmode="numeric"
+                  :value="typeof product.hotRank === 'number' ? product.hotRank : ''"
+                  :disabled="isSavingHotOverrides || !product.isHot"
+                  placeholder="#"
+                  @input.stop="(e) => setProductHotRank(product.id, (e.target as HTMLInputElement).value)"
+                />
+              </div>
+
 	              <LazyPicture :src="product.image" :alt="product.name"
 	                :placeholder="generatePlaceholderUrl(product.image)" />
             </div>
@@ -325,6 +415,16 @@
 	import { generatePlaceholderUrl, preloadImage } from '@/utils/image';
 	import LazyPicture from '@/components/LazyPicture.vue';
 	import QuoteDialog from '@/components/QuoteDialog.vue';
+  import {
+    applyHotOverrides,
+    fetchHotConfig,
+    authorizeHotEditorSession,
+    clearHotEditorSession,
+    getHotEditorSession,
+    notifyHotOverridesChanged,
+    saveHotConfig,
+    type HotOverride,
+  } from '@/utils/hotProducts';
 
 // 导入数据
 // @ts-ignore
@@ -356,6 +456,8 @@ interface Product {
   specs: string[];
   condition: string;
   isNew?: boolean;
+  isHot?: boolean;
+  hotRank?: number;
   link?: string;
 }
 
@@ -365,6 +467,203 @@ const typedProducts = products as Product[];
 
 const route = useRoute();
 const router = useRouter();
+
+const HOT_EDITOR_ENABLED_KEY = 'xw:hot-editor:enabled';
+
+const safeGetLocalStorage = (key: string): string | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const safeSetLocalStorage = (key: string, value: string) => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // ignore
+  }
+};
+
+const isHotEditorUnlockQuery = computed(() => {
+  const raw = route.query.__hot;
+  const token = Array.isArray(raw) ? raw[0] : raw;
+  return token === '1' || token === 'true' || token === 'on';
+});
+
+const hotEditorOneTimeToken = computed(() => {
+  const raw = route.query.__token;
+  const token = Array.isArray(raw) ? raw[0] : raw;
+  return typeof token === 'string' ? token.trim() : '';
+});
+
+const hotEditorUnlocked = ref(false);
+const hotEditorEnabled = ref(false);
+
+const hotConfig = ref<{ overrides: Record<string, HotOverride>; disableAllHot: boolean }>({
+  overrides: {},
+  disableAllHot: false,
+});
+const isSavingHotOverrides = ref(false);
+const hotEditorAuthorized = ref(false);
+const hotAdminMenu = ref<HTMLDetailsElement | null>(null);
+
+const productsWithHot = computed<Product[]>(() => {
+  return applyHotOverrides(typedProducts, hotConfig.value.overrides, hotConfig.value.disableAllHot);
+});
+
+const loadHotConfig = async () => {
+  const cfg = await fetchHotConfig();
+  hotConfig.value = { overrides: cfg.overrides ?? {}, disableAllHot: cfg.disableAllHot === true };
+};
+
+const refreshHotEditorSession = async () => {
+  hotEditorAuthorized.value = await getHotEditorSession();
+  if (!hotEditorAuthorized.value && hotEditorEnabled.value) {
+    hotEditorEnabled.value = false;
+    safeSetLocalStorage(HOT_EDITOR_ENABLED_KEY, '0');
+  }
+};
+
+const authorizeHotEditor = async (token?: string) => {
+  const resolved =
+    String(token ?? '').trim() ||
+    String(window.prompt('请输入热门编辑口令（服务器端 HOT_EDITOR_TOKEN）') ?? '').trim();
+  if (!resolved) return false;
+  await authorizeHotEditorSession(resolved);
+  await refreshHotEditorSession();
+  return hotEditorAuthorized.value;
+};
+
+const logoutHotEditor = async () => {
+  await clearHotEditorSession();
+  await refreshHotEditorSession();
+  hotEditorEnabled.value = false;
+  safeSetLocalStorage(HOT_EDITOR_ENABLED_KEY, '0');
+};
+
+const closeHotAdminMenu = () => {
+  hotAdminMenu.value?.removeAttribute('open');
+};
+
+const enterHotEdit = async () => {
+  if (isSavingHotOverrides.value) return;
+  const ok = await refreshHotEditorSession().then(() => hotEditorAuthorized.value);
+  if (!ok) {
+    const authorized = await authorizeHotEditor();
+    if (!authorized) return;
+  }
+  hotEditorEnabled.value = true;
+  safeSetLocalStorage(HOT_EDITOR_ENABLED_KEY, '1');
+};
+
+const exitHotEdit = async () => {
+  closeHotAdminMenu();
+  hotEditorEnabled.value = false;
+  safeSetLocalStorage(HOT_EDITOR_ENABLED_KEY, '0');
+  await logoutHotEditor();
+};
+
+const persistHotConfig = async (next: { overrides: Record<string, HotOverride>; disableAllHot: boolean }) => {
+  if (isSavingHotOverrides.value) return;
+  if (!hotEditorAuthorized.value) {
+    const ok = await authorizeHotEditor();
+    if (!ok) return;
+  }
+
+  hotConfig.value = next;
+  isSavingHotOverrides.value = true;
+  try {
+    await saveHotConfig(next);
+    notifyHotOverridesChanged();
+  } catch (err) {
+    await loadHotConfig();
+    const message = String((err as any)?.message ?? err);
+    if (message === 'unauthorized') {
+      await refreshHotEditorSession();
+      window.alert('热门编辑口令不正确或未配置，保存失败。');
+    } else {
+      window.alert('保存热门配置失败，请稍后重试。');
+    }
+  } finally {
+    isSavingHotOverrides.value = false;
+  }
+};
+
+const toggleHotEditor = () => {
+  if (!hotEditorUnlocked.value) return;
+  hotEditorEnabled.value = !hotEditorEnabled.value;
+  safeSetLocalStorage(HOT_EDITOR_ENABLED_KEY, hotEditorEnabled.value ? '1' : '0');
+};
+
+const restoreDefaultHot = () => {
+  closeHotAdminMenu();
+  persistHotConfig({ overrides: {}, disableAllHot: false });
+};
+
+const clearAllHot = () => {
+  closeHotAdminMenu();
+  const ok = window.confirm('确认清空所有热门标记？（将覆盖代码默认热门）');
+  if (!ok) return;
+  persistHotConfig({ overrides: {}, disableAllHot: true });
+};
+
+const setProductHot = (productId: number, nextIsHot: boolean) => {
+  const key = String(productId);
+  const nextOverrides = { ...hotConfig.value.overrides };
+  const previous = nextOverrides[key] ?? {};
+
+  if (nextIsHot) {
+    const { hotRank } = previous;
+    nextOverrides[key] = { ...previous, isHot: true };
+    if (typeof hotRank === 'number') nextOverrides[key].hotRank = hotRank;
+    else if (hotRank === null) delete nextOverrides[key].hotRank;
+  } else {
+    nextOverrides[key] = { isHot: false };
+  }
+
+  persistHotConfig({ ...hotConfig.value, overrides: nextOverrides });
+};
+
+const setProductHotRank = (productId: number, raw: string) => {
+  const key = String(productId);
+  const trimmed = String(raw ?? '').trim();
+  const rank = trimmed ? Number.parseInt(trimmed, 10) : NaN;
+  const normalizedRank = Number.isFinite(rank) ? Math.trunc(rank) : undefined;
+
+  const nextOverrides = { ...hotConfig.value.overrides };
+
+  // Allow clearing rank (important when the product has a default `hotRank` in data)
+  if (!trimmed) {
+    const current = nextOverrides[key] ?? {};
+    nextOverrides[key] = { ...current, isHot: true, hotRank: null };
+    persistHotConfig({ ...hotConfig.value, overrides: nextOverrides });
+    return;
+  }
+
+  if (!normalizedRank || normalizedRank < 1 || normalizedRank > 10) return;
+
+  // Enforce unique rank: clear same rank from other products (including base data)
+  for (const product of typedProducts) {
+    if (product.id === productId) continue;
+    if (product.hotRank === normalizedRank) {
+      const otherKey = String(product.id);
+      nextOverrides[otherKey] = { ...(nextOverrides[otherKey] ?? {}), hotRank: null };
+    }
+  }
+  for (const [otherKey, override] of Object.entries(nextOverrides)) {
+    if (otherKey === key) continue;
+    if (typeof override?.hotRank === 'number' && override.hotRank === normalizedRank) {
+      nextOverrides[otherKey] = { ...(override ?? {}), hotRank: null };
+    }
+  }
+
+  nextOverrides[key] = { ...(nextOverrides[key] ?? {}), isHot: true, hotRank: normalizedRank };
+  persistHotConfig({ ...hotConfig.value, overrides: nextOverrides });
+};
 
 type SelectedBrand = { categoryId: number; brand: string };
 
@@ -456,12 +755,15 @@ const serializeBrandsParam = (brands: SelectedBrand[]): string => {
 // 获取路由中的筛选参数
 const getQueryParams = () => {
   const normalizedBrands = normalizeSelectedBrands(parseBrandsParam(route.query.brands));
+  const hotRaw = route.query.hot;
+  const hotToken = Array.isArray(hotRaw) ? hotRaw[0] : hotRaw;
   return {
     categories: (route.query.categories as string || '').split(',').filter(Boolean),
     brands: normalizedBrands,
     newProduct: route.query.id as string || '',
     type: route.query.type as string || '',
-    q: route.query.q as string || ''
+    q: route.query.q as string || '',
+    hotOnly: hotToken === '1' || hotToken === 'true' || hotToken === 'on'
   };
 };
 
@@ -473,6 +775,7 @@ const initializeFilters = () => {
   selectedNewProduct.value = params.newProduct;
   selectedType.value = params.type;
   searchQuery.value = params.q;
+  hotOnly.value = params.hotOnly;
 
   // Auto-clean invalid/duplicate brands query (e.g. `NaN:KIKUSUI`), so users can always remove filters.
   const rawBrands = typeof route.query.brands === 'string' ? route.query.brands : '';
@@ -491,6 +794,7 @@ const selectedBrands = ref<SelectedBrand[]>(getQueryParams().brands);
 const selectedNewProduct = ref<string>(getQueryParams().newProduct);
 const selectedType = ref<string>(getQueryParams().type);
 const searchQuery = ref<string>(getQueryParams().q);
+const hotOnly = ref<boolean>(getQueryParams().hotOnly);
 let searchCommitTimer: number | null = null;
 
 // 当前选中的分类
@@ -500,7 +804,7 @@ const currentCategory = computed(() =>
 
 // 筛选产品
 const filteredProducts = computed(() => {
-  let result = [...typedProducts] as Product[];
+  let result = [...productsWithHot.value] as Product[];
 
   // 按产品类型筛选（产品/中古品）
   if (route.query.type) {
@@ -559,6 +863,10 @@ const filteredProducts = computed(() => {
     });
   }
 
+  if (hotOnly.value) {
+    result = result.filter((p) => !!p.isHot || typeof p.hotRank === 'number');
+  }
+
   return result;
 });
 
@@ -587,6 +895,14 @@ const clearSearch = () => {
   commitSearch();
 };
 
+const toggleHotOnly = () => {
+  hotOnly.value = !hotOnly.value;
+  if (route.query.id) {
+    selectedNewProduct.value = '';
+  }
+  updateQueryParams();
+};
+
 // 检查是否为移动端
 const isMobile = ref(false);
 const showFilter = ref(false);
@@ -601,6 +917,27 @@ onMounted(() => {
   checkMobile();
   window.addEventListener('resize', checkMobile);
   initializeFilters();
+
+  refreshHotEditorSession();
+  loadHotConfig();
+
+  hotEditorUnlocked.value = isHotEditorUnlockQuery.value;
+  hotEditorEnabled.value =
+    hotEditorUnlocked.value && safeGetLocalStorage(HOT_EDITOR_ENABLED_KEY) === '1';
+
+  // Optional one-time authorization via URL token (will be removed from URL afterwards)
+  if (hotEditorUnlocked.value && hotEditorOneTimeToken.value) {
+    authorizeHotEditor(hotEditorOneTimeToken.value).finally(() => {
+      const nextQuery = { ...route.query } as Record<string, any>;
+      delete nextQuery.__token;
+      router.replace({ query: nextQuery });
+    });
+  }
+});
+
+watch(isHotEditorUnlockQuery, (unlocked) => {
+  hotEditorUnlocked.value = unlocked;
+  if (!unlocked) hotEditorEnabled.value = false;
 });
 
 // 检查分类是否处于激活状态
@@ -697,6 +1034,7 @@ const activeFiltersCount = computed(() => {
   let count = 0;
   if (route.query.type) count += 1;
   if (route.query.brand) count += 1;
+  if (hotOnly.value) count += 1;
   if (searchQuery.value.trim()) count += 1;
   count += selectedCategories.value.length;
   count += selectedBrands.value.length;
@@ -712,11 +1050,12 @@ const clearFilters = () => {
   selectedCategories.value = [];
   selectedNewProduct.value = '';
   searchQuery.value = '';
+  hotOnly.value = false;
 
   // 清除路由中的所有筛选参数
   router.push({
     name: 'products',
-    query: {} // 清空所有查询参数
+    query: hotEditorUnlocked.value ? { __hot: '1' } : {} // 清空所有查询参数（保留隐藏入口）
   });
 };
 
@@ -770,6 +1109,17 @@ const clearFilters = () => {
 		      key: `q:${q}`,
 		      label: `搜索：${q}`,
 		      remove: () => clearSearch()
+		    });
+		  }
+
+		  if (hotOnly.value) {
+		    chips.push({
+		      key: 'hot:1',
+		      label: '热门',
+		      remove: () => {
+		        hotOnly.value = false;
+		        updateQueryParams();
+		      }
 		    });
 		  }
 
@@ -882,6 +1232,20 @@ const updateQueryParams = () => {
     newQuery.type = route.query.type as string;
   }
 
+  // Preserve brand jump filter (from homepage "热门产品" jump)
+  if (route.query.brand) {
+    newQuery.brand = route.query.brand as string;
+  }
+
+  // Preserve hidden hot-editor gate
+  if (route.query.__hot) {
+    newQuery.__hot = String(route.query.__hot);
+  }
+
+  if (hotOnly.value) {
+    newQuery.hot = '1';
+  }
+
   const q = searchQuery.value.trim();
   if (q) {
     newQuery.q = q;
@@ -897,12 +1261,6 @@ onUnmounted(() => {
   if (searchCommitTimer) window.clearTimeout(searchCommitTimer);
   window.removeEventListener('resize', checkMobile);
 });
-
-// 产品卡点击：打开官方详情页（如有）
-const handleProductClick = (product: Product) => {
-  if (!product.link) return;
-  window.open(product.link, '_blank');
-};
 
 // 添加格式化规格的函数
 const formatSpec = (spec: string) => {
@@ -1319,6 +1677,193 @@ const closeQuoteDialog = () => {
 			      min-width: 240px;
 			    }
 
+          .hot-only-toggle {
+            height: 44px;
+            padding: 0 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(0, 0, 0, 0.10);
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(10px);
+            color: vars.$primary-black;
+            font-size: var(--text-sm);
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.18s ease, opacity 0.18s ease;
+
+            i {
+              color: vars.$primary-green;
+            }
+
+            &:hover {
+              transform: translateY(-1px);
+            }
+
+            &:active {
+              transform: translateY(0);
+            }
+
+            &:focus-visible {
+              outline: 3px solid rgba(245, 158, 11, 0.28);
+              outline-offset: 3px;
+            }
+          }
+
+          .hot-only-toggle[aria-pressed='true'] {
+            border-color: rgba(vars.$primary-green, 0.42);
+            background: rgba(vars.$primary-green, 0.12);
+          }
+
+          .hot-editor-gate {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            flex: 0 0 auto;
+          }
+
+          .hot-admin-enter,
+          .hot-admin-actions,
+          .hot-admin-done,
+          .hot-admin-item,
+          .hot-editor-toggle,
+          .hot-editor-restore,
+          .hot-editor-clear {
+            height: 44px;
+            padding: 0 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(0, 0, 0, 0.10);
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(10px);
+            color: vars.$primary-black;
+            font-size: var(--text-sm);
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.18s ease, opacity 0.18s ease;
+
+            &:hover {
+              transform: translateY(-1px);
+            }
+
+            &:active {
+              transform: translateY(0);
+            }
+
+            &:disabled {
+              opacity: 0.55;
+              cursor: not-allowed;
+            }
+
+            &:focus-visible {
+              outline: 3px solid rgba(vars.$primary-green, 0.32);
+              outline-offset: 3px;
+            }
+          }
+
+          .hot-editor-toggle[aria-pressed='true'] {
+            border-color: rgba(vars.$primary-green, 0.45);
+            background: rgba(vars.$primary-green, 0.12);
+          }
+
+          .hot-admin-enter {
+            border-color: rgba(vars.$primary-green, 0.48);
+            background: linear-gradient(
+              180deg,
+              rgba(vars.$primary-green, 0.92),
+              rgba(vars.$primary-green, 0.78)
+            );
+            color: white;
+            font-weight: 800;
+            box-shadow: 0 10px 24px rgba(vars.$primary-green, 0.18);
+
+            i {
+              font-size: 0.9rem;
+              opacity: 0.95;
+            }
+          }
+
+          .hot-admin-editing {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+          }
+
+          .hot-admin-menu {
+            position: relative;
+          }
+
+          .hot-admin-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 750;
+            background: rgba(255, 255, 255, 0.92);
+
+            i {
+              font-size: 0.85rem;
+              opacity: 0.75;
+            }
+          }
+
+          .hot-admin-menu[open] > .hot-admin-actions {
+            border-color: rgba(vars.$primary-green, 0.45);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.10);
+          }
+
+          .hot-admin-popover {
+            position: absolute;
+            right: 0;
+            top: calc(100% + 10px);
+            min-width: 180px;
+            padding: 8px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.98);
+            border: 1px solid rgba(0, 0, 0, 0.10);
+            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
+            backdrop-filter: blur(14px);
+            z-index: 30;
+            display: grid;
+            gap: 6px;
+          }
+
+          .hot-admin-actions::-webkit-details-marker {
+            display: none;
+          }
+
+          details.hot-admin-menu > summary {
+            list-style: none;
+          }
+
+          .hot-admin-item {
+            height: 40px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            background: rgba(0, 0, 0, 0.03);
+            font-weight: 750;
+            text-align: left;
+            padding: 0 12px;
+          }
+
+          .hot-admin-item:hover {
+            background: rgba(vars.$primary-green, 0.10);
+            border-color: rgba(vars.$primary-green, 0.28);
+          }
+
+          .hot-admin-item.danger:hover {
+            background: rgba(220, 38, 38, 0.10);
+            border-color: rgba(220, 38, 38, 0.22);
+          }
+
+          .hot-admin-done {
+            font-weight: 800;
+            border-color: rgba(0, 0, 0, 0.10);
+            background: rgba(0, 0, 0, 0.04);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+          }
+
 				    .search-box {
 			      position: relative;
 			      width: min(520px, 100%);
@@ -1667,6 +2212,141 @@ const closeQuoteDialog = () => {
         height: 240px;
         overflow: hidden;
         background: #f0f0f0;
+
+        .hot-tag {
+          position: absolute;
+          top: 12px;
+          left: 12px;
+          z-index: 3;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 10px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.92);
+          border: 1px solid rgba(0, 0, 0, 0.10);
+          color: vars.$primary-black;
+          font-size: 0.82rem;
+          font-weight: 800;
+          letter-spacing: 0.2px;
+          backdrop-filter: blur(10px);
+          box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+
+          i {
+            font-size: 0.9rem;
+            color: #ff7a00;
+          }
+
+          .hot-rank {
+            color: vars.$primary-black;
+            background: rgba(vars.$primary-green, 0.12);
+            border: 1px solid rgba(vars.$primary-green, 0.18);
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-weight: 800;
+          }
+        }
+
+        .hot-editor-card {
+          position: absolute;
+          left: 12px;
+          bottom: 12px;
+          z-index: 3;
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 12px;
+          border-radius: 14px;
+          background: rgba(255, 255, 255, 0.92);
+          border: 1px solid rgba(0, 0, 0, 0.10);
+          color: vars.$primary-black;
+          backdrop-filter: blur(10px);
+          box-shadow: 0 14px 40px rgba(0, 0, 0, 0.18);
+        }
+
+        .hot-editor-switch {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          cursor: pointer;
+          user-select: none;
+          position: relative;
+
+          input {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+          }
+
+          .switch-ui {
+            width: 34px;
+            height: 20px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.12);
+            position: relative;
+            flex: 0 0 auto;
+            transition: background 0.18s ease;
+
+            &::after {
+              content: '';
+              position: absolute;
+              top: 2px;
+              left: 2px;
+              width: 16px;
+              height: 16px;
+              border-radius: 999px;
+              background: white;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+              transition: transform 0.18s ease;
+            }
+          }
+
+          input:checked + .switch-ui {
+            background: rgba(vars.$primary-green, 0.55);
+          }
+
+          input:checked + .switch-ui::after {
+            transform: translateX(14px);
+          }
+
+          .switch-label {
+            font-size: 0.85rem;
+            font-weight: 800;
+            letter-spacing: 0.2px;
+          }
+        }
+
+        .hot-rank-input {
+          width: 56px;
+          height: 32px;
+          border-radius: 10px;
+          border: 1px solid rgba(0, 0, 0, 0.12);
+          background: rgba(255, 255, 255, 0.8);
+          color: vars.$primary-black;
+          padding: 0 10px;
+          font-size: 0.85rem;
+          font-weight: 700;
+
+          &::placeholder {
+            color: rgba(0, 0, 0, 0.45);
+            font-weight: 600;
+          }
+
+          &:disabled {
+            opacity: 0.45;
+          }
+
+          &:focus-visible {
+            outline: 3px solid rgba(vars.$primary-green, 0.35);
+            outline-offset: 2px;
+          }
+        }
 
         .lazy-picture {
           width: 100%;

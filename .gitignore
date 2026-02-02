@@ -7,3 +7,4 @@ dist
 !.env.example
 .vite
 .npm-cache/
+data/hot-products.json

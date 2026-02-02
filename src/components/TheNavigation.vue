@@ -48,7 +48,11 @@
             <button
               type="button"
               class="nav-link"
-              :class="{ 'menu-trigger': isMobile, 'is-open': activeSubmenu === 'new' }"
+              :class="{
+                'menu-trigger': isMobile,
+                'is-open': activeSubmenu === 'new',
+                'is-route-active': isNewProductsRoute,
+              }"
               ref="productsTrigger"
               :aria-expanded="isMobile ? activeSubmenu === 'new' : undefined"
               :aria-controls="isMobile ? 'nav-submenu-products' : undefined"
@@ -89,7 +93,7 @@
                 <div class="brands-grid">
                   <div
                     v-for="brand in topBrands"
-                    :key="brand.id"
+                    :key="brand.name"
                     class="brand-section"
                   >
                     <button
@@ -97,12 +101,15 @@
                       class="brand-header"
                       @click="handleBrandClick(brand)"
                     >
-                      <img
-                        :src="brand.logo"
-                        :alt="brand.name"
-                        loading="lazy"
-                        decoding="async"
-                      />
+                      <div class="brand-mark" aria-hidden="true">
+                        <img
+                          :src="getBrandLogoUrl(brand.name)"
+                          :alt="brand.name"
+                          loading="lazy"
+                          decoding="async"
+                          @error="handleBrandLogoError(brand.name)"
+                        />
+                      </div>
                       <h3>{{ brand.name }}</h3>
                     </button>
                     <div class="products-list">
@@ -113,7 +120,7 @@
                           name: 'products',
                           query: {
                             type: 'new',
-                            brands: `${brand.categoryId}:${brand.name}`,
+                            id: String(product.id),
                           },
                         }"
                         class="product-item"
@@ -143,6 +150,9 @@
               query: { type: 'used' },
             }"
             class="nav-link"
+            :class="{ 'is-route-active': isUsedProductsRoute }"
+            active-class="_navlink-active"
+            exact-active-class="_navlink-exact-active"
             @click="closeMenu"
           >
             中古品
@@ -183,14 +193,174 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref, watch, onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { computed, nextTick, reactive, ref, watch, onMounted, onUnmounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { getAssetUrl } from '@/utils/assets';
 
-//获取产品下拉菜单数据
-import { topBrands } from '@/data/navigation/menuForNewProds';
+// @ts-ignore
+import { products } from '@/data/products/products.js';
 
 const router = useRouter();
+const route = useRoute();
+
+type Product = {
+  id: number;
+  name: string;
+  description: string;
+  image: string;
+  brand: string;
+  type: string;
+  categoryId: number;
+  isHot?: boolean;
+  hotRank?: number;
+};
+
+type MenuBrand = {
+  name: string;
+  brandsParam: string;
+  products: Array<Pick<Product, 'id' | 'name' | 'description' | 'image'>>;
+};
+
+const typedProducts = products as Product[];
+
+const BRAND_LOGO_OVERRIDES: Record<string, string[]> = {
+  // Existing assets live under `public/images/co-brands/nik.*`
+  NIKON: ['/images/co-brands/nik.avif', '/images/co-brands/nik.webp', '/images/co-brands/nik.png'],
+};
+
+const brandFolderName = (brandName: string): string => {
+  const raw = String(brandName ?? '').trim().toLowerCase();
+  // Keep it aligned with existing folder naming under public/images/brands/
+  // e.g. "R&S" -> "rs"
+  const slug = raw.replace(/[^a-z0-9]+/g, '');
+  return slug || raw;
+};
+
+const splitUrl = (url: string): { path: string; suffix: string } => {
+  const match = url.match(/^([^?#]+)([?#].*)?$/);
+  return { path: match?.[1] ?? url, suffix: match?.[2] ?? '' };
+};
+
+const replaceExt = (url: string, nextExt: string): string => {
+  const { path, suffix } = splitUrl(url);
+  const lastSlash = path.lastIndexOf('/');
+  const lastDot = path.lastIndexOf('.');
+  if (lastDot <= lastSlash) return url;
+  return `${path.slice(0, lastDot)}.${nextExt}${suffix}`;
+};
+
+const toBaselineImage = (url: string): string => {
+  const { path } = splitUrl(url.toLowerCase());
+  if (path.endsWith('.avif') || path.endsWith('.webp')) {
+    return replaceExt(url, 'jpg');
+  }
+  return url;
+};
+
+// Keep the mega-menu within one viewport (no scrollbar).
+// With typical desktop widths this yields 2 rows max.
+const MAX_MENU_BRANDS = 4;
+const MAX_PRODUCTS_PER_BRAND = 2;
+
+const brandLogoStepByName = reactive<Record<string, number>>({});
+const getBrandLogoUrl = (brandName: string): string => {
+  const step = brandLogoStepByName[brandName] ?? 0;
+  const overrides = BRAND_LOGO_OVERRIDES[String(brandName ?? '').trim()];
+  const candidates = overrides?.length
+    ? overrides.map((p) => getAssetUrl(p))
+    : (() => {
+        const folder = brandFolderName(brandName);
+        return [
+          getAssetUrl(`/images/brands/${folder}/logo.avif`),
+          getAssetUrl(`/images/brands/${folder}/logo.webp`),
+          getAssetUrl(`/images/brands/${folder}/logo.png`),
+          getAssetUrl(`/images/brands/${folder}/logo.svg`),
+          getAssetUrl(`/images/brands/${folder}/logo.jpg`),
+        ];
+      })();
+  return candidates[Math.min(step, candidates.length - 1)];
+};
+
+const handleBrandLogoError = (brandName: string) => {
+  brandLogoStepByName[brandName] = (brandLogoStepByName[brandName] ?? 0) + 1;
+};
+
+const topBrands = computed<MenuBrand[]>(() => {
+  const newProducts = typedProducts.filter((p) => p.type === 'new' && !!String(p.brand ?? '').trim());
+  const byBrand = new Map<string, Product[]>();
+
+  for (const product of newProducts) {
+    const key = String(product.brand).trim();
+    const list = byBrand.get(key) ?? [];
+    list.push(product);
+    byBrand.set(key, list);
+  }
+
+  const brands = Array.from(byBrand.entries()).map(([brandName, list]) => {
+    const categoryIds = Array.from(new Set(list.map((p) => p.categoryId).filter((id) => Number.isFinite(id))));
+    const brandsParam = categoryIds.map((id) => `${id}:${brandName}`).join(',');
+
+    const hotRanks = list
+      .filter((p) => p.isHot)
+      .map((p) => (Number.isFinite(p.hotRank) ? (p.hotRank as number) : Number.POSITIVE_INFINITY));
+
+    const hotCount = hotRanks.length;
+    const minHotRank = hotRanks.length ? Math.min(...hotRanks) : Number.POSITIVE_INFINITY;
+
+    const sortedProducts = [...list].sort((a, b) => {
+      const aHot = !!a.isHot;
+      const bHot = !!b.isHot;
+      if (aHot !== bHot) return aHot ? -1 : 1;
+
+      const aRank = Number.isFinite(a.hotRank) ? (a.hotRank as number) : Number.POSITIVE_INFINITY;
+      const bRank = Number.isFinite(b.hotRank) ? (b.hotRank as number) : Number.POSITIVE_INFINITY;
+      if (aRank !== bRank) return aRank - bRank;
+
+      return a.id - b.id;
+    });
+
+    return {
+      name: brandName,
+      brandsParam,
+      products: sortedProducts.slice(0, MAX_PRODUCTS_PER_BRAND).map((p) => ({
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        image: toBaselineImage(p.image),
+      })),
+      _sort: {
+        hotCount,
+        minHotRank,
+        totalCount: list.length,
+      },
+    };
+  });
+
+  brands.sort((a, b) => {
+    if (a._sort.hotCount !== b._sort.hotCount) return b._sort.hotCount - a._sort.hotCount;
+    if (a._sort.minHotRank !== b._sort.minHotRank) return a._sort.minHotRank - b._sort.minHotRank;
+    if (a._sort.totalCount !== b._sort.totalCount) return b._sort.totalCount - a._sort.totalCount;
+    return a.name.localeCompare(b.name);
+  });
+
+  return brands
+    .filter((b) => !!b.brandsParam && b.products.length > 0)
+    .slice(0, MAX_MENU_BRANDS)
+    .map(({ _sort: _unused, ...brand }) => brand);
+});
+
+const currentProductsType = computed(() => {
+  const raw = route.query?.type;
+  return Array.isArray(raw) ? raw[0] : raw;
+});
+
+const isUsedProductsRoute = computed(
+  () => route.name === 'products' && currentProductsType.value === 'used',
+);
+
+const isNewProductsRoute = computed(
+  () => route.name === 'products' && currentProductsType.value !== 'used',
+);
 
 const isScrolled = ref(false);
 const isMenuOpen = ref(false);
@@ -318,12 +488,12 @@ const handleProductsClick = () => {
   }
 };
 
-const handleBrandClick = (brand: any) => {
+const handleBrandClick = (brand: MenuBrand) => {
   router.push({
     name: 'products',
     query: {
       type: 'new',
-      brands: `${brand.categoryId}:${brand.name}`,
+      brands: brand.brandsParam,
     },
   });
   closeMenu();
@@ -443,6 +613,12 @@ onUnmounted(() => {
 
   &.nav-scrolled {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+
+    .nav-menu {
+      background: rgba(255, 255, 255, 0.7);
+      border-color: rgba(0, 0, 0, 0.12);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
   }
 }
 
@@ -476,43 +652,54 @@ onUnmounted(() => {
 .nav-menu {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  height: 100%;
+  gap: 6px;
+  height: auto;
+  padding: 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
 }
 
 .nav-link {
   color: var(--text-color);
   text-decoration: none;
-  font-weight: 500;
-  font-size: var(--text-md);
+  font: inherit;
+  font-weight: 650;
+  font-size: 1.02rem;
   transition: color 0.3s, transform 0.18s ease, opacity 0.18s ease;
   background: none;
-  border: none;
+  border: 1px solid transparent;
   cursor: pointer;
-  padding: 0;
-  font: inherit;
+  padding: 0 14px;
   display: inline-flex;
   align-items: center;
-  height: 100%;
+  height: 44px;
   position: relative;
+  border-radius: 999px;
+  opacity: 0.92;
 
   &.is-open {
-    color: vars.$primary-green;
-
-    &::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 14px;
-      height: 2px;
-      border-radius: 2px;
-      background: linear-gradient(90deg, transparent, vars.$primary-green, transparent);
-    }
+    color: vars.$primary-black;
+    background: linear-gradient(
+      180deg,
+      rgba(vars.$primary-green, 0.28),
+      rgba(vars.$primary-green, 0.12)
+    );
+    border-color: rgba(vars.$primary-green, 0.35);
+    opacity: 1;
   }
 
   &:hover {
-    color: vars.$primary-green;
+    color: vars.$primary-black;
+    background: rgba(vars.$primary-green, 0.12);
+    opacity: 1;
+  }
+
+  &:focus-visible {
+    outline: 3px solid rgba(vars.$primary-green, 0.35);
+    outline-offset: 3px;
+    opacity: 1;
   }
 
   &:active {
@@ -520,11 +707,24 @@ onUnmounted(() => {
   }
 }
 
+.nav-link.is-route-active,
+.nav-link.router-link-exact-active,
+.nav-link.router-link-active {
+  color: vars.$primary-black;
+  background: linear-gradient(
+    180deg,
+    rgba(vars.$primary-green, 0.32),
+    rgba(vars.$primary-green, 0.14)
+  );
+  border-color: rgba(vars.$primary-green, 0.4);
+  opacity: 1;
+}
+
 .nav-item {
   position: relative;
-  height: 100%;
+  height: auto;
   display: flex;
-  align-items: stretch;
+  align-items: center;
 }
 
 .nav-backdrop {
@@ -553,8 +753,7 @@ onUnmounted(() => {
   width: min(1240px, calc(100vw - 2rem));
   max-height: calc(100dvh - var(--header-offset) - 1rem);
   max-height: calc(100vh - var(--header-offset) - 1rem);
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
   transform: translate(-50%, 0) scale(0.98);
   transform-origin: top center;
   background: rgba(255, 255, 255, 0.98);
@@ -562,14 +761,14 @@ onUnmounted(() => {
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.18);
   border: 1px solid rgba(0, 0, 0, 0.10);
   border-radius: 20px;
-  padding: var(--space-5);
+  padding: var(--space-4);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
   transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.165, 0.84, 0.44, 1), visibility 0s linear 0.18s;
   z-index: 1002;
   will-change: transform, opacity;
-  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
 
   // Hover bridge: prevents a visible gap/flicker when moving cursor down
   &::before {
@@ -616,8 +815,8 @@ onUnmounted(() => {
     align-items: center;
     justify-content: space-between;
     gap: var(--space-4);
-    padding-bottom: var(--space-4);
-    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-3);
+    margin-bottom: var(--space-3);
     border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   }
 
@@ -665,14 +864,14 @@ onUnmounted(() => {
 
   .brands-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-3);
     width: 100%;
 
     .brand-section {
       position: relative;
-      padding: var(--space-3);
-      border-radius: 16px;
+      padding: var(--space-2);
+      border-radius: 14px;
       background: rgba(255, 255, 255, 0.7);
       border: 1px solid rgba(0, 0, 0, 0.06);
       transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
@@ -683,7 +882,7 @@ onUnmounted(() => {
         top: 0;
         left: 0;
         width: 2px;
-        height: 40px;
+        height: 34px;
         background: linear-gradient(
           180deg,
           vars.$primary-green 0%,
@@ -704,17 +903,28 @@ onUnmounted(() => {
         cursor: pointer;
         display: flex;
         align-items: center;
-        gap: var(--space-3);
-        margin-bottom: var(--space-4);
+        gap: var(--space-2);
+        margin-bottom: var(--space-3);
         padding-bottom: var(--space-2);
         border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 
-        img {
-          height: 36px;
-          width: auto;
-          object-fit: contain;
-          filter: grayscale(100%);
-          transition: filter 0.3s ease;
+        .brand-mark {
+          flex: 0 0 auto;
+          width: 40px;
+          height: 34px;
+          display: grid;
+          place-items: center;
+          border-radius: 10px;
+          background: rgba(15, 23, 42, 0.04);
+          border: 1px solid rgba(15, 23, 42, 0.06);
+
+          img {
+            height: 26px;
+            width: auto;
+            object-fit: contain;
+            filter: grayscale(100%);
+            transition: filter 0.25s ease;
+          }
         }
 
         h3 {
@@ -725,7 +935,7 @@ onUnmounted(() => {
           letter-spacing: 0.5px;
         }
 
-        &:hover img {
+        &:hover .brand-mark img {
           filter: grayscale(0%);
         }
       }
@@ -733,12 +943,12 @@ onUnmounted(() => {
       .products-list {
         display: flex;
         flex-direction: column;
-        gap: var(--space-3);
+        gap: var(--space-2);
 
         .product-item {
           display: flex;
-          gap: var(--space-3);
-          padding: var(--space-3);
+          gap: var(--space-2);
+          padding: var(--space-2);
           border-radius: 12px;
           transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1), opacity 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
           background: rgba(255, 255, 255, 0.5);
@@ -748,7 +958,7 @@ onUnmounted(() => {
           &:hover {
             background: rgba(vars.$primary-green, 0.03);
             border-color: rgba(vars.$primary-green, 0.1);
-            transform: translateX(10px);
+            transform: translateX(6px);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 
             img {
@@ -761,10 +971,10 @@ onUnmounted(() => {
           }
 
           img {
-            width: 120px;
-            height: 120px;
+            width: 72px;
+            height: 72px;
             object-fit: cover;
-            border-radius: 8px;
+            border-radius: 10px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             transition: transform 0.3s ease;
           }
@@ -777,8 +987,8 @@ onUnmounted(() => {
             min-width: 0;
 
             h4 {
-              margin: 0 0 var(--space-2);
-              font-size: 1.1rem;
+              margin: 0 0 var(--space-1);
+              font-size: 0.98rem;
               color: vars.$primary-black;
               font-weight: 500;
               letter-spacing: 0.3px;
@@ -790,12 +1000,12 @@ onUnmounted(() => {
 
             p {
               margin: 0;
-              font-size: 0.95rem;
+              font-size: 0.82rem;
               color: #666;
-              line-height: 1.6;
+              line-height: 1.35;
               opacity: 0.9;
               display: -webkit-box;
-              -webkit-line-clamp: 2;
+              -webkit-line-clamp: 1;
               -webkit-box-orient: vertical;
               overflow: hidden;
             }
@@ -896,6 +1106,7 @@ onUnmounted(() => {
     overflow: hidden; // 隐藏溢出内容
     z-index: 1000;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border: none;
 
     &.menu-active {
       height: calc(100dvh - var(--header-offset)); // 展开到全屏高度（动态视口）
@@ -911,8 +1122,17 @@ onUnmounted(() => {
       display: block;
       padding: var(--space-2);
       text-align: center;
+      border: none;
       border-bottom: 1px solid rgba(0, 0, 0, 0.05);
       font-size: var(--text-lg);
+      border-radius: 10px;
+
+      &.router-link-exact-active,
+      &.router-link-active,
+      &.is-route-active {
+        background: rgba(vars.$primary-green, 0.12);
+        border-bottom-color: rgba(0, 0, 0, 0.05);
+      }
     }
 
     .nav-item {
@@ -957,22 +1177,34 @@ onUnmounted(() => {
           flex-direction: column;
           gap: var(--space-3);
 
-          .brand-section {
-            background: white;
-            padding: var(--space-3);
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            .brand-section {
+              background: white;
+              padding: var(--space-3);
+              border-radius: 8px;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 
-            .brand-header {
-              display: flex;
-              align-items: center;
-              gap: var(--space-2);
-              margin-bottom: var(--space-3);
-              padding-bottom: var(--space-2);
-              border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+              .brand-header {
+                display: flex;
+                align-items: center;
+                gap: var(--space-2);
+                margin-bottom: var(--space-3);
+                padding-bottom: var(--space-2);
+                border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 
-              img {
-                height: 24px;
+              .brand-mark {
+                width: 36px;
+                height: 30px;
+                display: grid;
+                place-items: center;
+                border-radius: 8px;
+                background: rgba(15, 23, 42, 0.04);
+                border: 1px solid rgba(15, 23, 42, 0.06);
+
+                img {
+                  height: 20px;
+                  width: auto;
+                  object-fit: contain;
+                }
               }
 
               h3 {
