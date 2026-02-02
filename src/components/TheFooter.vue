@@ -16,7 +16,7 @@
                 </div>
 
                 <!-- 快速链接 -->
-                <nav class="footer-col links" aria-label="快速链接">
+                <nav v-if="!isMobile" class="footer-col links" aria-label="快速链接">
                     <h3>快速链接</h3>
                     <ul>
                         <li><router-link to="/">首页</router-link></li>
@@ -29,7 +29,7 @@
                 </nav>
 
                 <!-- 产品分类 -->
-                <nav class="footer-col categories" aria-label="产品分类">
+                <nav v-if="!isMobile" class="footer-col categories" aria-label="产品分类">
                     <h3>产品分类</h3>
                     <ul>
                         <li><router-link :to="{ path: '/products', query: { categories: '1' } }">数字万用表/源表</router-link></li>
@@ -44,7 +44,7 @@
                 </nav>
 
                 <!-- 联系我们 + 二维码 -->
-                <div class="footer-col contact">
+                <div v-if="!isMobile" class="footer-col contact">
                     <h3>联系我们</h3>
                     <div class="contact-grid">
                         <div class="contact-items">
@@ -72,6 +72,97 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Mobile: accordion layout -->
+                <div v-else class="footer-col mobile">
+                    <div class="mobile-actions" aria-label="快捷联系">
+                        <a class="action-btn primary" href="tel:186-6258-5852">
+                            <i class="fas fa-phone-alt" aria-hidden="true"></i>
+                            <span>一键拨打</span>
+                        </a>
+                        <a class="action-btn" href="mailto:sales@xwtest.com.cn">
+                            <i class="fas fa-envelope" aria-hidden="true"></i>
+                            <span>发邮件</span>
+                        </a>
+                    </div>
+
+                    <details class="footer-accordion" open>
+                        <summary>
+                            <span class="summary-left">
+                                <i class="fas fa-link" aria-hidden="true"></i>
+                                <span>快速链接</span>
+                            </span>
+                            <i class="fas fa-chevron-down summary-icon" aria-hidden="true"></i>
+                        </summary>
+                        <div class="accordion-body">
+                            <ul class="accordion-links">
+                                <li><router-link to="/">首页</router-link></li>
+                                <li><router-link :to="{ name: 'products', query: { type: 'new' } }">产品</router-link></li>
+                                <li><router-link :to="{ name: 'products', query: { type: 'used' } }">中古品</router-link></li>
+                                <li><router-link to="/services">服务</router-link></li>
+                                <li><router-link to="/about">关于我们</router-link></li>
+                                <li><a href="https://shop198581009.taobao.com" target="_blank" rel="noopener">淘宝店</a></li>
+                            </ul>
+                        </div>
+                    </details>
+
+                    <details class="footer-accordion">
+                        <summary>
+                            <span class="summary-left">
+                                <i class="fas fa-th-large" aria-hidden="true"></i>
+                                <span>产品分类</span>
+                            </span>
+                            <i class="fas fa-chevron-down summary-icon" aria-hidden="true"></i>
+                        </summary>
+                        <div class="accordion-body">
+                            <ul class="accordion-links">
+                                <li><router-link :to="{ path: '/products', query: { categories: '1' } }">数字万用表/源表</router-link></li>
+                                <li><router-link :to="{ path: '/products', query: { categories: '2' } }">电压/电流源</router-link></li>
+                                <li><router-link :to="{ path: '/products', query: { categories: '3' } }">超高电阻/微小电流计</router-link></li>
+                                <li><router-link :to="{ path: '/products', query: { categories: '4' } }">数字示波器</router-link></li>
+                                <li><router-link :to="{ path: '/products', query: { categories: '5' } }">电气安规测试</router-link></li>
+                                <li class="more">
+                                    <router-link to="/products">查看全部产品 <i class="fas fa-arrow-right" aria-hidden="true"></i></router-link>
+                                </li>
+                            </ul>
+                        </div>
+                    </details>
+
+                    <details class="footer-accordion">
+                        <summary>
+                            <span class="summary-left">
+                                <i class="fas fa-headset" aria-hidden="true"></i>
+                                <span>联系我们</span>
+                            </span>
+                            <i class="fas fa-chevron-down summary-icon" aria-hidden="true"></i>
+                        </summary>
+                        <div class="accordion-body">
+                            <div class="contact-items">
+                                <a class="contact-pill" href="tel:186-6258-5852">
+                                    <i class="fas fa-phone-alt" aria-hidden="true"></i>
+                                    <span>186-6258-5852</span>
+                                </a>
+                                <a class="contact-pill" href="mailto:sales@xwtest.com.cn">
+                                    <i class="fas fa-envelope" aria-hidden="true"></i>
+                                    <span>sales@xwtest.com.cn</span>
+                                </a>
+                                <div class="contact-pill muted" aria-label="工作时间">
+                                    <i class="fas fa-clock" aria-hidden="true"></i>
+                                    <span>周一至周五 9:00-18:00</span>
+                                </div>
+                            </div>
+
+                            <div class="qr-card" aria-label="微信二维码">
+                                <LazyPicture
+                                    :src="getAssetUrl('/images/qrcode.png')"
+                                    :placeholder="getAssetUrl('/images/qrcode-small.jpg')"
+                                    alt="微信二维码"
+                                />
+                                <span class="qr-label">扫码添加客服</span>
+                            </div>
+                        </div>
+                    </details>
+                </div>
             </div>
 
             <!-- 版权及备案信息 -->
@@ -85,8 +176,23 @@
     </footer>
 </template>
 <script setup lang="ts">
+import { onMounted, onUnmounted, ref } from 'vue';
 import { getAssetUrl } from '@/utils/assets';
 import LazyPicture from '@/components/LazyPicture.vue';
+
+const isMobile = ref(false);
+const checkMobile = () => {
+    isMobile.value = window.innerWidth <= 768;
+};
+
+onMounted(() => {
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('resize', checkMobile);
+});
 </script>
 
 <style lang="scss" scoped>
@@ -367,10 +473,162 @@ import LazyPicture from '@/components/LazyPicture.vue';
             gap: 20px;
         }
 
+        .footer-logo {
+            height: 44px;
+        }
+
+        .company-desc {
+            max-width: none;
+            margin-bottom: 12px;
+        }
+
+        .trust-points {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .footer-col.mobile {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .mobile-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .action-btn {
+            height: 44px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.88);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+            -webkit-tap-highlight-color: transparent;
+
+            i {
+                color: rgba(vars.$primary-green, 0.95);
+            }
+
+            &:active {
+                transform: scale(0.99);
+            }
+        }
+
+        .action-btn.primary {
+            background: rgba(vars.$primary-green, 0.16);
+            border-color: rgba(vars.$primary-green, 0.30);
+
+            i {
+                color: rgba(vars.$primary-green, 1);
+            }
+        }
+
+        .footer-accordion {
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.04);
+            overflow: hidden;
+        }
+
+        .footer-accordion summary {
+            list-style: none;
+            cursor: pointer;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            user-select: none;
+        }
+
+        .footer-accordion summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .summary-left {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.92);
+
+            i {
+                color: rgba(vars.$primary-green, 0.95);
+                width: 16px;
+                text-align: center;
+            }
+        }
+
+        .summary-icon {
+            color: rgba(255, 255, 255, 0.68);
+            transition: transform 0.18s ease;
+        }
+
+        .footer-accordion[open] .summary-icon {
+            transform: rotate(180deg);
+        }
+
+        .accordion-body {
+            padding: 0 14px 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.10);
+            display: grid;
+            gap: 12px;
+        }
+
+        .accordion-links {
+            list-style: none;
+            padding: 12px 0 0;
+            margin: 0;
+            display: grid;
+            gap: 10px;
+
+            a {
+                color: rgba(255, 255, 255, 0.78);
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            li.more a {
+                color: rgba(vars.$primary-green, 0.95);
+                font-weight: 800;
+            }
+        }
+
+        .accordion-body .contact-items {
+            margin-top: 12px;
+        }
+
+        .accordion-body .qr-card {
+            width: 100%;
+            grid-template-columns: auto 1fr;
+            justify-items: start;
+            align-items: center;
+
+            .qr-label {
+                text-align: left;
+            }
+        }
+
         .footer-bottom {
             flex-direction: column;
-            align-items: flex-start;
-            text-align: left;
+            align-items: center;
+            text-align: center;
+            padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
         }
     }
 }

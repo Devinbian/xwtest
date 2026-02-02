@@ -7,9 +7,16 @@ export const generatePlaceholderUrl = (originalUrl: string): string => {
   // 生产环境下，返回低质量预览图的URL
   // 移除重复的 base 路径
   const cleanUrl = originalUrl.replace(/^\/xwtest\//, '').replace(/^\//, '');
-  
-  // 生成小图URL
-  const smallImageUrl = cleanUrl.replace(/(\.[^.]+)$/, '-small.jpg');
+
+  const urlPath = cleanUrl.split('?')[0].split('#')[0];
+  const lastSlash = urlPath.lastIndexOf('/');
+  const lastDot = urlPath.lastIndexOf('.');
+  const ext =
+    lastDot > lastSlash ? urlPath.slice(lastDot + 1).toLowerCase() : 'jpg';
+  const smallExt = ext === 'avif' || ext === 'webp' ? 'jpg' : ext;
+
+  // 生成小图URL（保持与原图扩展名一致；对 avif/webp 强制使用 jpg 作为占位兜底）
+  const smallImageUrl = cleanUrl.replace(/(\.[^.]+)$/, `-small.${smallExt}`);
   
   // 添加正确的 base 路径
   return `${import.meta.env.BASE_URL}${smallImageUrl}`;

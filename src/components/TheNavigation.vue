@@ -4,14 +4,21 @@
     <div class="top-bar">
       <div class="container top-container">
         <div class="company-info">
-          <span>鑫万测电子科技（苏州）有限公司</span>
+          <span class="company-wordmark" aria-label="鑫万测电子科技（苏州）有限公司">
+            <span class="company-brand">鑫万测</span>
+            <span class="company-divider" aria-hidden="true"></span>
+            <span class="company-rest">电子科技（苏州）有限公司</span>
+          </span>
+          <span class="company-tagline" aria-hidden="true">仪器设备 · 测试测量解决方案</span>
         </div>
         <div class="contact-info">
           <a href="tel:186-6258-5852">
-            <i class="fas fa-phone-alt"></i> 186-6258-5852
+            <i class="fas fa-phone-alt"></i>
+            <span>186-6258-5852</span>
           </a>
           <a href="mailto:sales@xwtest.com.cn">
-            <i class="fas fa-envelope"></i> sales@xwtest.com.cn
+            <i class="fas fa-envelope"></i>
+            <span>sales@xwtest.com.cn</span>
           </a>
         </div>
       </div>
@@ -40,40 +47,42 @@
           >
 
           <!-- 产品下拉菜单 -->
+          <router-link
+            v-if="isMobile"
+            :to="{ name: 'products', query: { type: 'new' } }"
+            class="nav-link"
+            :class="{ 'is-route-active': isNewProductsRoute }"
+            active-class="_navlink-active"
+            exact-active-class="_navlink-exact-active"
+            @click="closeMenu"
+          >
+            产品
+          </router-link>
           <div
+            v-else
             class="nav-item"
-            @mouseenter="!isMobile && showSubmenu('new')"
-            @mouseleave="!isMobile && scheduleHideSubmenu()"
+            @mouseenter="showSubmenu('new')"
+            @mouseleave="scheduleHideSubmenu()"
           >
             <button
               type="button"
               class="nav-link"
               :class="{
-                'menu-trigger': isMobile,
                 'is-open': activeSubmenu === 'new',
                 'is-route-active': isNewProductsRoute,
               }"
               ref="productsTrigger"
-              :aria-expanded="isMobile ? activeSubmenu === 'new' : undefined"
-              :aria-controls="isMobile ? 'nav-submenu-products' : undefined"
               @click="handleProductsClick"
             >
               产品
-              <i
-                v-if="isMobile"
-                :class="[
-                  'fas',
-                  activeSubmenu === 'new' ? 'fa-chevron-up' : 'fa-chevron-down',
-                ]"
-              ></i>
             </button>
             <div
               id="nav-submenu-products"
               ref="newSubmenu"
               class="submenu new-products"
               :class="{ active: activeSubmenu === 'new' }"
-              @mouseenter="!isMobile && cancelHideSubmenu()"
-              @mouseleave="!isMobile && scheduleHideSubmenu()"
+              @mouseenter="cancelHideSubmenu()"
+              @mouseleave="scheduleHideSubmenu()"
             >
               <div class="container submenu-container">
                 <div class="submenu-header">
@@ -169,19 +178,54 @@
           >
         </div>
 
-        <button
-          type="button"
-          class="mobile-menu-btn"
-          :aria-expanded="isMenuOpen"
-          aria-controls="primary-navigation"
-          :aria-label="isMenuOpen ? '关闭菜单' : '打开菜单'"
-          @click="toggleMenu"
-        >
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
+        <div class="nav-actions">
+          <a
+            v-if="isMobile && !isMenuOpen"
+            class="nav-action"
+            href="tel:186-6258-5852"
+            aria-label="拨打电话 186-6258-5852"
+          >
+            <i class="fas fa-phone-alt" aria-hidden="true"></i>
+          </a>
+          <a
+            v-if="isMobile && !isMenuOpen"
+            class="nav-action"
+            href="mailto:sales@xwtest.com.cn"
+            aria-label="发送邮件 sales@xwtest.com.cn"
+          >
+            <i class="fas fa-envelope" aria-hidden="true"></i>
+          </a>
+
+          <button
+            type="button"
+            class="mobile-menu-btn"
+            :aria-expanded="isMenuOpen"
+            aria-controls="primary-navigation"
+            :aria-label="isMenuOpen ? '关闭菜单' : '打开菜单'"
+            @click="toggleMenu"
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
       </div>
+
+      <!-- Mobile overlay + underlay:
+           - underlay: fixes iOS/微信滚动合成导致“菜单变半透明”
+           - overlay: tap outside to dismiss -->
+      <div
+        v-if="isMobile && isMenuOpen"
+        class="mobile-menu-underlay"
+        aria-hidden="true"
+      ></div>
+      <button
+        v-if="isMobile && isMenuOpen"
+        type="button"
+        class="mobile-menu-overlay"
+        aria-label="关闭菜单"
+        @click="closeMenu"
+      ></button>
     </nav>
 
     <div
@@ -452,11 +496,10 @@ const updateHeaderHeights = () => {
   const topBar = document.querySelector('.top-bar');
   const mainNav = document.querySelector('.main-nav');
 
-  if (topBar)
-    document.documentElement.style.setProperty(
-      '--top-bar-height',
-      `${topBar.clientHeight}px`,
-    );
+  document.documentElement.style.setProperty(
+    '--top-bar-height',
+    `${topBar ? topBar.clientHeight : 0}px`,
+  );
   if (mainNav)
     document.documentElement.style.setProperty(
       '--nav-height',
@@ -551,41 +594,115 @@ onUnmounted(() => {
 @use '../styles/variables' as vars;
 
 .top-bar {
-  background: vars.$primary-black;
+  background:
+    radial-gradient(900px 260px at 20% -60%, rgba(vars.$primary-green, 0.22), rgba(0, 0, 0, 0) 60%),
+    rgba(0, 0, 0, 0.92);
   color: white;
-  padding: var(--space-1) 0;
+  padding: 8px 0;
   font-size: 0.9rem;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 1001;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 
   .top-container {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 var(--space-4);
-    min-height: 32px; // 设置最小高度
+    min-height: 36px;
+    gap: var(--space-3);
 
     .company-info {
-      font-weight: 500;
+      display: inline-flex;
+      align-items: baseline;
+      gap: 12px;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+
+      .company-wordmark {
+        min-width: 0;
+        display: inline-flex;
+        align-items: baseline;
+        gap: 10px;
+        color: rgba(255, 255, 255, 0.92);
+        font-weight: 650;
+        letter-spacing: 0.2px;
+        overflow: hidden;
+      }
+
+      .company-brand {
+        flex: 0 0 auto;
+        font-weight: 900;
+        letter-spacing: 1.2px;
+        background: linear-gradient(
+          90deg,
+          rgba(vars.$primary-green, 1) 0%,
+          rgba(vars.$primary-green, 0.85) 55%,
+          rgba(255, 255, 255, 0.92) 110%
+        );
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        text-shadow: 0 10px 24px rgba(vars.$primary-green, 0.22);
+      }
+
+      .company-divider {
+        flex: 0 0 auto;
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(vars.$primary-green, 0.9);
+        box-shadow: 0 0 0 4px rgba(vars.$primary-green, 0.14);
+        opacity: 0.9;
+      }
+
+      .company-rest {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: rgba(255, 255, 255, 0.86);
+        font-weight: 650;
+        letter-spacing: 0.25px;
+      }
+
+      .company-tagline {
+        flex: 0 0 auto;
+        color: rgba(255, 255, 255, 0.58);
+        font-size: 0.82rem;
+        letter-spacing: 0.6px;
+        padding-left: 12px;
+        border-left: 1px solid rgba(255, 255, 255, 0.14);
+      }
     }
 
     .contact-info {
       display: flex;
       gap: var(--space-4);
+      align-items: center;
 
       a {
-        color: white;
+        color: rgba(255, 255, 255, 0.92);
         text-decoration: none;
         display: flex;
         align-items: center;
         gap: var(--space-1);
-        transition: color 0.3s, transform 0.18s ease, opacity 0.18s ease;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.06);
+        transition: color 0.22s ease, transform 0.18s ease, opacity 0.18s ease, background 0.22s ease, border-color 0.22s ease;
+        min-width: 0;
 
         &:hover {
-          color: vars.$primary-green;
+          border-color: rgba(vars.$primary-green, 0.45);
+          background: rgba(vars.$primary-green, 0.12);
+          color: #fff;
         }
 
         &:active {
@@ -594,6 +711,34 @@ onUnmounted(() => {
 
         i {
           font-size: 0.9rem;
+          color: rgba(vars.$primary-green, 0.95);
+          flex: 0 0 auto;
+        }
+
+        span {
+          min-width: 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        &:focus-visible {
+          outline: 3px solid rgba(vars.$primary-green, 0.35);
+          outline-offset: 3px;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 1100px) {
+  .top-bar {
+    .top-container {
+      .company-info {
+        gap: 8px;
+
+        .company-tagline {
+          display: none;
         }
       }
     }
@@ -756,10 +901,13 @@ onUnmounted(() => {
   overflow: hidden;
   transform: translate(-50%, 0) scale(0.98);
   transform-origin: top center;
-  background: rgba(255, 255, 255, 0.98);
+  background:
+    radial-gradient(1100px 520px at 14% -12%, rgba(vars.$primary-green, 0.20), rgba(255, 255, 255, 0) 58%),
+    radial-gradient(900px 460px at 110% 10%, rgba(15, 23, 42, 0.10), rgba(255, 255, 255, 0) 60%),
+    rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(20px);
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.18);
-  border: 1px solid rgba(0, 0, 0, 0.10);
+  border: 1px solid rgba(15, 23, 42, 0.10);
   border-radius: 20px;
   padding: var(--space-4);
   opacity: 0;
@@ -815,28 +963,43 @@ onUnmounted(() => {
     align-items: center;
     justify-content: space-between;
     gap: var(--space-4);
-    padding-bottom: var(--space-3);
-    margin-bottom: var(--space-3);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
   }
 
   .submenu-title {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
 
     .eyebrow {
-      font-size: 0.85rem;
-      color: rgba(0, 0, 0, 0.55);
-      letter-spacing: 0.08em;
+      display: inline-flex;
+      align-items: center;
+      height: 26px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
+      color: rgba(15, 23, 42, 0.76);
+      background: rgba(vars.$primary-green, 0.14);
+      border: 1px solid rgba(vars.$primary-green, 0.22);
+      flex: 0 0 auto;
     }
 
     .title {
-      font-size: 1.1rem;
-      font-weight: 600;
+      font-size: 1.22rem;
+      font-weight: 850;
       color: vars.$primary-black;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.2px;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.15;
     }
   }
 
@@ -844,13 +1007,17 @@ onUnmounted(() => {
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 14px;
+    height: 40px;
+    padding: 0 14px;
     border-radius: 999px;
     text-decoration: none;
     color: vars.$primary-black;
-    background: rgba(vars.$primary-green, 0.10);
-    border: 1px solid rgba(vars.$primary-green, 0.20);
-    transition: transform 0.2s ease, background 0.2s ease;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.72)) padding-box,
+      linear-gradient(135deg, rgba(vars.$primary-green, 0.34), rgba(15, 23, 42, 0.16)) border-box;
+    border: 1px solid transparent;
+    transition: transform 0.2s ease, opacity 0.2s ease, background 0.2s ease;
+    flex: 0 0 auto;
 
     i {
       font-size: 0.9rem;
@@ -858,42 +1025,60 @@ onUnmounted(() => {
 
     &:hover {
       transform: translateY(-1px);
-      background: rgba(vars.$primary-green, 0.16);
+      opacity: 0.95;
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    &:focus-visible {
+      outline: 3px solid rgba(vars.$primary-green, 0.28);
+      outline-offset: 3px;
     }
   }
 
   .brands-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: var(--space-3);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-4);
     width: 100%;
+
+    @media (max-width: 1024px) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 
     .brand-section {
       position: relative;
-      padding: var(--space-2);
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.7);
-      border: 1px solid rgba(0, 0, 0, 0.06);
-      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      padding: var(--space-3);
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.90), rgba(255, 255, 255, 0.70)) padding-box,
+        linear-gradient(135deg, rgba(vars.$primary-green, 0.30), rgba(15, 23, 42, 0.12)) border-box;
+      border: 1px solid transparent;
+      transition: transform 0.22s ease, box-shadow 0.22s ease, opacity 0.22s ease;
+      overflow: hidden;
 
       &::before {
         content: '';
         position: absolute;
         top: 0;
-        left: 0;
-        width: 2px;
-        height: 34px;
+        left: 18px;
+        right: 18px;
+        height: 2px;
         background: linear-gradient(
-          180deg,
-          vars.$primary-green 0%,
+          90deg,
+          rgba(vars.$primary-green, 0) 0%,
+          rgba(vars.$primary-green, 0.85) 40%,
           rgba(vars.$primary-green, 0) 100%
         );
+        opacity: 0.65;
       }
 
       &:hover {
-        transform: translateY(-2px);
-        border-color: rgba(vars.$primary-green, 0.18);
-        box-shadow: 0 14px 40px rgba(0, 0, 0, 0.08);
+        transform: translateY(-3px);
+        box-shadow: 0 22px 60px rgba(15, 23, 42, 0.14);
+        opacity: 0.98;
       }
 
       .brand-header {
@@ -910,16 +1095,16 @@ onUnmounted(() => {
 
         .brand-mark {
           flex: 0 0 auto;
-          width: 40px;
-          height: 34px;
+          width: 44px;
+          height: 38px;
           display: grid;
           place-items: center;
-          border-radius: 10px;
-          background: rgba(15, 23, 42, 0.04);
-          border: 1px solid rgba(15, 23, 42, 0.06);
+          border-radius: 12px;
+          background: rgba(15, 23, 42, 0.035);
+          border: 1px solid rgba(15, 23, 42, 0.07);
 
           img {
-            height: 26px;
+            height: 28px;
             width: auto;
             object-fit: contain;
             filter: grayscale(100%);
@@ -931,8 +1116,8 @@ onUnmounted(() => {
           margin: 0;
           font-size: var(--text-lg);
           color: vars.$primary-black;
-          font-weight: 500;
-          letter-spacing: 0.5px;
+          font-weight: 650;
+          letter-spacing: 0.25px;
         }
 
         &:hover .brand-mark img {
@@ -948,18 +1133,18 @@ onUnmounted(() => {
         .product-item {
           display: flex;
           gap: var(--space-2);
-          padding: var(--space-2);
-          border-radius: 12px;
-          transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1), opacity 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
-          background: rgba(255, 255, 255, 0.5);
-          border: 1px solid rgba(0, 0, 0, 0.05);
+          padding: 12px;
+          border-radius: 14px;
+          transition: transform 0.22s ease, background 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+          background: rgba(255, 255, 255, 0.55);
+          border: 1px solid rgba(15, 23, 42, 0.06);
           min-width: 0;
 
           &:hover {
             background: rgba(vars.$primary-green, 0.03);
             border-color: rgba(vars.$primary-green, 0.1);
-            transform: translateX(6px);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            transform: translateX(4px);
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.10);
 
             img {
               transform: scale(1.05);
@@ -970,13 +1155,18 @@ onUnmounted(() => {
             }
           }
 
+          &:focus-visible {
+            outline: 3px solid rgba(vars.$primary-green, 0.28);
+            outline-offset: 3px;
+          }
+
           img {
             width: 72px;
             height: 72px;
             object-fit: cover;
             border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            transition: transform 0.3s ease;
+            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.14);
+            transition: transform 0.22s ease;
           }
 
           .product-info {
@@ -1041,6 +1231,12 @@ onUnmounted(() => {
   }
 }
 
+.nav-actions {
+  display: none;
+  align-items: center;
+  gap: 10px;
+}
+
 .contact-info {
   a {
     i {
@@ -1052,86 +1248,122 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
+  .top-bar {
+    display: none;
+  }
+
   .nav-backdrop {
     display: none;
   }
 
-  .top-bar {
-    position: fixed;
-    background: vars.$primary-black;
+  .main-nav {
+    height: 72px;
+    background: #ffffff;
+    backdrop-filter: none;
+  }
 
-    .top-container {
-      flex-direction: column;
-      gap: var(--space-2);
-      padding: var(--space-2) var(--space-2);
+  .nav-container {
+    height: 72px;
+    padding: 0 var(--space-2);
+  }
 
-      .company-info {
-        font-size: 0.9rem;
-      }
+  .nav-logo img {
+    height: 44px;
+  }
 
-      .contact-info {
-        display: flex;
-        flex-direction: row; // 改为水平排列
-        justify-content: center;
-        gap: var(--space-3);
-        font-size: 0.9rem;
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
 
-        a {
-          color: white;
-          display: flex;
-          align-items: center;
-          gap: var(--space-1);
+  .nav-action {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    background: rgba(15, 23, 42, 0.03);
+    color: rgba(15, 23, 42, 0.78);
+    display: grid;
+    place-items: center;
+    text-decoration: none;
+    transition: transform 0.18s ease, opacity 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+    -webkit-tap-highlight-color: transparent;
 
-          i {
-            width: 14px;
-            font-size: 0.9rem;
-          }
-        }
-      }
+    i {
+      font-size: 1rem;
+    }
+
+    &:active {
+      transform: scale(0.98);
+      opacity: 0.92;
     }
   }
 
   .nav-menu {
     position: fixed;
-    top: var(--header-offset);
     left: 0;
     right: 0;
-    height: 0; // 初始高度为0
-    background: white;
+    bottom: 0;
+    top: auto;
+    height: auto;
+    background: #ffffff;
+    backdrop-filter: none;
     flex-direction: column;
+    align-items: stretch;
     padding: 0; // 初始padding为0
     opacity: 0;
-    transition: transform 0.3s ease, opacity 0.3s ease;
+    transform: translate3d(0, 100%, 0);
+    transition: transform 0.34s cubic-bezier(0.165, 0.84, 0.44, 1), opacity 0.2s ease;
     pointer-events: none;
-    overflow: hidden; // 隐藏溢出内容
+    overflow: hidden;
     z-index: 1000;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    border: none;
+    box-shadow: 0 -18px 50px rgba(15, 23, 42, 0.18);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-bottom: none;
+    border-radius: 18px 18px 0 0;
+    gap: 0;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    isolation: isolate;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
 
     &.menu-active {
-      height: calc(100dvh - var(--header-offset)); // 展开到全屏高度（动态视口）
-      height: calc(100vh - var(--header-offset)); // fallback
-      padding: var(--space-3);
+      max-height: calc(var(--app-vh, 1vh) * 100 - var(--header-offset));
+      padding: 14px var(--space-3) calc(14px + env(safe-area-inset-bottom, 0px));
       opacity: 1;
       pointer-events: auto;
-      overflow-y: auto; // 允许滚动
+      overflow-y: auto;
+      gap: 10px;
+      transform: translate3d(0, 0, 0);
     }
 
     .nav-link {
-      min-height: 48px;
-      display: block;
-      padding: var(--space-2);
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 12px 14px;
       text-align: center;
-      border: none;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-      font-size: var(--text-lg);
-      border-radius: 10px;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      background: rgba(15, 23, 42, 0.02);
+      font-size: 1.05rem;
+      border-radius: 14px;
+      line-height: 1.2;
+      transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
+      opacity: 1;
+
+      &:active {
+        transform: scale(0.99);
+      }
 
       &.router-link-exact-active,
       &.router-link-active,
       &.is-route-active {
-        background: rgba(vars.$primary-green, 0.12);
-        border-bottom-color: rgba(0, 0, 0, 0.05);
+        background: rgba(vars.$primary-green, 0.14);
+        border-color: rgba(vars.$primary-green, 0.30);
       }
     }
 
@@ -1147,6 +1379,7 @@ onUnmounted(() => {
         cursor: pointer;
         border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         width: 100%;
+        min-height: 48px;
 
         i {
           font-size: 0.8rem;
@@ -1165,11 +1398,46 @@ onUnmounted(() => {
         opacity: 1;
         visibility: visible;
         transform: none;
+        max-height: none;
+        overflow: visible;
+
+        &::before,
+        &::after {
+          display: none;
+        }
 
         &.active {
           display: block;
           padding: var(--space-2);
           margin: var(--space-1) 0;
+        }
+
+        .submenu-header {
+          flex-direction: column;
+          align-items: stretch;
+          justify-content: flex-start;
+          gap: var(--space-2);
+          padding: var(--space-2) var(--space-2) var(--space-3);
+          margin-bottom: var(--space-2);
+          border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+          text-align: center;
+        }
+
+        .submenu-title {
+          align-items: center;
+
+          .eyebrow {
+            font-size: 0.8rem;
+          }
+
+          .title {
+            font-size: 1.02rem;
+          }
+        }
+
+        .submenu-all {
+          width: 100%;
+          justify-content: center;
         }
 
         .brands-grid {
@@ -1300,6 +1568,35 @@ onUnmounted(() => {
         }
       }
     }
+  }
+
+  .mobile-menu-underlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #ffffff;
+    z-index: 998;
+    pointer-events: none;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  .mobile-menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.28);
+    border: none;
+    padding: 0;
+    margin: 0;
+    z-index: 999;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .mobile-menu-btn {

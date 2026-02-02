@@ -150,11 +150,18 @@
           @mouseenter="handleMouseEnter"
           @mouseleave="handleMouseLeave"
         >
-          <div class="slider-wrapper" ref="sliderWrapper" :style="{ transform: `translateX(${-currentSlide * 100}%)` }">
-            <div v-for="product in featuredProducts" :key="product.id" class="product-slide">
+          <div class="slider-wrapper" ref="sliderWrapper" :style="{ transform: `translate3d(${-currentSlide * 100}%, 0, 0)` }">
+            <div v-for="(product, index) in featuredProducts" :key="product.id" class="product-slide">
               <div class="product-content">
                 <div class="product-image">
-                  <LazyPicture :src="product.image" :placeholder="generatePlaceholderUrl(product.image)" :alt="product.title" />
+                  <LazyPicture
+                    :src="product.image"
+                    :placeholder="generatePlaceholderUrl(product.image)"
+                    :alt="product.title"
+                    :eager="index === currentSlide"
+                    :disable-sources="disableFeaturedModernSources"
+                    rootMargin="600px 0px"
+                  />
                 </div>
                 <div class="product-info">
                   <span class="product-brand">{{ product.brand }}</span>
@@ -432,6 +439,7 @@ const partnersInView = ref(false);
 const featuredInView = ref(false);
 
 const prefersReducedMotion = ref(false);
+const disableFeaturedModernSources = ref(false);
 
 const currentSlide = ref(0);
 
@@ -758,6 +766,10 @@ const mountWhenNearViewport = () => {
 };
 
 onMounted(() => {
+  // Some mobile/in-app browsers can be flaky with <picture><source type="..."> selection.
+  // For the homepage featured slider, prefer a guaranteed baseline image format on coarse pointers.
+  disableFeaturedModernSources.value = window.matchMedia?.('(pointer: coarse)')?.matches ?? false;
+
   const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
   prefersReducedMotion.value = reduce;
 
@@ -1142,10 +1154,12 @@ $primary-black: #000000;
     display: flex;
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     will-change: transform;
+    width: 100%;
   }
 
   .product-slide {
     flex: 0 0 100%;
+    max-width: 100%;
     padding: 0 var(--space-2);
   }
 
@@ -1164,10 +1178,23 @@ $primary-black: #000000;
     flex: 0 0 50%;
     border-radius: 16px;
     overflow: hidden;
+    position: relative;
+    background: radial-gradient(120% 90% at 10% 0%, rgba($primary-green, 0.22), rgba(0, 0, 0, 0) 55%),
+      rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba($primary-green, 0.10);
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0));
+      pointer-events: none;
+    }
 
     :deep(.lazy-picture) {
       width: 100%;
       height: 400px;
+      background: transparent;
     }
 
     :deep(.main-image) {
@@ -1337,8 +1364,12 @@ $primary-black: #000000;
 
     .product-image {
       flex: 0 0 100%;
+      aspect-ratio: 16 / 10;
+      min-height: 220px;
+
       :deep(.lazy-picture) {
-        height: 300px;
+        height: 100%;
+        min-height: inherit;
       }
     }
 
@@ -1362,8 +1393,22 @@ $primary-black: #000000;
       padding: var(--space-3);
     }
 
-    .product-image :deep(.lazy-picture) {
-      height: 250px;
+    .product-image {
+      aspect-ratio: 16 / 11;
+      min-height: 190px;
+
+      :deep(.lazy-picture) {
+        height: 100%;
+        min-height: inherit;
+      }
+
+      :deep(.placeholder) {
+        filter: blur(16px) saturate(1.05);
+      }
+
+      :deep(.loading-spinner) {
+        color: rgba(255, 255, 255, 0.55);
+      }
     }
 
     .product-title {
@@ -2040,16 +2085,26 @@ $primary-black: #000000;
   @media (max-width: 768px) {
     padding: var(--space-8) 0;
 
+    .container-fluid {
+      padding: 0 var(--space-2);
+    }
+
     .section-title {
-      font-size: 2.8rem;
+      max-width: calc(100vw - 2 * var(--space-2));
+      font-size: clamp(1.9rem, 6.6vw, 2.4rem);
+      line-height: 1.1;
       margin-bottom: var(--space-4);
+      letter-spacing: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .industries-slider {
       height: auto;
       flex-wrap: wrap;
       gap: var(--space-2);
-      padding: 0 var(--space-2);
+      padding: 0 var(--space-1);
     }
 
     .slider-item {
@@ -2132,8 +2187,13 @@ $primary-black: #000000;
   }
 
   @media (max-width: 640px) {
+    .container-fluid {
+      padding: 0 var(--space-1);
+    }
+
     .industries-slider {
-      gap: 1.2rem;
+      gap: 0.6rem;
+      padding: 0 var(--space-1);
     }
 
     .slider-item {
@@ -2325,23 +2385,27 @@ $primary-black: #000000;
     }
   }
 
-	  @media (max-width: 768px) {
-	    &.main-products-section {
-	      padding: var(--space-8) 0;
+		  @media (max-width: 768px) {
+		    &.main-products-section {
+		      padding: var(--space-8) 0;
+		    }
+
+		    .section-title {
+		      font-size: 2.2rem;
+		      margin-bottom: var(--space-6);
+		    }
+
+        .container {
+          padding: 0 var(--space-2);
+        }
+
+	    .products-grid {
+	      grid-template-columns: 1fr;
+	      gap: 1.5rem;
 	    }
 
-	    .section-title {
-	      font-size: 2.8rem;
-	      margin-bottom: var(--space-6);
-	    }
-
-    .products-grid {
-      grid-template-columns: 1fr;
-      gap: 1.5rem;
-    }
-
-    .product-category {
-      .category-inner {
+	    .product-category {
+	      .category-inner {
 
         // 移除 hover 效果
         &:hover {
@@ -2372,11 +2436,45 @@ $primary-black: #000000;
             .item-dot {
               background: $primary-green;
               transform: scale(1.2);
-            }
-          }
+	        }
+	      }
+	    }
+
+      .category-header {
+        padding: var(--space-3);
+
+        .category-number {
+          font-size: 1rem;
+        }
+
+        h3 {
+          font-size: 1.4rem;
         }
       }
-    }
+
+      .category-content {
+        padding: 0 var(--space-3) var(--space-3);
+      }
+
+      .items-wrapper {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+      }
+
+      .item-card .item-inner {
+        padding: 0.7rem 0.9rem;
+      }
+
+      .item-card .item-text {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: initial;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+      }
+	  }
+	}
   }
 }
 

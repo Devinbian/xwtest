@@ -2,72 +2,176 @@
   <div>
     <div class="products-page">
       <!-- PC端左侧分类菜单 -->
-      <aside v-if="!isMobile" class="categories-menu">
+      <aside v-if="!isMobile" ref="desktopCategoriesMenuEl" class="categories-menu">
         <div class="filter-content">
-          <!-- 添加筛选状态提示 -->
-          <div class="filter-status" v-if="activeFiltersCount > 0">
-            <span class="status-text">已选{{ activeFiltersCount }}项</span>
-            <button class="clear-all-btn" @click="clearFilters">
-              <i class="fas fa-times"></i>
-              清除全部
-            </button>
-          </div>
+          <div class="filters-sticky">
+            <div ref="desktopBrandPickerRoot" class="filters-toolbar">
+              <div class="toolbar-top">
+                <!-- 产品类型选择器 -->
+                <div class="product-type-selector">
+                  <button
+                    type="button"
+                    class="type-btn"
+                    :class="{ active: route.query.type === 'new' }"
+                    :aria-pressed="route.query.type === 'new'"
+                    @click="toggleProductType('new')"
+                  >
+                    产品
+                  </button>
+                  <button
+                    type="button"
+                    class="type-btn"
+                    :class="{ active: route.query.type === 'used' }"
+                    :aria-pressed="route.query.type === 'used'"
+                    @click="toggleProductType('used')"
+                  >
+                    中古品
+                  </button>
+                </div>
 
-          <!-- 产品类型选择器 -->
-          <div class="product-type-selector">
-            <button
-              type="button"
-              class="type-btn"
-              :class="{ active: route.query.type === 'new' }"
-              :aria-pressed="route.query.type === 'new'"
-              @click="toggleProductType('new')"
-            >
-              产品
-            </button>
-            <button
-              type="button"
-              class="type-btn"
-              :class="{ active: route.query.type === 'used' }"
-              :aria-pressed="route.query.type === 'used'"
-              @click="toggleProductType('used')"
-            >
-              中古品
-            </button>
-          </div>
+                <!-- 快速添加品牌（点击放大镜弹出） -->
+                <div class="brand-quick-pop">
+                  <button
+                    type="button"
+                    class="facet-icon brand-quick-trigger"
+                    title="添加品牌"
+                    :aria-expanded="desktopBrandPickerOpen"
+                    @click="toggleDesktopBrandPicker"
+                  >
+                    <i class="fas fa-search" aria-hidden="true"></i>
+                    <span class="sr-only">添加品牌</span>
+                  </button>
+                </div>
+              </div>
 
-          <!-- 分类列表 -->
-          <div class="category-group">
-            <div v-for="category in categories" :key="category.id" class="category-item">
-              <button
-                type="button"
-                class="category-header"
-                :aria-expanded="isCategoryActive(category.id)"
-                @click="toggleCategory(category.id)"
+              <div
+                v-if="desktopBrandPickerOpen"
+                class="brand-quick-panel"
+                role="dialog"
+                aria-label="添加品牌"
+                @click.stop
               >
-                <span>{{ category.name }}</span>
-                <i :class="['fas', isCategoryActive(category.id) ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
-              </button>
-              <div class="brands-list" :class="{ active: isCategoryActive(category.id) }">
-                <button
-                  v-for="brand in category.brands"
-                  :key="brand"
-                  type="button"
-                  class="brand-link"
-                  :class="{ active: isBrandSelected(category.id, brand) }"
-                  :aria-pressed="isBrandSelected(category.id, brand)"
-                  @click="toggleBrand(category.id, brand)"
-                >
-                  {{ brand }}
-                </button>
+                <div class="brand-quick-input">
+                  <i class="fas fa-search" aria-hidden="true"></i>
+                  <input
+                    ref="desktopBrandPickerInput"
+                    v-model="desktopBrandQuery"
+                    type="search"
+                    inputmode="search"
+                    placeholder="输入品牌（支持英文/缩写）"
+                    @keydown.escape="closeDesktopBrandPicker"
+                  />
+                  <button
+                    v-if="desktopBrandQuery.trim()"
+                    type="button"
+                    class="brand-quick-clear"
+                    aria-label="清除品牌搜索"
+                    @click="desktopBrandQuery = ''"
+                  >
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                  </button>
+                </div>
+
+                <div v-if="desktopBrandSuggestions.length" class="brand-quick-suggest">
+                  <button
+                    v-for="suggestion in desktopBrandSuggestions"
+                    :key="suggestion.key"
+                    type="button"
+                    class="suggest-item"
+                    @click="applyDesktopBrandSuggestion(suggestion)"
+                  >
+                    <span class="suggest-brand">{{ suggestion.brand }}</span>
+                    <span class="suggest-scope">{{ suggestion.scopeLabel }}</span>
+                  </button>
+                </div>
+                <div v-else class="brand-quick-empty">
+                  输入关键字以搜索品牌
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- 添加清除按钮 -->
-          <div class="filter-actions" v-if="activeFiltersCount > 0">
-            <button class="clear-btn" @click="clearFilters">
-              清除筛选
-            </button>
+          <!-- 分类分面筛选（可同时展开多个） -->
+          <div class="facets">
+            <div
+              v-for="category in desktopVisibleCategories"
+              :key="category.id"
+              class="facet"
+              :class="{ selected: isCategorySelected(category.id) }"
+            >
+              <div class="facet-head">
+                <button
+                  type="button"
+                  class="facet-select"
+                  :class="{ active: isCategorySelected(category.id) }"
+                  :aria-pressed="isCategorySelected(category.id)"
+                  :title="isCategorySelected(category.id) ? '取消筛选该分类' : '筛选该分类'"
+                  @click.stop="toggleCategory(category.id)"
+                >
+                  <i
+                    :class="[
+                      'fas',
+                      isCategorySelected(category.id) ? 'fa-check' : 'fa-plus',
+                    ]"
+                    aria-hidden="true"
+                  ></i>
+                  <span class="sr-only">筛选该分类</span>
+                </button>
+                <button
+                  type="button"
+                  class="facet-toggle"
+                  :aria-expanded="isCategoryExpanded(category.id)"
+                  @click="toggleCategoryExpanded(category.id)"
+                >
+                  <span class="facet-title">{{ category.name }}</span>
+                  <span v-if="selectedBrandCountByCategory(category.id) > 0" class="facet-badge">
+                    已选{{ selectedBrandCountByCategory(category.id) }}
+                  </span>
+                </button>
+                <button
+                  v-if="selectedBrandCountByCategory(category.id) > 0 || isCategorySelected(category.id)"
+                  type="button"
+                  class="facet-clear"
+                  title="清空该分类筛选"
+                  aria-label="清空该分类筛选"
+                  @click.stop="clearCategoryFilters(category.id)"
+                >
+                  <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+              </div>
+
+              <div v-show="isCategoryExpanded(category.id)" class="facet-body">
+                <div class="brand-chips">
+                  <button
+                    v-for="brand in desktopBrandsForCategory(category)"
+                    :key="brand"
+                    type="button"
+                    class="brand-chip"
+                    :class="{ active: isBrandSelected(category.id, brand) }"
+                    :aria-pressed="isBrandSelected(category.id, brand)"
+                    @click="toggleBrand(category.id, brand)"
+                  >
+                    {{ brand }}
+                  </button>
+                </div>
+
+                <button
+                  v-if="category.brands.length > DESKTOP_BRAND_PREVIEW_LIMIT"
+                  type="button"
+                  class="facet-more"
+                  @click="toggleDesktopShowAllBrands(category.id)"
+                >
+                  {{ desktopShowAllBrands[category.id] ? '收起品牌' : `更多品牌（共${category.brands.length}个）` }}
+                  <i
+                    :class="[
+                      'fas',
+                      desktopShowAllBrands[category.id] ? 'fa-chevron-up' : 'fa-chevron-down',
+                    ]"
+                    aria-hidden="true"
+                  ></i>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </aside>
@@ -76,23 +180,6 @@
       <div v-if="isMobile" class="mobile-filter">
         <!-- 遮罩层 -->
         <div class="menu-overlay" :class="{ active: showFilter }" @click="showFilter = false"></div>
-
-        <!-- 筛选按钮 -->
-        <button class="filter-btn" @click="showFilter = true">
-          <div class="left-section">
-            <i class="fas fa-sliders-h"></i>
-            <span>筛选</span>
-          </div>
-          <div class="right-section">
-            <span class="active-filters" v-if="activeFiltersCount > 0">
-              已选{{ activeFiltersCount }}项
-            </span>
-            <span class="active-filters" v-else>
-              全部商品
-            </span>
-            <i class="fas fa-chevron-right"></i>
-          </div>
-        </button>
 
         <!-- 全屏筛选菜单 -->
         <div class="filter-menu" :class="{ active: showFilter }">
@@ -112,7 +199,7 @@
               <div class="filter-options">
                 <button
                   type="button"
-                  class="filter-btn"
+                  class="option-btn"
                   :class="{ active: route.query.type === 'new' }"
                   :aria-pressed="route.query.type === 'new'"
                   @click="toggleProductType('new')"
@@ -121,7 +208,7 @@
                 </button>
                 <button
                   type="button"
-                  class="filter-btn"
+                  class="option-btn"
                   :class="{ active: route.query.type === 'used' }"
                   :aria-pressed="route.query.type === 'used'"
                   @click="toggleProductType('used')"
@@ -143,12 +230,6 @@
                   :aria-pressed="isBrandSelected(category.id, brand)"
                   @click="toggleBrand(category.id, brand)"
                 >
-                  <img
-                    :src="getAssetUrl(`/images/brands/${brand.toLowerCase()}/logo.png`)"
-                    :alt="brand"
-                    loading="lazy"
-                    decoding="async"
-                  >
                   <span>{{ brand }}</span>
                 </button>
               </div>
@@ -159,110 +240,145 @@
 
       <!-- 右侧产品列表 -->
       <main class="products-content">
-        <div class="products-header">
-          <h2>{{ currentCategory?.name || '全部产品' }}</h2>
-          <div class="filters">
-            <div class="search-box" role="search" aria-label="搜索产品">
-              <i class="fas fa-search search-icon" aria-hidden="true"></i>
-              <input
-                v-model="searchQuery"
-                class="search-input"
-                type="search"
-                inputmode="search"
-                placeholder="搜索产品 / 型号 / 品牌"
-                @input="onSearchInput"
-                @keydown.enter.prevent="commitSearch()"
-              />
+        <div class="products-topbar" :class="{ compact: topbarCompact }" aria-label="筛选栏">
+          <div class="topbar-main">
+            <h2 class="page-title">{{ currentCategory?.name || '全部产品' }}</h2>
+
+            <div class="topbar-actions">
+              <div class="search-box" role="search" aria-label="搜索产品">
+                <i class="fas fa-search search-icon" aria-hidden="true"></i>
+                <input
+                  v-model="searchQuery"
+                  class="search-input"
+                  type="search"
+                  inputmode="search"
+                  placeholder="搜索产品 / 型号 / 品牌"
+                  @input="onSearchInput"
+                  @keydown.enter.prevent="commitSearch()"
+                />
+                <button
+                  type="button"
+                  class="hot-pill"
+                  :aria-pressed="hotOnly"
+                  title="热门"
+                  @click.stop="toggleHotOnly"
+                >
+                  <i class="fas fa-fire" aria-hidden="true"></i>
+                  <span class="pill-text">热门</span>
+                </button>
+                <button
+                  v-if="isMobile"
+                  type="button"
+                  class="filter-pill"
+                  :aria-label="activeFiltersCount > 0 ? `打开筛选（已选${activeFiltersCount}项）` : '打开筛选'"
+                  @click.stop="showFilter = true"
+                >
+                  <i class="fas fa-sliders-h" aria-hidden="true"></i>
+                  <span v-if="activeFiltersCount > 0" class="pill-count" aria-hidden="true">
+                    {{ activeFiltersCount }}
+                  </span>
+                </button>
+                <button
+                  v-if="searchQuery.trim()"
+                  type="button"
+                  class="clear-search"
+                  aria-label="清除搜索"
+                  @click="clearSearch"
+                >
+                  <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+              </div>
+
+              <div v-if="hotEditorUnlocked" class="hot-editor-gate" @click.stop>
+                <button
+                  v-if="!hotEditorEnabled"
+                  type="button"
+                  class="hot-admin-enter"
+                  :disabled="isSavingHotOverrides"
+                  @click.stop="enterHotEdit"
+                >
+                  <i class="fas fa-lock" aria-hidden="true"></i>
+                  编辑热门
+                </button>
+                <div v-else class="hot-admin-editing">
+                  <details ref="hotAdminMenu" class="hot-admin-menu">
+                    <summary class="hot-admin-actions">
+                      操作
+                      <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                    </summary>
+                    <div class="hot-admin-popover" @click.stop>
+                      <button
+                        type="button"
+                        class="hot-admin-item"
+                        :disabled="isSavingHotOverrides"
+                        @click.stop="restoreDefaultHot"
+                      >
+                        恢复默认
+                      </button>
+                      <button
+                        type="button"
+                        class="hot-admin-item danger"
+                        :disabled="isSavingHotOverrides"
+                        @click.stop="clearAllHot"
+                      >
+                        清空热门
+                      </button>
+                    </div>
+                  </details>
+
+                  <button
+                    type="button"
+                    class="hot-admin-done"
+                    :disabled="isSavingHotOverrides"
+                    @click.stop="exitHotEdit"
+                  >
+                    <i class="fas fa-check" aria-hidden="true"></i>
+                    完成
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="filterChips.length > 0" class="topbar-chips" aria-label="已选筛选项">
+            <div v-if="!topbarCompact" class="chips" :class="{ collapsed: !chipsExpanded }">
               <button
-                v-if="searchQuery.trim()"
+                v-for="chip in displayedFilterChips"
+                :key="chip.key"
                 type="button"
-                class="clear-search"
-                aria-label="清除搜索"
-                @click="clearSearch"
+                class="chip"
+                :title="chip.title || chip.label"
+                @click.stop="chip.remove()"
+              >
+                <span class="chip-label">{{ chip.label }}</span>
+                <i class="fas fa-times" aria-hidden="true"></i>
+              </button>
+            </div>
+            <div class="chips-actions">
+              <button
+                v-if="!topbarCompact && hiddenFilterChipCount > 0"
+                type="button"
+                class="chips-more"
+                :aria-expanded="chipsExpanded"
+                @click.stop="chipsExpanded = !chipsExpanded"
+              >
+                {{ chipsExpanded ? '收起' : `+${hiddenFilterChipCount}` }}
+              </button>
+              <div v-if="topbarCompact" class="chips-compact-count" aria-hidden="true">
+                已选{{ filterChips.length }}项
+              </div>
+              <button
+                type="button"
+                class="chips-clear-icon"
+                aria-label="清空筛选"
+                title="清空筛选"
+                @click.stop="clearFilters"
               >
                 <i class="fas fa-times" aria-hidden="true"></i>
               </button>
             </div>
-
-            <button
-              type="button"
-              class="hot-only-toggle"
-              :aria-pressed="hotOnly"
-              @click.stop="toggleHotOnly"
-            >
-              <i class="fas fa-fire" aria-hidden="true"></i>
-              热门
-            </button>
-
-            <div v-if="hotEditorUnlocked" class="hot-editor-gate" @click.stop>
-              <button
-                v-if="!hotEditorEnabled"
-                type="button"
-                class="hot-admin-enter"
-                :disabled="isSavingHotOverrides"
-                @click.stop="enterHotEdit"
-              >
-                <i class="fas fa-lock" aria-hidden="true"></i>
-                编辑热门
-              </button>
-              <div v-else class="hot-admin-editing">
-                <details ref="hotAdminMenu" class="hot-admin-menu">
-                  <summary class="hot-admin-actions">
-                    操作
-                    <i class="fas fa-chevron-down" aria-hidden="true"></i>
-                  </summary>
-                  <div class="hot-admin-popover" @click.stop>
-                    <button
-                      type="button"
-                      class="hot-admin-item"
-                      :disabled="isSavingHotOverrides"
-                      @click.stop="restoreDefaultHot"
-                    >
-                      恢复默认
-                    </button>
-                    <button
-                      type="button"
-                      class="hot-admin-item danger"
-                      :disabled="isSavingHotOverrides"
-                      @click.stop="clearAllHot"
-                    >
-                      清空热门
-                    </button>
-                  </div>
-                </details>
-
-                <button
-                  type="button"
-                  class="hot-admin-done"
-                  :disabled="isSavingHotOverrides"
-                  @click.stop="exitHotEdit"
-                >
-                  <i class="fas fa-check" aria-hidden="true"></i>
-                  完成
-                </button>
-              </div>
-            </div>
           </div>
-	        </div>
-
-	        <div v-if="filterChips.length > 0" class="selected-filters-bar" aria-label="已选筛选项">
-	          <div class="chips">
-	            <button
-	              v-for="chip in filterChips"
-	              :key="chip.key"
-	              type="button"
-	              class="chip"
-	              :title="chip.title || chip.label"
-	              @click.stop="chip.remove()"
-	            >
-	              <span class="chip-label">{{ chip.label }}</span>
-	              <i class="fas fa-times" aria-hidden="true"></i>
-	            </button>
-	          </div>
-	          <button type="button" class="chips-clear" @click.stop="clearFilters">
-	            清空
-	          </button>
-	        </div>
+        </div>
 
 	        <div v-if="filteredProducts.length === 0" class="empty-products">
 	          <div class="empty-card">
@@ -409,7 +525,7 @@
 	</template>
 
 <script setup lang="ts">
-	import { reactive, ref, computed, onMounted, onUnmounted, watch } from 'vue';
+	import { reactive, ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue';
 	import { useRoute, useRouter } from 'vue-router';
 	import { getAssetUrl } from '@/utils/assets';
 	import { generatePlaceholderUrl, preloadImage } from '@/utils/image';
@@ -564,7 +680,6 @@ const exitHotEdit = async () => {
   closeHotAdminMenu();
   hotEditorEnabled.value = false;
   safeSetLocalStorage(HOT_EDITOR_ENABLED_KEY, '0');
-  await logoutHotEditor();
 };
 
 const persistHotConfig = async (next: { overrides: Record<string, HotOverride>; disableAllHot: boolean }) => {
@@ -797,6 +912,143 @@ const searchQuery = ref<string>(getQueryParams().q);
 const hotOnly = ref<boolean>(getQueryParams().hotOnly);
 let searchCommitTimer: number | null = null;
 
+const DESKTOP_BRAND_PREVIEW_LIMIT = 10;
+
+type DesktopBrandSuggestion = {
+  key: string;
+  brand: string;
+  scopeLabel: string;
+  kind: 'all' | 'one';
+  categoryIds: number[];
+  categoryId?: number;
+};
+
+const desktopBrandQuery = ref('');
+const desktopOnlyShowSelected = ref(false);
+const desktopExpandedCategories = reactive<Record<number, boolean>>({});
+const desktopShowAllBrands = reactive<Record<number, boolean>>({});
+const desktopBrandPickerOpen = ref(false);
+const desktopBrandPickerRoot = ref<HTMLElement | null>(null);
+const desktopBrandPickerInput = ref<HTMLInputElement | null>(null);
+const desktopCategoriesMenuEl = ref<HTMLElement | null>(null);
+
+const handleDesktopMenuWheel = (event: WheelEvent) => {
+  const menu = desktopCategoriesMenuEl.value;
+  if (!menu) return;
+  if (event.deltaY === 0) return;
+  const atTop = menu.scrollTop <= 0;
+  const atBottom = menu.scrollTop + menu.clientHeight >= menu.scrollHeight - 1;
+  if ((event.deltaY < 0 && atTop) || (event.deltaY > 0 && atBottom)) {
+    event.preventDefault();
+  }
+};
+
+const normalizeToken = (value: string): string =>
+  String(value ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '');
+
+const brandToCategoryIds = new Map<string, number[]>();
+const brandToCategoryNames = new Map<string, string[]>();
+
+for (const category of typedCategories) {
+  for (const brand of category.brands ?? []) {
+    const name = String(brand ?? '').trim();
+    if (!name) continue;
+    const ids = brandToCategoryIds.get(name) ?? [];
+    if (!ids.includes(category.id)) ids.push(category.id);
+    brandToCategoryIds.set(name, ids);
+    const names = brandToCategoryNames.get(name) ?? [];
+    if (!names.includes(category.name)) names.push(category.name);
+    brandToCategoryNames.set(name, names);
+  }
+}
+
+const desktopBrandSuggestions = computed<DesktopBrandSuggestion[]>(() => {
+  const q = normalizeToken(desktopBrandQuery.value);
+  if (!q) return [];
+
+  const suggestions: DesktopBrandSuggestion[] = [];
+  const seen = new Set<string>();
+
+  for (const [brand, categoryIds] of brandToCategoryIds.entries()) {
+    const brandKey = normalizeToken(brand);
+    if (!brandKey.includes(q)) continue;
+
+    if (categoryIds.length > 1) {
+      const key = `all:${brand}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        suggestions.push({
+          key,
+          brand,
+          kind: 'all',
+          categoryIds: [...categoryIds],
+          scopeLabel: '全部分类',
+        });
+      }
+    }
+
+    for (const id of categoryIds) {
+      const categoryName = typedCategories.find((c) => c.id === id)?.name ?? '';
+      const key = `one:${id}:${brand}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      suggestions.push({
+        key,
+        brand,
+        kind: 'one',
+        categoryIds: [id],
+        categoryId: id,
+        scopeLabel: categoryName || '分类',
+      });
+    }
+  }
+
+  const starts = (s: DesktopBrandSuggestion) => normalizeToken(s.brand).startsWith(q);
+  suggestions.sort((a, b) => {
+    const aStarts = starts(a);
+    const bStarts = starts(b);
+    if (aStarts !== bStarts) return aStarts ? -1 : 1;
+    if (a.kind !== b.kind) return a.kind === 'all' ? -1 : 1;
+    return a.brand.localeCompare(b.brand);
+  });
+
+  return suggestions.slice(0, 8);
+});
+
+const isCategorySelected = (categoryId: number) => selectedCategories.value.includes(String(categoryId));
+const isCategoryExpanded = (categoryId: number) => !!desktopExpandedCategories[categoryId];
+const toggleCategoryExpanded = (categoryId: number) => {
+  desktopExpandedCategories[categoryId] = !desktopExpandedCategories[categoryId];
+};
+
+const selectedBrandCountByCategory = (categoryId: number) => {
+  return selectedBrands.value.filter((b) => b.categoryId === categoryId && !!String(b.brand ?? '').trim()).length;
+};
+
+const clearCategoryFilters = (categoryId: number) => {
+  selectedNewProduct.value = '';
+  const categoryIdStr = String(categoryId);
+  selectedCategories.value = selectedCategories.value.filter((id) => String(id) !== categoryIdStr);
+  selectedBrands.value = selectedBrands.value.filter((b) => b.categoryId !== categoryId);
+  updateQueryParams();
+};
+
+const desktopVisibleCategories = computed(() => {
+  if (!desktopOnlyShowSelected.value) return typedCategories;
+  const keep = new Set<number>();
+  for (const idRaw of selectedCategories.value) {
+    const id = Number(idRaw);
+    if (Number.isFinite(id)) keep.add(id);
+  }
+  for (const entry of selectedBrands.value) {
+    if (Number.isFinite(entry.categoryId)) keep.add(entry.categoryId);
+  }
+  if (keep.size === 0) return typedCategories;
+  return typedCategories.filter((c) => keep.has(c.id));
+});
+
 // 当前选中的分类
 const currentCategory = computed(() =>
   typedCategories.find((c: Category) => c.id === Number(route.query.category))
@@ -907,6 +1159,17 @@ const toggleHotOnly = () => {
 const isMobile = ref(false);
 const showFilter = ref(false);
 
+const setOverlayViewportVars = () => {
+  const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+  document.documentElement.style.setProperty('--overlay-vh', `${viewportHeight * 0.01}px`);
+  document.documentElement.style.setProperty('--overlay-vh-px', `${viewportHeight}px`);
+};
+
+const clearOverlayViewportVars = () => {
+  document.documentElement.style.removeProperty('--overlay-vh');
+  document.documentElement.style.removeProperty('--overlay-vh-px');
+};
+
 // 检查是否为移动端
 const checkMobile = () => {
   isMobile.value = window.innerWidth <= 768;
@@ -917,6 +1180,10 @@ onMounted(() => {
   checkMobile();
   window.addEventListener('resize', checkMobile);
   initializeFilters();
+  seedDesktopExpandedCategories();
+
+  document.addEventListener('pointerdown', handleDesktopBrandPickerDismiss);
+  desktopCategoriesMenuEl.value?.addEventListener('wheel', handleDesktopMenuWheel, { passive: false });
 
   refreshHotEditorSession();
   loadHotConfig();
@@ -933,6 +1200,21 @@ onMounted(() => {
       router.replace({ query: nextQuery });
     });
   }
+
+  // Compact the filter/topbar while scrolling to maximize visible product area.
+  lastScrollY = window.scrollY || 0;
+  handleTopbarScroll();
+  window.addEventListener('scroll', onTopbarScroll, { passive: true });
+});
+
+watch(showFilter, (open) => {
+  if (!isMobile.value) return;
+  if (open) setOverlayViewportVars();
+  else clearOverlayViewportVars();
+});
+
+onUnmounted(() => {
+  clearOverlayViewportVars();
 });
 
 watch(isHotEditorUnlockQuery, (unlocked) => {
@@ -941,9 +1223,7 @@ watch(isHotEditorUnlockQuery, (unlocked) => {
 });
 
 // 检查分类是否处于激活状态
-const isCategoryActive = (categoryId: number) => {
-  return selectedCategories.value.includes(String(categoryId));
-};
+const isCategoryActive = isCategorySelected;
 
 // 切换分类选择
 const toggleCategory = (categoryId: number) => {
@@ -992,6 +1272,116 @@ const isBrandSelected = (categoryId: number, brand: string) => {
     return selectedBrands.value.some((b) => b.brand === brand && !Number.isFinite(b.categoryId));
   }
   return selectedBrands.value.some((b) => b.categoryId === categoryId && b.brand === brand);
+};
+
+let desktopExpansionSeeded = false;
+const seedDesktopExpandedCategories = () => {
+  if (desktopExpansionSeeded) return;
+  desktopExpansionSeeded = true;
+
+  const ids = new Set<number>();
+  for (const raw of selectedCategories.value) {
+    const id = Number(raw);
+    if (Number.isFinite(id)) ids.add(id);
+  }
+  for (const entry of selectedBrands.value) {
+    if (Number.isFinite(entry.categoryId)) ids.add(entry.categoryId);
+  }
+
+  for (const id of ids) desktopExpandedCategories[id] = true;
+};
+
+const expandSelectedFacets = () => {
+  for (const raw of selectedCategories.value) {
+    const id = Number(raw);
+    if (Number.isFinite(id)) desktopExpandedCategories[id] = true;
+  }
+  for (const entry of selectedBrands.value) {
+    if (Number.isFinite(entry.categoryId)) desktopExpandedCategories[entry.categoryId] = true;
+  }
+};
+
+const desktopBrandsForCategory = (category: Category): string[] => {
+  const base = [...(category.brands ?? [])].map((b) => String(b)).filter(Boolean);
+  base.sort((a, b) => {
+    const aSel = isBrandSelected(category.id, a);
+    const bSel = isBrandSelected(category.id, b);
+    if (aSel !== bSel) return aSel ? -1 : 1;
+    return a.localeCompare(b);
+  });
+
+  if (desktopShowAllBrands[category.id]) return base;
+  return base.slice(0, DESKTOP_BRAND_PREVIEW_LIMIT);
+};
+
+const toggleDesktopShowAllBrands = (categoryId: number) => {
+  desktopShowAllBrands[categoryId] = !desktopShowAllBrands[categoryId];
+};
+
+const toggleBrandAcrossCategories = (brand: string, categoryIds: number[]) => {
+  selectedNewProduct.value = '';
+
+  const trimmedBrand = String(brand ?? '').trim();
+  const ids = categoryIds.filter((id) => Number.isFinite(id));
+  if (!trimmedBrand || ids.length === 0) return;
+
+  const selectedSet = new Set(selectedBrands.value.map((b) => `${b.categoryId}:${b.brand}`));
+  const keys = ids.map((id) => `${id}:${trimmedBrand}`);
+  const shouldRemove = keys.every((k) => selectedSet.has(k));
+
+  let next = selectedBrands.value.filter((b) => !(b.brand === trimmedBrand && ids.includes(b.categoryId)));
+  if (!shouldRemove) {
+    for (const id of ids) {
+      if (selectedSet.has(`${id}:${trimmedBrand}`)) continue;
+      next.push({ categoryId: id, brand: trimmedBrand });
+      desktopExpandedCategories[id] = true;
+    }
+  }
+
+  selectedBrands.value = normalizeSelectedBrands(next);
+  updateQueryParams();
+};
+
+const applyDesktopBrandSuggestion = (suggestion: DesktopBrandSuggestion) => {
+  if (suggestion.kind === 'all') {
+    toggleBrandAcrossCategories(suggestion.brand, suggestion.categoryIds);
+  } else {
+    const categoryId = suggestion.categoryId ?? suggestion.categoryIds[0];
+    desktopExpandedCategories[categoryId] = true;
+    toggleBrand(categoryId, suggestion.brand);
+  }
+  desktopBrandQuery.value = '';
+  desktopBrandPickerOpen.value = false;
+};
+
+watch([selectedCategories, selectedBrands], () => {
+  if (isMobile.value) return;
+  expandSelectedFacets();
+}, { deep: true });
+
+const openDesktopBrandPicker = async () => {
+  desktopBrandPickerOpen.value = true;
+  await nextTick();
+  desktopBrandPickerInput.value?.focus?.();
+};
+
+const closeDesktopBrandPicker = () => {
+  desktopBrandPickerOpen.value = false;
+  desktopBrandQuery.value = '';
+};
+
+const toggleDesktopBrandPicker = () => {
+  if (desktopBrandPickerOpen.value) closeDesktopBrandPicker();
+  else openDesktopBrandPicker();
+};
+
+const handleDesktopBrandPickerDismiss = (event: Event) => {
+  if (!desktopBrandPickerOpen.value) return;
+  const root = desktopBrandPickerRoot.value;
+  const target = event.target as Node | null;
+  if (!target) return;
+  if (root?.contains(target)) return;
+  closeDesktopBrandPicker();
 };
 
 // 监听路由变化，更新选中状态
@@ -1180,6 +1570,80 @@ const clearFilters = () => {
 		  return Array.from(uniq.values());
 		});
 
+    const chipsExpanded = ref(false);
+    const maxCollapsedChips = computed(() => (isMobile.value ? 2 : 6));
+    const displayedFilterChips = computed<FilterChip[]>(() => {
+      if (chipsExpanded.value) return filterChips.value;
+      return filterChips.value.slice(0, maxCollapsedChips.value);
+    });
+    const hiddenFilterChipCount = computed(() => {
+      const hidden = filterChips.value.length - displayedFilterChips.value.length;
+      return hidden > 0 ? hidden : 0;
+    });
+
+    watch(filterChips, (next) => {
+      if (next.length <= maxCollapsedChips.value) chipsExpanded.value = false;
+    });
+
+    const topbarCompactByScroll = ref(false);
+    const topbarCompact = computed(() => {
+      // When there are no active filter chips, keep the topbar compact by default
+      // to maximize product visibility (PC + mobile).
+      if (filterChips.value.length === 0) return true;
+      return topbarCompactByScroll.value;
+    });
+    let lastScrollY = 0;
+    let topbarScrollRaf = 0;
+
+    const syncTopbarCompact = (next: boolean) => {
+      if (topbarCompactByScroll.value === next) return;
+      topbarCompactByScroll.value = next;
+      if (next) chipsExpanded.value = false;
+    };
+
+    const handleTopbarScroll = () => {
+      topbarScrollRaf = 0;
+      const y = window.scrollY || 0;
+      const delta = y - lastScrollY;
+      lastScrollY = y;
+
+      // Near the top, show the full filter area (only matters when chips exist).
+      if (y <= 40) {
+        syncTopbarCompact(false);
+        return;
+      }
+
+      // Scroll down -> compact; scroll up -> expand.
+      if (delta > 8 && y > 140) {
+        syncTopbarCompact(true);
+        return;
+      }
+      if (delta < -10) {
+        syncTopbarCompact(false);
+      }
+    };
+
+    const onTopbarScroll = () => {
+      if (topbarScrollRaf) return;
+      topbarScrollRaf = window.requestAnimationFrame(handleTopbarScroll);
+    };
+
+    watch(
+      () => filterChips.value.length,
+      (len, prev) => {
+        if (len === 0) {
+          // When no filters, we force compact via computed; reset scroll-state so when filters appear
+          // we start expanded again.
+          topbarCompactByScroll.value = false;
+          chipsExpanded.value = false;
+          return;
+        }
+        if (prev === 0) {
+          topbarCompactByScroll.value = false;
+        }
+      },
+    );
+
 // 添加成色文本转换函数
 const getConditionText = (condition: string) => {
   const conditionMap = {
@@ -1260,6 +1724,10 @@ const updateQueryParams = () => {
 onUnmounted(() => {
   if (searchCommitTimer) window.clearTimeout(searchCommitTimer);
   window.removeEventListener('resize', checkMobile);
+  document.removeEventListener('pointerdown', handleDesktopBrandPickerDismiss);
+  desktopCategoriesMenuEl.value?.removeEventListener('wheel', handleDesktopMenuWheel);
+  window.removeEventListener('scroll', onTopbarScroll);
+  if (topbarScrollRaf) window.cancelAnimationFrame(topbarScrollRaf);
 });
 
 // 添加格式化规格的函数
@@ -1367,20 +1835,17 @@ const closeQuoteDialog = () => {
 @use '../styles/variables' as vars;
 
 	.products-page {
-  // 定义全局变量
-  --top-bar-height: 40px;
-  --nav-height: 38px;
-
 	  display: grid;
-	  grid-template-columns: 280px 1fr;
+	  grid-template-columns: 320px 1fr;
 	  gap: var(--space-4);
 	  padding: var(--space-4);
 	  min-height: 100vh;
 	  background: #f8f8f8;
 
   @media (max-width: 768px) {
+    --page-pad: 1rem;
     display: block;
-    padding: 1rem;
+    padding: var(--page-pad);
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
 }
@@ -1390,9 +1855,26 @@ const closeQuoteDialog = () => {
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 	  padding: var(--space-3);
-	  height: fit-content;
 	  position: sticky;
-  // top: calc(var(--top-bar-height) + var(--nav-height) + 2rem);
+    top: calc(var(--header-offset) + var(--space-3));
+    height: calc(100dvh - var(--header-offset) - var(--space-4));
+    height: calc(100vh - var(--header-offset) - var(--space-4));
+    max-height: calc(100dvh - var(--header-offset) - var(--space-4));
+    max-height: calc(100vh - var(--header-offset) - var(--space-4));
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+
+    &::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+    }
+
+    .filter-content {
+      min-height: 100%;
+    }
 
   @media (max-width: 768px) {
     position: fixed;
@@ -1506,28 +1988,30 @@ const closeQuoteDialog = () => {
   }
 
 	  .product-type-selector {
-	    margin-top: var(--space-3);
 	    display: flex;
-	    gap: var(--space-2);
-	    margin-bottom: var(--space-4);
-	    padding-bottom: var(--space-2);
-	    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+	    gap: 8px;
+      padding: 6px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.04);
+      border: 1px solid rgba(15, 23, 42, 0.08);
 
 		    .type-btn {
 	      flex: 1;
-	      padding: var(--space-2);
-	      border: 1px solid rgba(0, 0, 0, 0.1);
-	      border-radius: 6px;
-	      background: white;
-	      color: #666;
-	      font-size: var(--text-md);
+	      padding: 10px 12px;
+	      border: 1px solid transparent;
+	      border-radius: 999px;
+	      background: transparent;
+	      color: rgba(15, 23, 42, 0.66);
+	      font-size: 0.9rem;
+        font-weight: 750;
+        line-height: 1.1;
+        white-space: nowrap;
 	      cursor: pointer;
-		      transition: transform 0.2s ease, opacity 0.2s ease;
+		      transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
 
 	      &:hover {
-	        border-color: vars.$primary-green;
-	        color: vars.$primary-green;
-	        transform: translateY(-1px);
+	        background: rgba(255, 255, 255, 0.8);
+	        color: vars.$primary-black;
 	      }
 
       &.active {
@@ -1538,144 +2022,466 @@ const closeQuoteDialog = () => {
     }
   }
 
-	  .category-group {
-	    &+.category-group {
-	      margin-top: var(--space-4);
-	      padding-top: var(--space-4);
-	      border-top: 1px solid rgba(0, 0, 0, 0.08);
-	    }
-	  }
+    .filters-sticky {
+      position: sticky;
+      top: 0;
+      background: white;
+      padding-top: 10px;
+      padding-bottom: 12px;
+      z-index: 5;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      margin-bottom: 12px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.04);
+    }
 
-	  .category-title {
-	    font-size: var(--text-lg);
-	    color: vars.$primary-black;
-	    margin: 0 0 var(--space-3);
-	    font-weight: 500;
-	  }
+    .filters-toolbar {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
 
-  .category-item {
-    margin-bottom: 0.5rem;
+    .toolbar-top {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: var(--space-2);
+    }
 
-		    .category-header {
-	      display: flex;
-	      justify-content: space-between;
-	      align-items: center;
-	      padding: var(--space-2);
-	      cursor: pointer;
-	      border-radius: 6px;
-	      width: 100%;
-	      border: none;
-	      background: transparent;
-	      text-align: left;
-		      transition: transform 0.2s ease, opacity 0.2s ease;
+    .toolbar-top .product-type-selector {
+      flex: 1;
+      min-width: 0;
+    }
 
-	      &:hover {
-	        background: rgba(vars.$primary-green, 0.05);
-	        transform: translateY(-1px);
-	      }
+    .brand-quick-pop {
+      position: relative;
+      flex: 0 0 auto;
+    }
+
+    .brand-quick-panel {
+      margin-top: 10px;
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid rgba(15, 23, 42, 0.10);
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.10);
+      padding: 10px;
+      z-index: 6;
+    }
+
+    .brand-quick-input {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(15, 23, 42, 0.10);
+      background: rgba(15, 23, 42, 0.03);
+      transition: border-color 0.2s ease, background 0.2s ease;
+
+      &:focus-within {
+        border-color: rgba(vars.$primary-green, 0.45);
+        background: rgba(vars.$primary-green, 0.06);
+      }
 
       i {
-        font-size: 0.8rem;
-        color: #666;
-        transition: transform 0.3s ease;
+        color: rgba(15, 23, 42, 0.55);
+        font-size: 0.95rem;
+      }
+
+      input {
+        flex: 1;
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 0.92rem;
+        color: vars.$primary-black;
+        min-width: 0;
+
+        &::placeholder {
+          color: rgba(15, 23, 42, 0.45);
+        }
+      }
+
+      .brand-quick-clear {
+        border: none;
+        background: transparent;
+        color: rgba(15, 23, 42, 0.55);
+        cursor: pointer;
+        padding: 2px 6px;
+        border-radius: 10px;
+
+        &:hover {
+          background: rgba(15, 23, 42, 0.06);
+          color: rgba(15, 23, 42, 0.72);
+        }
       }
     }
 
-	    .brands-list {
-	      display: none;
-	      padding: var(--space-1) 0 var(--space-1) var(--space-3);
+    .brand-quick-suggest {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 260px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: none;
 
-      &.active {
-        display: block;
+      &::-webkit-scrollbar {
+        width: 0;
+        height: 0;
       }
 
-		      .brand-link {
-	        display: block;
-	        padding: var(--space-1);
-	        color: #666;
-	        text-decoration: none;
-	        border-radius: 4px;
-	        transition: transform 0.2s ease, opacity 0.2s ease;
-        border: none;
-        background: none;
+      .suggest-item {
         width: 100%;
+        border: none;
+        background: transparent;
         text-align: left;
         cursor: pointer;
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--space-2);
+        padding: 10px 12px;
+        border-radius: 12px;
+        transition: background 0.2s ease, transform 0.2s ease;
 
-	        &:hover {
-	          color: vars.$primary-green;
-	          background: rgba(vars.$primary-green, 0.05);
-	          transform: translateX(2px);
-	        }
+        &:hover {
+          background: rgba(vars.$primary-green, 0.08);
+          transform: translateY(-1px);
+        }
 
-	        &.active {
-	          color: vars.$primary-green;
-	          font-weight: 500;
-	          background: rgba(vars.$primary-green, 0.08);
-	          position: relative;
-	          padding-right: var(--space-4);
+        .suggest-brand {
+          font-weight: 650;
+          color: vars.$primary-black;
+          letter-spacing: 0.2px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
 
-	          &::after {
-	            content: '\f00c';
-	            font-family: 'Font Awesome 5 Free';
-	            font-weight: 900;
-	            position: absolute;
-	            right: var(--space-1);
-	            font-size: 0.8rem;
-	          }
-	        }
-	      }
-	    }
-	  }
+        .suggest-scope {
+          font-size: 0.82rem;
+          color: rgba(15, 23, 42, 0.56);
+          flex: 0 0 auto;
+          white-space: nowrap;
+        }
+      }
+    }
 
-	  .filter-actions {
-	    margin-top: var(--space-3);
-	    padding-top: var(--space-3);
-	    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    .brand-quick-empty {
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.03);
+      border: 1px dashed rgba(15, 23, 42, 0.14);
+      color: rgba(15, 23, 42, 0.55);
+      font-size: 0.78rem;
+      line-height: 1.3;
+      letter-spacing: 0.1px;
+    }
 
-	    .clear-btn {
-	      width: 100%;
-	      padding: var(--space-2);
-	      background: #f5f5f5;
-	      border: none;
-	      border-radius: 6px;
-	      color: #666;
-	      font-size: var(--text-sm);
-	      cursor: pointer;
-	      transition: transform 0.2s ease, opacity 0.2s ease;
+    .facet-actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 0;
+    }
+
+    .facet-icon {
+      width: 40px;
+      height: 40px;
+      border: 1px solid rgba(15, 23, 42, 0.10);
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 14px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      font-size: 1rem;
+      font-weight: 700;
+      color: rgba(15, 23, 42, 0.72);
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+
+      &:hover {
+        transform: translateY(-1px);
+        border-color: rgba(vars.$primary-green, 0.26);
+        background: rgba(vars.$primary-green, 0.06);
+        color: vars.$primary-black;
+      }
+
+      &.active {
+        background: rgba(vars.$primary-green, 0.14);
+        border-color: rgba(vars.$primary-green, 0.35);
+        color: vars.$primary-black;
+      }
+    }
+
+    .sr-only {
+      position: absolute !important;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .facets {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-right: 2px;
+      padding-bottom: var(--space-2);
+    }
+
+	    .facet {
+	      border-radius: 14px;
+	      border: 1px solid rgba(15, 23, 42, 0.10);
+	      background: rgba(255, 255, 255, 0.96);
+	      overflow: hidden;
+	      transition: border-color 0.18s ease, box-shadow 0.18s ease;
 
 	      &:hover {
-	        background: rgba(vars.$primary-green, 0.08);
-	        color: vars.$primary-green;
-	        transform: translateY(-1px);
+	        border-color: rgba(vars.$primary-green, 0.18);
+	        box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
 	      }
+
+	      &.selected {
+	        border-color: rgba(vars.$primary-green, 0.30);
+	        box-shadow: 0 14px 30px rgba(vars.$primary-green, 0.07);
+	      }
+
+	      .facet-head {
+	        display: grid;
+	        grid-template-columns: 32px 1fr 32px;
+	        align-items: center;
+	        gap: 10px;
+	        padding: 10px 12px;
+	      }
+
+	      .facet-select {
+	        flex: 0 0 auto;
+	        width: 32px;
+	        height: 32px;
+	        border-radius: 14px;
+	        border: 1px solid rgba(15, 23, 42, 0.12);
+	        background: rgba(15, 23, 42, 0.03);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        color: rgba(15, 23, 42, 0.55);
+        transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+
+        &:hover {
+          transform: translateY(-1px);
+          border-color: rgba(vars.$primary-green, 0.22);
+          background: rgba(vars.$primary-green, 0.10);
+          color: vars.$primary-black;
+        }
+
+        &.active {
+          background: rgba(vars.$primary-green, 0.16);
+          border-color: rgba(vars.$primary-green, 0.35);
+          color: rgba(vars.$primary-green, 0.95);
+        }
+
+        i {
+          font-size: 0.92rem;
+        }
+      }
+
+	      .facet-toggle {
+	        flex: 1;
+	        border: none;
+	        background: transparent;
+	        cursor: pointer;
+	        display: flex;
+	        align-items: center;
+	        gap: var(--space-2);
+	        min-width: 0;
+	        min-height: 32px;
+	        padding: 0 10px;
+	        text-align: left;
+	        border-radius: 12px;
+	        transition: background 0.18s ease;
+          outline: none;
+          box-shadow: none;
+          -webkit-tap-highlight-color: transparent;
+
+	        &:hover {
+	          background: rgba(vars.$primary-green, 0.06);
+	        }
+
+        .facet-title {
+          font-weight: 800;
+          color: vars.$primary-black;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          letter-spacing: 0.15px;
+          line-height: 1.15;
+        }
+
+        .facet-badge {
+          flex: 0 0 auto;
+          font-size: 0.78rem;
+          font-weight: 700;
+          padding: 3px 8px;
+          border-radius: 999px;
+          background: rgba(vars.$primary-green, 0.14);
+          color: vars.$primary-black;
+          border: 1px solid rgba(vars.$primary-green, 0.22);
+        }
+
+        i {
+          display: none;
+        }
+      }
+
+	      .facet-clear {
+	        flex: 0 0 auto;
+	        width: 32px;
+	        height: 32px;
+	        border-radius: 12px;
+	        border: 1px solid rgba(15, 23, 42, 0.10);
+	        background: rgba(15, 23, 42, 0.03);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        color: rgba(15, 23, 42, 0.55);
+        transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+
+        &:hover {
+          transform: translateY(-1px);
+          border-color: rgba(vars.$primary-green, 0.22);
+          background: rgba(vars.$primary-green, 0.06);
+          color: rgba(15, 23, 42, 0.78);
+        }
+      }
+
+	      .facet-body {
+	        padding: 10px 12px 12px;
+	        border-top: 1px solid rgba(15, 23, 42, 0.06);
+	        background: rgba(255, 255, 255, 0.70);
+	      }
+
+	      .brand-chips {
+	        display: grid;
+	        grid-template-columns: repeat(2, minmax(0, 1fr));
+	        gap: 8px;
+	      }
+
+	      .brand-chip {
+	        border: 1px solid rgba(15, 23, 42, 0.10);
+	        background: rgba(255, 255, 255, 0.92);
+	        border-radius: 10px;
+	        padding: 8px 10px;
+	        font-size: 0.82rem;
+	        line-height: 1.15;
+	        font-weight: 600;
+	        color: rgba(15, 23, 42, 0.78);
+	        cursor: pointer;
+	        text-align: center;
+	        min-width: 0;
+	        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+
+        &:hover {
+          transform: translateY(-1px);
+          border-color: rgba(vars.$primary-green, 0.28);
+          background: rgba(vars.$primary-green, 0.06);
+          color: vars.$primary-black;
+        }
+
+	        &.active {
+	          background: rgba(vars.$primary-green, 0.16);
+	          border-color: rgba(vars.$primary-green, 0.36);
+	          color: vars.$primary-black;
+	          position: relative;
+	          padding-right: 26px;
+
+	          &::after {
+	            content: '✓';
+	            position: absolute;
+	            right: 9px;
+	            top: 50%;
+	            transform: translateY(-50%);
+	            font-weight: 900;
+            color: rgba(vars.$primary-green, 0.95);
+          }
+        }
+      }
+
+      .facet-more {
+        width: 100%;
+        border: none;
+        background: transparent;
+        color: rgba(15, 23, 42, 0.60);
+        cursor: pointer;
+        margin-top: var(--space-2);
+        padding: 8px 10px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
+
+        &:hover {
+          background: rgba(15, 23, 42, 0.04);
+          color: rgba(15, 23, 42, 0.78);
+          transform: translateY(-1px);
+        }
+
+        i {
+          font-size: 0.9rem;
+        }
+      }
     }
-  }
 }
 
-				.products-content {
-				  .products-header {
-			    display: flex;
-			    justify-content: space-between;
-			    align-items: center;
-			    margin-bottom: var(--space-4);
-			    gap: var(--space-2);
-			    flex-wrap: wrap;
+					.products-content {
+					  .products-topbar {
+            position: sticky;
+            top: calc(var(--header-offset) + var(--space-3));
+            z-index: 4;
+            margin-bottom: var(--space-4);
+            padding: var(--space-3);
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 16px;
+            box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+	            backdrop-filter: blur(10px);
+	            transition: padding 0.22s ease, box-shadow 0.22s ease, background 0.22s ease, border-color 0.22s ease;
 
-			    h2 {
-			      font-size: var(--text-xl);
-			      color: vars.$primary-black;
-			      margin: 0;
-			    }
+	            .topbar-main {
+              display: grid;
+              grid-template-columns: auto 1fr;
+              align-items: center;
+              gap: var(--space-3);
+            }
 
-			    .filters {
-			      display: flex;
-			      align-items: center;
-			      justify-content: flex-end;
-			      gap: var(--space-2);
-			      flex: 1 1 320px;
-			      min-width: 240px;
-			    }
+	            .page-title {
+              font-size: var(--text-xl);
+              color: vars.$primary-black;
+              margin: 0;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              max-width: 36vw;
+            }
+
+	            .topbar-actions {
+              display: flex;
+              align-items: center;
+              justify-content: flex-end;
+              gap: var(--space-2);
+              min-width: 0;
+            }
 
           .hot-only-toggle {
             height: 44px;
@@ -1692,6 +2498,7 @@ const closeQuoteDialog = () => {
             align-items: center;
             gap: 10px;
             transition: transform 0.18s ease, opacity 0.18s ease;
+            min-width: 44px;
 
             i {
               color: vars.$primary-green;
@@ -1714,6 +2521,70 @@ const closeQuoteDialog = () => {
           .hot-only-toggle[aria-pressed='true'] {
             border-color: rgba(vars.$primary-green, 0.42);
             background: rgba(vars.$primary-green, 0.12);
+          }
+
+          @media (max-width: 420px) {
+            .hot-only-toggle {
+              padding: 0 12px;
+            }
+          }
+
+          .mobile-open-filter {
+            height: 44px;
+            padding: 0 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(0, 0, 0, 0.10);
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(10px);
+            color: vars.$primary-black;
+            font-size: var(--text-sm);
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.18s ease, opacity 0.18s ease;
+            position: relative;
+            -webkit-tap-highlight-color: transparent;
+            min-width: 44px;
+
+            i {
+              color: rgba(15, 23, 42, 0.72);
+            }
+
+            .count-badge {
+              min-width: 22px;
+              height: 22px;
+              padding: 0 6px;
+              border-radius: 999px;
+              background: rgba(vars.$primary-green, 0.92);
+              color: #fff;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 0.78rem;
+              font-weight: 800;
+              line-height: 1;
+            }
+
+            &:hover {
+              transform: translateY(-1px);
+            }
+
+            &:active {
+              transform: translateY(0);
+            }
+
+            &:focus-visible {
+              outline: 3px solid rgba(vars.$primary-green, 0.28);
+              outline-offset: 3px;
+            }
+
+            @media (max-width: 420px) {
+              .btn-text {
+                display: none;
+              }
+            }
           }
 
           .hot-editor-gate {
@@ -1866,26 +2737,27 @@ const closeQuoteDialog = () => {
 
 				    .search-box {
 			      position: relative;
-			      width: min(520px, 100%);
-			      flex: 1 1 360px;
-			      background: white;
-			      border: 1px solid rgba(0, 0, 0, 0.08);
+			      width: min(680px, 100%);
+			      flex: 1 1 420px;
+			      background: rgba(15, 23, 42, 0.03);
+			      border: none;
 			      border-radius: 999px;
-			      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+			      box-shadow: none;
 			      display: flex;
 			      align-items: center;
+            gap: 8px;
 			      padding: 10px 12px;
 				      transition: transform 0.22s ease, opacity 0.22s ease;
 
 			      &:focus-within {
-			        border-color: rgba(vars.$primary-green, 0.45);
-			        box-shadow: 0 10px 28px rgba(vars.$primary-green, 0.14);
+			        background: rgba(vars.$primary-green, 0.06);
+              box-shadow: 0 0 0 3px rgba(vars.$primary-green, 0.18);
 			      }
 
 			      .search-icon {
 			        color: #888;
 			        margin-left: 2px;
-			        margin-right: 10px;
+			        margin-right: 0;
 			        flex: 0 0 auto;
 			      }
 
@@ -1916,6 +2788,97 @@ const closeQuoteDialog = () => {
 				        }
 				      }
 
+              .hot-pill {
+                flex: 0 0 auto;
+                height: 32px;
+                padding: 0 10px;
+                border-radius: 999px;
+                border: none;
+                background: rgba(15, 23, 42, 0.03);
+                color: rgba(15, 23, 42, 0.78);
+                font-size: 0.82rem;
+                font-weight: 750;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+                -webkit-tap-highlight-color: transparent;
+
+                i {
+                  color: rgba(vars.$primary-green, 0.92);
+                }
+
+                &:hover {
+                  transform: translateY(-1px);
+                  background: rgba(vars.$primary-green, 0.08);
+                }
+
+                &:active {
+                  transform: translateY(0);
+                }
+
+                &[aria-pressed='true'] {
+                  background: rgba(vars.$primary-green, 0.14);
+                  color: vars.$primary-black;
+                }
+
+                @media (max-width: 420px) {
+                  .pill-text {
+                    display: none;
+                  }
+                }
+              }
+
+              .filter-pill {
+                position: relative;
+                flex: 0 0 auto;
+                width: 32px;
+                height: 32px;
+                border-radius: 999px;
+                border: none;
+                background: rgba(15, 23, 42, 0.03);
+                color: rgba(15, 23, 42, 0.78);
+                cursor: pointer;
+                display: grid;
+                place-items: center;
+                transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+                -webkit-tap-highlight-color: transparent;
+
+                &:hover {
+                  transform: translateY(-1px);
+                  background: rgba(vars.$primary-green, 0.06);
+                }
+
+                &:active {
+                  transform: translateY(0);
+                }
+
+                i {
+                  color: rgba(15, 23, 42, 0.72);
+                  font-size: 0.95rem;
+                }
+
+                .pill-count {
+                  position: absolute;
+                  top: -6px;
+                  right: -6px;
+                  min-width: 18px;
+                  height: 18px;
+                  padding: 0 5px;
+                  border-radius: 999px;
+                  background: rgba(vars.$primary-green, 0.95);
+                  color: #fff;
+                  display: inline-flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-size: 0.72rem;
+                  font-weight: 900;
+                  line-height: 1;
+                  box-shadow: 0 8px 18px rgba(vars.$primary-green, 0.22);
+                }
+              }
+
 				      .clear-search {
 			        flex: 0 0 auto;
 			        width: 32px;
@@ -1939,81 +2902,160 @@ const closeQuoteDialog = () => {
 						}
 					  }
 
-				  .selected-filters-bar {
-				    display: flex;
-				    align-items: center;
-				    justify-content: space-between;
-				    gap: var(--space-2);
-				    padding: var(--space-2);
-				    margin-bottom: var(--space-4);
-				    background: white;
-				    border: 1px solid rgba(0, 0, 0, 0.08);
-				    border-radius: 12px;
+	          .topbar-chips {
+	            margin-top: 12px;
+	            display: flex;
+	            align-items: flex-start;
+	            gap: var(--space-2);
+	            transition: margin-top 0.22s ease, opacity 0.22s ease;
+	          }
 
-				    .chips {
-				      display: flex;
-				      flex-wrap: wrap;
-				      gap: 8px;
-				      min-width: 0;
-				      flex: 1;
-				    }
+          .chips {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+          }
 
-				    .chip {
-				      display: inline-flex;
-				      align-items: center;
-				      gap: 6px;
-				      padding: 3px 10px;
-				      border-radius: 999px;
-				      border: 1px solid rgba(vars.$primary-green, 0.16);
-				      background: rgba(vars.$primary-green, 0.06);
-				      color: vars.$primary-green;
-				      font-size: var(--text-xs);
-				      cursor: pointer;
-				      white-space: nowrap;
-				      transition: transform 0.18s ease, opacity 0.18s ease;
+          .chips.collapsed {
+            flex-wrap: nowrap;
+            overflow: hidden;
+          }
 
-				      &:hover {
-				        transform: translateY(-1px);
-				      }
+	          .chip {
+	            display: inline-flex;
+	            align-items: center;
+	            gap: 6px;
+	            height: 26px;
+	            padding: 0 10px;
+	            border-radius: 999px;
+	            border: 1px solid rgba(vars.$primary-green, 0.16);
+	            background: rgba(vars.$primary-green, 0.06);
+	            color: vars.$primary-green;
+	            font-size: var(--text-xs);
+	            line-height: 1;
+	            cursor: pointer;
+	            white-space: nowrap;
+	            transition: transform 0.18s ease, opacity 0.18s ease;
 
-				      &:active {
-				        transform: translateY(0) scale(0.98);
-				      }
+            &:hover {
+              transform: translateY(-1px);
+            }
 
-				      .chip-label {
-				        max-width: min(520px, 48vw);
-				        overflow: hidden;
-				        text-overflow: ellipsis;
-				        white-space: nowrap;
-				      }
+            &:active {
+              transform: translateY(0) scale(0.98);
+            }
 
-				      i {
-				        font-size: 0.75rem;
-				      }
-				    }
+            .chip-label {
+              max-width: min(520px, 48vw);
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
 
-				    .chips-clear {
-				      flex: 0 0 auto;
-				      height: 32px;
-				      padding: 0 12px;
-				      border-radius: 10px;
-				      border: 1px solid rgba(vars.$primary-green, 0.24);
-				      background: white;
-				      color: vars.$primary-green;
-				      font-size: var(--text-sm);
-				      font-weight: 600;
-				      cursor: pointer;
-				      transition: transform 0.2s ease, opacity 0.2s ease;
+            i {
+              font-size: 0.75rem;
+            }
+          }
 
-				      &:hover {
-				        transform: translateY(-1px);
-				      }
+		          .chips-actions {
+	            flex: 0 0 auto;
+	            display: inline-flex;
+	            align-items: center;
+	            gap: 8px;
+	            padding-top: 0;
+	          }
 
-				      &:active {
-				        transform: translateY(0) scale(0.98);
-				      }
-				    }
-				  }
+	          .chips-more {
+	            height: 26px;
+	            padding: 0 10px;
+	            border-radius: 999px;
+	            border: 1px solid rgba(15, 23, 42, 0.10);
+	            background: rgba(15, 23, 42, 0.03);
+	            color: rgba(15, 23, 42, 0.78);
+	            font-size: var(--text-xs);
+	            font-weight: 750;
+	            cursor: pointer;
+	          }
+
+		          .chips-clear-icon {
+	            width: 26px;
+	            height: 26px;
+	            border-radius: 999px;
+	            border: 1px solid rgba(vars.$primary-green, 0.16);
+	            background: rgba(vars.$primary-green, 0.06);
+	            color: rgba(15, 23, 42, 0.68);
+	            cursor: pointer;
+	            display: grid;
+	            place-items: center;
+
+	            i {
+	              font-size: 0.8rem;
+	            }
+
+	            &:hover {
+	              background: rgba(vars.$primary-green, 0.10);
+	              border-color: rgba(vars.$primary-green, 0.22);
+		          }
+
+              .chips-compact-count {
+                height: 26px;
+                padding: 0 10px;
+                border-radius: 999px;
+                border: 1px solid rgba(15, 23, 42, 0.10);
+                background: rgba(15, 23, 42, 0.03);
+                color: rgba(15, 23, 42, 0.66);
+                font-size: var(--text-xs);
+                font-weight: 750;
+                display: inline-flex;
+                align-items: center;
+                white-space: nowrap;
+              }
+
+              &.compact {
+                margin-top: 8px;
+                align-items: center;
+
+                .chips-actions {
+                  gap: 10px;
+                }
+              }
+	          }
+
+            &.compact {
+              padding: var(--space-2);
+              box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+
+              .topbar-main {
+                grid-template-columns: 1fr;
+                gap: var(--space-2);
+              }
+
+              .page-title {
+                display: none;
+              }
+
+              .topbar-actions {
+                justify-content: flex-start;
+              }
+
+              .search-box {
+                padding: 8px 10px;
+              }
+
+              .hot-pill,
+              .filter-pill,
+              .clear-search {
+                height: 30px;
+              }
+
+              .filter-pill,
+              .clear-search {
+                width: 30px;
+              }
+            }
+        }
 
 			  .empty-products {
 			    display: grid;
@@ -2618,25 +3660,70 @@ const closeQuoteDialog = () => {
       }
     }
   }
-}
 
 		@media (max-width: 768px) {
 		  .products-content {
-		    .products-header {
-		      align-items: flex-start;
+			    .products-topbar {
+	          top: calc(var(--header-offset) + var(--space-2));
+	          padding: 10px;
 
-		      .filters {
-		        width: 100%;
-		        justify-content: stretch;
-		        flex: 1 1 100%;
-		      }
+          .topbar-main {
+            grid-template-columns: 1fr;
+            gap: var(--space-2);
+          }
 
-		      .search-box {
-		        width: 100%;
-		        flex: 1 1 100%;
-		      }
-		    }
-		  }
+          .page-title {
+            display: none;
+          }
+
+          .topbar-actions {
+            width: 100%;
+            justify-content: flex-start;
+            flex-wrap: nowrap;
+          }
+
+          .search-box {
+            width: 100%;
+            flex: 1 1 100%;
+            order: 0;
+          }
+
+	          .topbar-chips {
+	            margin-top: 10px;
+	          }
+
+	          .chip {
+	            height: 24px;
+	            padding: 0 9px;
+	            font-size: 0.75rem;
+	          }
+
+	          .chips-more,
+	          .chips-clear-icon {
+	            height: 24px;
+	          }
+
+	          .chips-clear-icon {
+	            width: 24px;
+	          }
+
+	          .chips-compact-count {
+	            height: 24px;
+	            padding: 0 9px;
+	            font-size: 0.75rem;
+	          }
+
+	          &.compact {
+	            padding: 8px;
+	          }
+	        }
+			  }
+
+      .hot-editor-gate {
+        order: 2;
+        flex: 1 1 100%;
+        justify-content: flex-start;
+      }
 
 		  .products-grid {
 		    grid-template-columns: repeat(2, 1fr);
@@ -2700,13 +3787,16 @@ const closeQuoteDialog = () => {
 	        }
 	      }
 
-      .condition-tag {
-        top: 20px;
-        right: -38px;
-        padding: 0.3rem 2.5rem;
-        font-size: 0.8rem;
-        min-width: 100px;
-      }
+		      .condition-tag {
+		        top: 5px;
+		        right: -42px;
+		        padding: 0.4rem 3rem;
+		        font-size: 0.85rem;
+		        min-width: 120px;
+		        transform: rotate(45deg);
+		        transform-origin: center;
+		        letter-spacing: 1px;
+		      }
 
       .view-details-btn {
         opacity: 1;
@@ -2725,372 +3815,186 @@ const closeQuoteDialog = () => {
 
 // 移动端筛选样式
 .mobile-filter {
-  position: fixed;
-  top: var(--nav-height);
-  left: 0;
-  right: 0;
-  background: white;
-  z-index: 1001;
-  -webkit-overflow-scrolling: touch;
+  position: static;
+  margin: 0;
+  padding: 0;
+  background: transparent;
 
-  // 顶部分割线
-  &::before {
-    content: '';
-    position: absolute;
+  .menu-overlay {
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    height: 1px;
-    background: linear-gradient(to right,
-        rgba(131, 183, 53, 0.05),
-        rgba(131, 183, 53, 0.3) 50%,
-        rgba(131, 183, 53, 0.05));
-    opacity: 1;
-  }
-
-  // 底部分割线
-  &::after {
-    content: '';
-    position: absolute;
     bottom: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: rgba(0, 0, 0, 0.08);
-  }
-
-  // 遮罩层样式
-	  .menu-overlay {
-    position: fixed;
-    top: var(--nav-height);
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(15, 23, 42, 0.35);
     opacity: 0;
     visibility: hidden;
-	    transition: opacity 0.3s ease;
-    z-index: 1000;
+    transition: opacity 0.22s ease, visibility 0s linear 0.22s;
+    z-index: 1100;
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
 
     &.active {
       opacity: 1;
       visibility: visible;
+      transition: opacity 0.22s ease, visibility 0s;
     }
   }
 
-  // 筛选按钮
-  .filter-btn {
-    height: 60px;
-    background: white;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 1rem;
-    font-size: 1rem;
-    color: #333;
-    width: 100%;
-    position: relative;
-    line-height: 1;
-    cursor: pointer;
-
-    // 顶部装饰线
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 80%;
-      height: 2px;
-      background: linear-gradient(to right,
-          rgba(131, 183, 53, 0.05),
-          rgba(131, 183, 53, 0.3) 50%,
-          rgba(131, 183, 53, 0.05));
-      border-radius: 2px;
-    }
-  }
-
-  // 筛选菜单
   .filter-menu {
     position: fixed;
-    top: var(--nav-height);
+    top: 0;
     left: 0;
     width: 100%;
-    height: calc(100vh - var(--nav-height));
+    height: calc(var(--overlay-vh, var(--app-vh, 1vh)) * 100);
     background: white;
-    z-index: 1001;
+    z-index: 1101;
     display: flex;
     flex-direction: column;
     transform: translateX(100%);
-    transition: transform 0.3s ease;
+    transition: transform 0.28s cubic-bezier(0.165, 0.84, 0.44, 1);
+    box-shadow: -2px 0 18px rgba(0, 0, 0, 0.12);
     -webkit-overflow-scrolling: touch;
-    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+    touch-action: pan-y;
 
     &.active {
       transform: translateX(0);
     }
 
     .menu-header {
-      padding: 1rem 1.2rem;
-      display: flex;
-      justify-content: space-between;
+      padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 14px;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
       align-items: center;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-      background: white;
-      position: relative;
-      z-index: 2;
+      gap: 10px;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(10px);
       flex-shrink: 0;
-
-      // 顶部装饰线
-      &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 80%;
-        height: 2px;
-        background: linear-gradient(to right,
-            rgba(131, 183, 53, 0.05),
-            rgba(131, 183, 53, 0.3) 50%,
-            rgba(131, 183, 53, 0.05));
-        border-radius: 2px;
-      }
 
       h3 {
         margin: 0;
-        font-size: 1.1rem;
-        font-weight: 600;
+        font-size: 1.05rem;
+        font-weight: 700;
         color: vars.$primary-black;
       }
 
       .clear-filters-btn {
-        margin-right: 1rem;
-        padding: 0.5rem 1rem;
-        border: none;
-        background: transparent;
-        color: #666;
-        font-size: 0.9rem;
-        display: flex;
+        border: 1px solid rgba(15, 23, 42, 0.10);
+        background: rgba(15, 23, 42, 0.04);
+        color: rgba(15, 23, 42, 0.72);
+        height: 36px;
+        padding: 0 12px;
+        border-radius: 999px;
+        display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 8px;
         cursor: pointer;
-
-        i {
-          font-size: 0.8rem;
-        }
-
-        &:hover {
-          color: #333;
-        }
       }
 
       .close-btn {
-        width: 36px;
-        height: 36px;
-        border: none;
-        background: #f5f5f5;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #666;
+        width: 38px;
+        height: 38px;
+        border: 1px solid rgba(15, 23, 42, 0.10);
+        background: rgba(15, 23, 42, 0.04);
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        color: rgba(15, 23, 42, 0.72);
         cursor: pointer;
-
-        i {
-          font-size: 1rem;
-        }
-
-        &:active {
-          background: #eee;
-        }
       }
     }
 
     .menu-content {
       flex: 1;
-      overflow-y: scroll;
-      padding: 1.2rem;
-      background: white;
-      position: relative;
-      z-index: 1;
-      overscroll-behavior: none;
-      padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 180px); // 增加底部内边距
+      overflow-y: auto;
+      padding: 16px;
+      padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 180px);
       -webkit-overflow-scrolling: touch;
-      position: relative;
-      will-change: transform;
+      overscroll-behavior: contain;
+      touch-action: pan-y;
+    }
 
-      // 筛选区块样式
-	      .filter-section {
-	        margin-bottom: var(--space-4);
-	        background: white;
-	        border-radius: 12px;
-	        overflow: hidden;
+    .filter-group {
+      margin-bottom: 18px;
 
-        &:last-child {
-          margin-bottom: calc(env(safe-area-inset-bottom, 20px) + 80px); // 为最后一个区块增加更多底部边距
-        }
-
-        .section-title {
-          font-size: 1.1rem;
-          font-weight: 600;
-          color: vars.$primary-black;
-          margin-bottom: 1rem;
-        }
-
-        // 类型选择网格
-        .filter-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 0.8rem;
-
-	          .filter-item {
-            height: 44px;
-            background: #f5f5f5;
-            border: none;
-            border-radius: 8px;
-            color: #666;
-            font-size: 0.95rem;
-            font-weight: 500;
-	            transition: transform 0.2s ease, opacity 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-
-	            &:hover {
-	              transform: translateY(-1px);
-	            }
-
-	            &.active {
-	              background: vars.$primary-green;
-	              color: white;
-	            }
-
-            &:active {
-              opacity: 0.8;
-            }
-          }
-        }
-
-        // 品牌列表
-        .brand-list {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 0.8rem;
-
-	          .brand-item {
-            height: 52px;
-            padding: 0 1rem;
-            background: #f5f5f5;
-            border: none;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-	            transition: transform 0.2s ease, opacity 0.2s ease;
-	            cursor: pointer;
-
-            img {
-              width: 24px;
-              height: 24px;
-              object-fit: contain;
-            }
-
-            span {
-              color: #666;
-              font-size: 0.95rem;
-              font-weight: 500;
-            }
-
-	            &:hover {
-	              transform: translateY(-1px);
-	            }
-
-	            &.active {
-	              background: rgba(vars.$primary-green, 0.1);
-
-              span {
-                color: vars.$primary-green;
-              }
-            }
-
-            &:active {
-              opacity: 0.8;
-            }
-          }
-        }
+      h3,
+      .section-title {
+        margin: 0 0 12px;
+        font-size: 1rem;
+        font-weight: 700;
+        color: vars.$primary-black;
       }
     }
-  }
-}
 
-.filter-count {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  font-size: var(--text-sm);
-  color: #666;
-
-  .clear-filters {
-    padding: 4px 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background: transparent;
-    color: #666;
-    cursor: pointer;
-    transition: transform 0.2s ease, opacity 0.2s ease;
-
-    &:hover {
-      background: #f5f5f5;
-      border-color: #999;
-      transform: translateY(-1px);
-    }
-  }
-}
-
-.filter-option {
-  &.active {
-    background-color: var(--primary-color);
-    color: white;
-  }
-}
-
-.filter-group {
-  margin-bottom: var(--space-3);
-
-  h3 {
-    font-size: var(--text-md);
-    margin-bottom: var(--space-2);
-    color: #333;
-  }
-
-  .filter-options {
-    display: flex;
-    gap: var(--space-1);
-    flex-wrap: wrap;
-  }
-
-  .filter-btn {
-    padding: var(--space-1) var(--space-2);
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background: white;
-    cursor: pointer;
-    transition: transform 0.2s ease, opacity 0.2s ease;
-
-    &:hover {
-      border-color: var(--primary-color);
-      transform: translateY(-1px);
+    .filter-options {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
     }
 
-    &.active {
-      background-color: var(--primary-color);
-      color: white;
-      border-color: var(--primary-color);
+    .option-btn {
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid rgba(15, 23, 42, 0.10);
+      background: rgba(15, 23, 42, 0.03);
+      color: rgba(15, 23, 42, 0.72);
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.18s ease, opacity 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+
+      &:active {
+        transform: scale(0.98);
+      }
+
+      &.active {
+        background: rgba(vars.$primary-green, 0.16);
+        border-color: rgba(vars.$primary-green, 0.35);
+        color: vars.$primary-black;
+      }
+    }
+
+    .brand-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .brand-item {
+      min-height: 48px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(15, 23, 42, 0.10);
+      background: rgba(15, 23, 42, 0.03);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      min-width: 0;
+      transition: transform 0.18s ease, opacity 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+
+      span {
+        font-size: 0.92rem;
+        font-weight: 750;
+        color: rgba(15, 23, 42, 0.78);
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      &:active {
+        transform: scale(0.985);
+      }
+
+      &.active {
+        background: rgba(vars.$primary-green, 0.16);
+        border-color: rgba(vars.$primary-green, 0.35);
+
+        span {
+          color: vars.$primary-black;
+        }
+      }
     }
   }
 }
