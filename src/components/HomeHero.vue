@@ -22,7 +22,9 @@
       </div>
     </div>
     <div class="slider-controls">
-      <button type="button" class="prev" aria-label="上一张" @click="prevSlide">‹</button>
+      <button type="button" class="prev" aria-label="上一张" @click="prevSlide">
+        <i class="fas fa-chevron-left" aria-hidden="true"></i>
+      </button>
       <div class="dots" role="tablist" aria-label="轮播切换">
         <button
           v-for="(_, index) in slides"
@@ -35,7 +37,9 @@
           @click="goToSlide(index)"
         />
       </div>
-      <button type="button" class="next" aria-label="下一张" @click="nextSlide">›</button>
+      <button type="button" class="next" aria-label="下一张" @click="nextSlide">
+        <i class="fas fa-chevron-right" aria-hidden="true"></i>
+      </button>
     </div>
   </div>
 </template>
@@ -217,10 +221,19 @@ onUnmounted(() => {
         content: '';
         position: absolute;
         inset: 0;
-        background: linear-gradient(to top,
-            rgba(0, 0, 0, 0.6) 0%,
-            rgba(0, 0, 0, 0.2) 50%,
-            rgba(0, 0, 0, 0.1) 100%);
+        background:
+          radial-gradient(
+            ellipse at 50% 52%,
+            rgba(0, 0, 0, 0.38) 0%,
+            rgba(0, 0, 0, 0.10) 45%,
+            rgba(0, 0, 0, 0.00) 70%
+          ),
+          linear-gradient(
+            to top,
+            rgba(0, 0, 0, 0.74) 0%,
+            rgba(0, 0, 0, 0.22) 55%,
+            rgba(0, 0, 0, 0.06) 100%
+          );
         z-index: 1;
       }
     }
@@ -243,10 +256,7 @@ onUnmounted(() => {
     transform: translateY(20px);
     transition: transform 0.8s ease, opacity 0.8s ease;
     will-change: transform, opacity;
-    background: radial-gradient(ellipse at center,
-                rgba(0, 0, 0, 0.4) 0%,
-                rgba(0, 0, 0, 0.2) 50%,
-                transparent 100%);
+    background: none;
 
     h2 {
       font-size: var(--text-4xl);
@@ -341,11 +351,26 @@ onUnmounted(() => {
     align-items: center;
     justify-content: center;
     font-size: 1.2rem;
+    line-height: 1;
     transition: transform 0.3s ease, opacity 0.3s ease;
     backdrop-filter: blur(4px);
 
     &:hover {
       background: rgba(255, 255, 255, 0.25);
+    }
+
+    i {
+      font-size: 1.1rem;
+      line-height: 1;
+      display: block;
+    }
+
+    &.prev i {
+      transform: translateX(-0.5px);
+    }
+
+    &.next i {
+      transform: translateX(0.5px);
     }
   }
 

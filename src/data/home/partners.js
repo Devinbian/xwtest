@@ -82,7 +82,7 @@ export const partners = [
     name: 'TEXIO',
     logo: getAssetUrl('/images/co-brands/texio.png'),
     website: 'https://www.texio.co.jp',
-    description: '泰克',
+    description: '德士欧',
   },
   {
     id: 13,

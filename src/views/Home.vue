@@ -141,9 +141,34 @@
     </section>
 
     <!-- 热门产品板块 -->
-    <section ref="featuredSectionEl" class="featured-products">
+    <section ref="featuredSectionEl" class="featured-products" :class="{ 'is-visible': featuredTitleShown }">
       <div class="container">
-        <h2 class="section-title">热门产品</h2>
+        <div class="featured-header">
+          <span class="featured-scanlines" aria-hidden="true"></span>
+          <div class="featured-header-main">
+            <h2 class="section-title">
+              <span class="title-icon" aria-hidden="true">
+                <i class="fas fa-microchip"></i>
+                <i class="fas fa-fire title-flame"></i>
+              </span>
+              <span class="title-text">热门产品</span>
+              <span
+                class="title-badge"
+                :aria-label="`热度榜，当前展示 ${featuredHotCount} 款`"
+              >
+                <span class="badge-label">热度榜</span>
+                <span class="badge-sep">/</span>
+                <span class="badge-label-en">HOT PICK</span>
+                <span class="badge-count">{{ featuredHotCount }}</span>
+              </span>
+            </h2>
+            <button type="button" class="featured-cta" @click="goToHotProducts" aria-label="查看全部热门产品">
+              查看全部
+              <i class="fas fa-arrow-right" aria-hidden="true"></i>
+            </button>
+          </div>
+          <p class="featured-subtitle">高频咨询 · 热度排序 · 一键直达品牌</p>
+        </div>
         <div
           v-if="renderFeatured && featuredProducts.length > 0"
           class="products-slider"
@@ -419,6 +444,8 @@ const featuredProducts = computed<FeaturedProduct[]>(() => {
   return pickFeaturedProducts();
 });
 
+const featuredHotCount = computed(() => featuredProducts.value.length);
+
 const activeIndustry = ref<number | null>(null);
 
 const partnersSectionEl = ref<HTMLElement | null>(null);
@@ -437,6 +464,7 @@ const renderCta = ref(false);
 
 const partnersInView = ref(false);
 const featuredInView = ref(false);
+const featuredTitleShown = ref(false);
 
 const prefersReducedMotion = ref(false);
 const disableFeaturedModernSources = ref(false);
@@ -498,6 +526,10 @@ watch([renderFeatured, featuredInView, prefersReducedMotion], ([mounted, visible
   else startAutoPlay();
 });
 
+watch(featuredInView, (visible) => {
+  if (visible) featuredTitleShown.value = true;
+});
+
 watch(featuredProducts, (nextList) => {
   if (currentSlide.value > nextList.length - 1) currentSlide.value = 0;
 });
@@ -532,6 +564,15 @@ const goToProduct = (brand: string) => {
   });
 };
 
+const goToHotProducts = () => {
+  router.push({
+    path: '/products',
+    query: {
+      hot: '1',
+    }
+  });
+};
+
 const handleIndustryTouchStart = (e: TouchEvent, index: number) => {
   // 移除 preventDefault，允许页面滚动
   activeIndustry.value = index;
@@ -551,21 +592,21 @@ const handleIndustryTouchCancel = (e: TouchEvent) => {
   element.classList.remove('touch-active');
 };
 
-// 修改分组逻辑，每组显示10个品牌
+// 修改分组逻辑，每组显示12个品牌（6x2）
 const partnerGroups = computed(() => {
   const groups = [];
-  const itemsPerGroup = 10; // 改为每组10个品牌，匹配 5x2 的网格布局
+  const itemsPerGroup = 12; // 每组12个品牌，匹配 6x2 的网格布局
   for (let i = 0; i < partners.length; i += itemsPerGroup) {
     const group = partners.slice(i, i + itemsPerGroup);
-    // 如果最后一组不足10个，用空对象填充以保持布局
+    // 如果最后一组不足12个，用空对象填充以保持布局
     if (group.length < itemsPerGroup) {
-      const padding = Array(itemsPerGroup - group.length).fill({
-        id: `empty-${i}`,
+      const padding = Array.from({ length: itemsPerGroup - group.length }, (_, padIndex) => ({
+        id: `empty-${i}-${padIndex}`,
         name: '',
         logo: '',
         website: '',
         isEmpty: true // 标记为空卡片
-      });
+      }));
       group.push(...padding);
     }
     groups.push(group);
@@ -1124,9 +1165,306 @@ $primary-black: #000000;
   @include section-background;
   @include section-transition;
 
+  .featured-header {
+    max-width: 1100px;
+    margin: 0 auto var(--space-8);
+    position: relative;
+    text-align: center;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: -18px;
+      transform: translateX(-50%);
+      width: min(920px, 92vw);
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba($primary-green, 0.55), transparent);
+      opacity: 0.9;
+      pointer-events: none;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: -26px -16px -18px -16px;
+      background:
+        radial-gradient(420px 180px at 50% 10%, rgba($primary-green, 0.18), transparent 70%),
+        radial-gradient(380px 240px at 20% 60%, rgba($primary-green, 0.08), transparent 70%),
+        radial-gradient(320px 220px at 80% 70%, rgba($primary-green, 0.06), transparent 70%);
+      filter: blur(0px);
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+
+  .featured-scanlines {
+    position: absolute;
+    inset: -26px -16px -18px -16px;
+    pointer-events: none;
+    opacity: 0;
+    background:
+      repeating-linear-gradient(
+        180deg,
+        rgba($primary-green, 0.00) 0px,
+        rgba($primary-green, 0.10) 1px,
+        rgba($primary-green, 0.00) 6px,
+        rgba($primary-green, 0.00) 16px
+      );
+    mask-image: radial-gradient(520px 240px at 50% 30%, rgba(0, 0, 0, 0.85), transparent 70%);
+    filter: drop-shadow(0 0 12px rgba($primary-green, 0.18));
+    will-change: background-position, opacity;
+  }
+
+  .featured-header-main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
   .section-title {
-    @include section-title;
-    margin-bottom: var(--space-8);
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 750;
+    letter-spacing: 0.8px;
+    font-size: clamp(1.55rem, 1.2rem + 1.1vw, 2.35rem);
+    position: relative;
+    isolation: isolate;
+
+    .title-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba($primary-green, 0.10);
+      border: 1px solid rgba($primary-green, 0.20);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
+      position: relative;
+      isolation: isolate;
+
+      i {
+        color: rgba($primary-green, 0.95);
+        font-size: 1.05rem;
+      }
+
+      .title-flame {
+        position: absolute;
+        right: 5px;
+        top: 4px;
+        font-size: 0.82rem;
+        color: rgba(255, 140, 0, 0.95);
+        filter: drop-shadow(0 0 10px rgba(255, 140, 0, 0.22));
+        transform: rotate(-10deg);
+      }
+    }
+
+    .title-text {
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.96) 0%, rgba($primary-green, 0.92) 60%, rgba(255, 255, 255, 0.92) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+    }
+
+    .title-badge {
+      height: 30px;
+      padding: 0 10px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      font-weight: 850;
+      letter-spacing: 0.7px;
+      color: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      white-space: nowrap;
+
+      .badge-label {
+        color: rgba(255, 255, 255, 0.92);
+      }
+
+      .badge-sep {
+        color: rgba(255, 255, 255, 0.45);
+        font-weight: 700;
+      }
+
+      .badge-label-en {
+        color: rgba($primary-green, 0.92);
+        letter-spacing: 1.1px;
+      }
+
+      .badge-count {
+        height: 22px;
+        padding: 0 8px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba($primary-green, 0.22);
+        background: rgba($primary-green, 0.12);
+        color: rgba(255, 255, 255, 0.95);
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.2px;
+        min-width: 26px;
+      }
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      bottom: -14px;
+      transform: translateX(-50%);
+      width: min(540px, 86vw);
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, rgba($primary-green, 0.9), transparent);
+      opacity: 0.55;
+      filter: drop-shadow(0 0 16px rgba($primary-green, 0.22));
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      bottom: -14px;
+      transform: translateX(-50%) translateX(-45%);
+      width: min(140px, 24vw);
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+
+  .featured-subtitle {
+    margin: 12px 0 0;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.98rem;
+    letter-spacing: 0.3px;
+  }
+
+  .featured-cta {
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid rgba($primary-green, 0.28);
+    background: rgba(0, 0, 0, 0.18);
+    color: rgba(255, 255, 255, 0.92);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease;
+
+    i {
+      color: rgba($primary-green, 0.95);
+      font-size: 0.95rem;
+    }
+
+    &:hover {
+      transform: translateY(-1px);
+      border-color: rgba($primary-green, 0.44);
+      background: rgba($primary-green, 0.10);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  // Reveal animation (one-shot via featuredTitleShown flag)
+  .featured-header,
+  .featured-header .section-title,
+  .featured-header .featured-subtitle,
+  .featured-header .featured-cta {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  &.is-visible {
+    .featured-header {
+      opacity: 1;
+      transform: translateY(0);
+
+      &::after {
+        opacity: 1;
+        transition: opacity 0.9s ease;
+      }
+    }
+
+    .featured-scanlines {
+      opacity: 0.36;
+      animation: featured-scanlines 6s linear infinite;
+    }
+
+    .featured-header .section-title {
+      animation: featured-title-in 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .featured-header .featured-subtitle {
+      animation: featured-title-in 0.75s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
+    }
+
+    .featured-header .featured-cta {
+      animation: featured-title-in 0.75s cubic-bezier(0.16, 1, 0.3, 1) 0.18s both;
+    }
+
+    .featured-header .section-title::before {
+      opacity: 0.85;
+      animation: featured-underline-sweep 1.25s cubic-bezier(0.2, 1, 0.2, 1) 0.15s both;
+    }
+  }
+
+  @keyframes featured-title-in {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+      filter: blur(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0px);
+    }
+  }
+
+  @keyframes featured-underline-sweep {
+    from {
+      transform: translateX(-50%) translateX(-55%);
+      opacity: 0;
+    }
+    30% {
+      opacity: 0.9;
+    }
+    to {
+      transform: translateX(-50%) translateX(55%);
+      opacity: 0;
+    }
+  }
+
+  @keyframes featured-scanlines {
+    from {
+      background-position: 0 0;
+    }
+    to {
+      background-position: 0 140px;
+    }
   }
 
   .featured-empty {
@@ -1385,6 +1723,19 @@ $primary-black: #000000;
   @media (max-width: 768px) {
     padding: var(--space-8) 0;
 
+    .featured-header {
+      margin-bottom: var(--space-6);
+    }
+
+    .featured-subtitle {
+      font-size: 0.92rem;
+    }
+
+    .featured-cta {
+      height: 38px;
+      padding: 0 12px;
+    }
+
     .products-slider {
       padding: 0 var(--space-2);
     }
@@ -1426,6 +1777,27 @@ $primary-black: #000000;
       span {
         font-size: 1.2rem;
       }
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .featured-header,
+    .featured-header .section-title,
+    .featured-header .featured-subtitle,
+    .featured-header .featured-cta {
+      opacity: 1;
+      transform: none;
+      animation: none !important;
+      filter: none !important;
+    }
+
+    .featured-scanlines {
+      opacity: 0.18;
+      animation: none !important;
+    }
+
+    .featured-header .section-title::before {
+      display: none;
     }
   }
 }
@@ -3111,7 +3483,7 @@ $primary-black: #000000;
   position: relative;
   overflow: hidden;
   margin: 0 auto;
-  max-width: 1200px;
+  max-width: 1440px;
 
   .slider-wrapper {
     display: flex;
@@ -3125,10 +3497,16 @@ $primary-black: #000000;
 
   .partners-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr); // 改为5列，这样每行显示更多
+    grid-template-columns: repeat(6, 1fr); // 6列（2行）= 12个品牌
     grid-template-rows: repeat(2, 1fr);
     gap: 1.2rem; // 减小间距
     padding: 0 var(--space-2);
+  }
+}
+
+.partners-section {
+  .container {
+    max-width: 1440px;
   }
 }
 
@@ -3239,30 +3617,13 @@ $primary-black: #000000;
   }
 }
 
-@media (max-width: 1024px) {
-  .partners-grid {
-    grid-template-columns: repeat(4, 1fr); // 中等屏幕4列
-  }
-}
-
 @media (max-width: 768px) {
-  .partners-grid {
-    grid-template-columns: repeat(3, 1fr); // 小屏幕3列
-    gap: 1rem;
-  }
-
   .partner-card {
     height: 70px; // 移动端更小的高度
 
     .logo-wrapper {
       padding: 0.8rem;
     }
-  }
-}
-
-@media (max-width: 640px) {
-  .partners-grid {
-    grid-template-columns: repeat(2, 1fr); // 超小屏幕2列
   }
 }
 
@@ -3378,7 +3739,7 @@ $primary-black: #000000;
   .partners-slider {
     .partners-grid {
       grid-template-columns: repeat(4, 1fr);
-      grid-template-rows: repeat(2, 1fr);
+      grid-template-rows: repeat(3, 1fr);
       gap: 1.5rem;
     }
   }
@@ -3387,7 +3748,7 @@ $primary-black: #000000;
 @media (max-width: 768px) {
   .partners-slider {
     .partners-grid {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       grid-template-rows: repeat(4, 1fr);
       gap: 1rem;
     }
@@ -3399,7 +3760,16 @@ $primary-black: #000000;
 
   .partner-card {
     .logo-wrapper {
-      padding: 1.5rem;
+      padding: 0.8rem;
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .partners-slider {
+    .partners-grid {
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: repeat(6, 1fr);
     }
   }
 }

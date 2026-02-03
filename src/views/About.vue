@@ -146,7 +146,6 @@
                   />
                 </div>
                 <div class="brand-info">
-                  <h3>{{ brand.name }}</h3>
                   <p>{{ brand.description }}</p>
                 </div>
               </div>
@@ -570,15 +569,10 @@ section {
       .brand-info {
         text-align: center;
 
-        h3 {
-          font-size: 1rem;
-          color: vars.$primary-black;
-          margin-bottom: 0.5rem;
-        }
-
         p {
           color: #666;
           font-size: 0.9rem;
+          margin: 0;
         }
       }
     }
