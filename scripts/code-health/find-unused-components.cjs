@@ -29,6 +29,9 @@ function findUnusedComponents() {
   componentFiles.forEach(componentFile => {
     const componentName = path.basename(componentFile, '.vue');
     const isUsed = allFiles.some(file => {
+      if (path.resolve(file) === path.resolve(componentFile)) {
+        return false;
+      }
       const content = fs.readFileSync(file, 'utf-8');
       const regex = new RegExp(`\\b${componentName}\\b`, 'g');
       return regex.test(content);
@@ -46,6 +49,7 @@ const unusedComponents = findUnusedComponents();
 if (unusedComponents.length > 0) {
   console.log('Unused components:');
   unusedComponents.forEach(component => console.log(component));
+  process.exit(1);
 } else {
   console.log('No unused components found.');
 }

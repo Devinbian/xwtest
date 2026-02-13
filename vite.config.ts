@@ -2,8 +2,17 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
 
+const normalizeBase = (value?: string): string => {
+  const raw = String(value ?? '').trim()
+  if (!raw) return '/'
+  const withLeadingSlash = raw.startsWith('/') ? raw : `/${raw}`
+  return withLeadingSlash.endsWith('/') ? withLeadingSlash : `${withLeadingSlash}/`
+}
+
 // 使用函数式配置
-export default defineConfig(({ command }) => {
+export default defineConfig(() => {
+  const base = normalizeBase(process.env.VITE_BASE_PATH)
+
   return {
     plugins: [vue()],
     resolve: {
@@ -34,7 +43,7 @@ export default defineConfig(({ command }) => {
         '/api': 'http://localhost:5175',
       },
     },
-    // base: command === 'build' ? '/xwtest/' : '/',  //发布到GitHub Pages 用这个
-    base: '/',//注意发布到阿里云服务器的时候，由于站点根目录是/home/app/xwtest/，所以需要设置base为 /;
+    // 默认 '/'；GitHub Pages 等子路径部署时通过 `VITE_BASE_PATH=/repo-name/` 覆盖。
+    base,
   }
 }) 

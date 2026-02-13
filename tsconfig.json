@@ -4,8 +4,6 @@
     "useDefineForClassFields": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "baseUrl": ".",
-    "ignoreDeprecations": "6.0",
     "strict": true,
     "allowJs": true,
     "checkJs": false,

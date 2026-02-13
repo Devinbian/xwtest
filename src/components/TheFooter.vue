@@ -24,7 +24,7 @@
                         <li><router-link :to="{ name: 'products', query: { type: 'used' } }">中古品</router-link></li>
                         <li><router-link to="/services">服务</router-link></li>
                         <li><router-link to="/about">关于我们</router-link></li>
-                        <li><a href="https://shop198581009.taobao.com" target="_blank" rel="noopener">淘宝店</a></li>
+                        <li><a href="https://shop198581009.taobao.com" target="_blank" rel="noopener noreferrer">淘宝店</a></li>
                     </ul>
                 </nav>
 
@@ -101,7 +101,7 @@
                                 <li><router-link :to="{ name: 'products', query: { type: 'used' } }">中古品</router-link></li>
                                 <li><router-link to="/services">服务</router-link></li>
                                 <li><router-link to="/about">关于我们</router-link></li>
-                                <li><a href="https://shop198581009.taobao.com" target="_blank" rel="noopener">淘宝店</a></li>
+                                <li><a href="https://shop198581009.taobao.com" target="_blank" rel="noopener noreferrer">淘宝店</a></li>
                             </ul>
                         </div>
                     </details>
@@ -169,7 +169,7 @@
             <div class="footer-bottom">
                 <div class="copyright">&copy; {{ new Date().getFullYear() }} 鑫万测电子科技（苏州）有限公司 版权所有</div>
                 <div class="icp">
-                    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">苏ICP备2022042335号-1</a>
+                    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">苏ICP备2022042335号-1</a>
                 </div>
             </div>
         </div>

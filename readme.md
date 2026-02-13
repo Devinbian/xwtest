@@ -2,7 +2,6 @@
 
 `src/data/`
 - `src/data/home/`：首页数据源（主营产品、行业、服务、合作品牌等）
-- `src/data/navigation/`：主导航菜单数据源
 - `src/data/products/`：产品页数据源（`products.js`、`categories.js`）
 
 `scripts/`
@@ -32,8 +31,16 @@
 - 构建：`npm run build`
 - 预览：`npm run preview`
 
-# 体验优化计划
-- 见：`docs/ux-optimization-plan.md`
+# 质量检查
+- 类型检查（Vue SFC）：`npm run typecheck`
+- TypeScript 检查：`npm run typecheck:ts`
+- 代码健康检查：`npm run lint`
+
+# 部署 base 配置
+- 默认 `base` 为 `/`
+- 子路径部署（如 GitHub Pages）时，构建前设置：
+  - `VITE_BASE_PATH=/xwtest/ npm run build`
+- CI 示例见：`.github/workflows/deploy.yml`
 
 # 图片更新流程
 - 见：`docs/image-workflow.md`

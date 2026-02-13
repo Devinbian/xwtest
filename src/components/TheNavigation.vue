@@ -169,6 +169,7 @@
           <a
             href="https://shop198581009.taobao.com"
             target="_blank"
+            rel="noopener noreferrer"
             class="nav-link"
             @click="closeMenu"
             >淘宝店</a

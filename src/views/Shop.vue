@@ -56,64 +56,64 @@ const categories = [
     { id: 11, name: '理化分析' }
 ];
 
-	const products = ref([
-	    {
-	        id: 1,
-	        title: 'KEITHLEY 2450',
-	        image: getAssetUrl('/images/products/keithley-2450.jpg'),
-	        brand: 'KEITHLEY',
-	        description: '高精度数字源表',
-	        category: 1
-	    },
-	    {
-	        id: 2,
-	        title: 'KIKUSUI PWX1500L',
-	        image: getAssetUrl('/images/products/kikusui-pwx1500l.jpg'),
-	        brand: 'KIKUSUI',
-	        description: '可编程直流电源',
-	        category: 2
-	    },
-	    {
-	        id: 3,
-	        title: 'ADC 7461',
-	        image: getAssetUrl('/images/products/adc-7461.jpg'),
-	        brand: 'ADC',
-	        description: '高精度数字万用表',
-	        category: 1
-	    },
-	    {
-	        id: 4,
-	        title: 'RIGOL DM3068',
-	        image: getAssetUrl('/images/products/rigol-dm3068.jpg'),
-	        brand: 'RIGOL',
-	        description: '6½ 位数字万用表',
-	        category: 1
-	    },
-	    {
-	        id: 5,
-	        title: 'Tektronix MSO46',
-	        image: getAssetUrl('/images/products/tektronix-mso46.jpg'),
-	        brand: 'Tektronix',
-	        description: '混合信号示波器',
-	        category: 4
-	    },
-	    {
-	        id: 6,
-	        title: 'Keysight DSOX1204G',
-	        image: getAssetUrl('/images/products/keysight-dsox1204g.jpg'),
-	        brand: 'Keysight',
-	        description: '数字示波器',
-	        category: 4
-	    },
-	    {
-	        id: 7,
-	        title: 'CHROMA 62000P',
-	        image: getAssetUrl('/images/products/chroma-62000p.jpg'),
-	        brand: 'CHROMA',
-	        description: '可编程直流电源',
-	        category: 2
-	    }
-	]);
+		const products = ref([
+		    {
+		        id: 1,
+		        title: 'KEITHLEY 2450',
+		        image: getAssetUrl('/images/products/keithley/dmm6500.jpg'),
+		        brand: 'KEITHLEY',
+		        description: '高精度数字源表',
+		        category: 1
+		    },
+		    {
+		        id: 2,
+		        title: 'KIKUSUI PWX1500L',
+		        image: getAssetUrl('/images/products/keysight/E36106B.png'),
+		        brand: 'KIKUSUI',
+		        description: '可编程直流电源',
+		        category: 2
+		    },
+		    {
+		        id: 3,
+		        title: 'ADC 7461',
+		        image: getAssetUrl('/images/products/adcmt/7461A.jpg'),
+		        brand: 'ADC',
+		        description: '高精度数字万用表',
+		        category: 1
+		    },
+		    {
+		        id: 4,
+		        title: 'RIGOL DM3068',
+		        image: getAssetUrl('/images/products/power-analyzer.jpg'),
+		        brand: 'RIGOL',
+		        description: '6½ 位数字万用表',
+		        category: 1
+		    },
+		    {
+		        id: 5,
+		        title: 'Tektronix MSO46',
+		        image: getAssetUrl('/images/products/tektronix/MSO46.png'),
+		        brand: 'Tektronix',
+		        description: '混合信号示波器',
+		        category: 4
+		    },
+		    {
+		        id: 6,
+		        title: 'Keysight DSOX1204G',
+		        image: getAssetUrl('/images/products/keysight/34461A.png'),
+		        brand: 'Keysight',
+		        description: '数字示波器',
+		        category: 4
+		    },
+		    {
+		        id: 7,
+		        title: 'CHROMA 62000P',
+		        image: getAssetUrl('/images/products/power-analyzer.jpg'),
+		        brand: 'CHROMA',
+		        description: '可编程直流电源',
+		        category: 2
+		    }
+		]);
 
 const searchQuery = ref('');
 const selectedCategory = ref<number | null>(null);

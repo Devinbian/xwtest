@@ -373,7 +373,7 @@ export const products = [
     id: 27,
     name: "TEKTRONIX 3 系列 MDO 混合域示波器",
     description: "具有出色的射频测试性能和有保证的射频技术规格",
-    image: getAssetUrl("/images/products/tektronix/MDO34.png"),
+    image: getAssetUrl("/images/products/tektronix/MDO34.jpg"),
     brand: "TEKTRONIX",
     brandDisplay: "TEKTRONIX",
     type: "new",

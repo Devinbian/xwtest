@@ -2,5 +2,7 @@
     "liveServer.settings.port": 5501,
     "typescript.tsdk": "node_modules/typescript/lib",
     "typescript.enablePromptUseWorkspaceTsdk": true,
-    "vue.tsdk": "node_modules/typescript/lib"
+    "vue.tsdk": "node_modules/typescript/lib",
+    "vetur.useWorkspaceDependencies": true,
+    "vetur.validation.script": false
 }

@@ -4,8 +4,7 @@ export const productCategories = [
     {
       id: 1,
       name: '汽车关联',
-      icon: getAssetUrl('/images/icons/auto.svg'),
-      image: getAssetUrl('/images/products/auto-related.jpg'),
+      image: getAssetUrl('/images/industries/auto.jpg'),
       items: [
         '排气分析系统',
         'VOC检测系统',
@@ -22,7 +21,7 @@ export const productCategories = [
     {
       id: 2,
       name: '液晶关联',
-      image: getAssetUrl('/images/products/lcd-related.jpg'),
+      image: getAssetUrl('/images/industries/lcd.jpg'),
       items: [
         '老化・耐久试验设备',
         '信号发生器',
@@ -39,7 +38,7 @@ export const productCategories = [
     {
       id: 3,
       name: 'PCB关联',
-      image: getAssetUrl('/images/products/pcb-related.jpg'),
+      image: getAssetUrl('/images/industries/pcb.jpg'),
       items: [
         '离子迁移系统',
         '接触角仪',
@@ -56,7 +55,7 @@ export const productCategories = [
     {
       id: 4,
       name: '新能源关联',
-      image: getAssetUrl('/images/products/new-energy-related.jpg'),
+      image: getAssetUrl('/images/industries/material.jpg'),
       items: [
         '电子显微镜',
         '轮廓仪・画像测定仪',
@@ -73,7 +72,7 @@ export const productCategories = [
     {
       id: 5,
       name: '半导体关联',
-      image: getAssetUrl('/images/products/semiconductor-related.jpg'),
+      image: getAssetUrl('/images/industries/semiconductor.jpg'),
       items: [
         '高精度万用表',
         '高精度电流发生器',
