@@ -35,12 +35,20 @@
 - 类型检查（Vue SFC）：`npm run typecheck`
 - TypeScript 检查：`npm run typecheck:ts`
 - 代码健康检查：`npm run lint`
+- 回归测试：`npm test`（使用 Node 内置测试工具，API 测试仅使用临时文件和随机端口）
 
 # 部署 base 配置
 - 默认 `base` 为 `/`
 - 子路径部署（如 GitHub Pages）时，构建前设置：
   - `VITE_BASE_PATH=/xwtest/ npm run build`
 - CI 示例见：`.github/workflows/deploy.yml`
+
+构建会为 `/products`、`/shop`、`/about`、`/services`、`/brands`、`/contact` 生成独立的 `目录/index.html` 入口，因此 GitHub Pages 能直接访问和刷新这些 History 路由（静态服务器可能补上末尾 `/`）。新增路由时需同时更新 `src/data/sitePages.ts`。
+
+各入口包含独立标题和描述，客户端切换页面时也会同步更新；页面正文仍由 Vue 渲染，并非 SSR。
+设置 `SITE_ORIGIN=https://你的域名` 后，构建会生成包含部署前缀的 `sitemap.xml`，可提交到搜索平台；不设置时不会猜测网站域名。GitHub Pages 工作流已配置默认域名，使用自定义域名时请同步修改。
+
+GitHub Pages 仅托管静态站点，热门编辑仍需另行运行 Node API 并配置同域 `/api` 反向代理；纯静态部署下使用代码中的默认热门产品。
 
 # 图片更新流程
 - 见：`docs/image-workflow.md`

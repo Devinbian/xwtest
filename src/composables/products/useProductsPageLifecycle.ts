@@ -1,11 +1,6 @@
-import { onMounted, onUnmounted, watch, type ComputedRef, type Ref } from 'vue';
-import { preloadImage } from '@/utils/image';
+import { onMounted, onUnmounted, type Ref } from 'vue';
 
-type ProductWithImage = {
-  image: string;
-};
-
-type UseProductsPageLifecycleArgs<TProduct extends ProductWithImage> = {
+type UseProductsPageLifecycleArgs = {
   initializeViewportState: () => void;
   cleanupViewportState: () => void;
   seedDesktopExpandedCategories: () => void;
@@ -16,10 +11,9 @@ type UseProductsPageLifecycleArgs<TProduct extends ProductWithImage> = {
   initializeTopbarScroll: () => void;
   onTopbarScroll: () => void;
   cleanupTopbarScroll: () => void;
-  filteredProducts: ComputedRef<TProduct[]>;
 };
 
-export const useProductsPageLifecycle = <TProduct extends ProductWithImage>({
+export const useProductsPageLifecycle = ({
   initializeViewportState,
   cleanupViewportState,
   seedDesktopExpandedCategories,
@@ -30,13 +24,7 @@ export const useProductsPageLifecycle = <TProduct extends ProductWithImage>({
   initializeTopbarScroll,
   onTopbarScroll,
   cleanupTopbarScroll,
-  filteredProducts,
-}: UseProductsPageLifecycleArgs<TProduct>) => {
-  const preloadVisibleImages = async () => {
-    const visibleProducts = filteredProducts.value.map((product) => product.image);
-    await Promise.all(visibleProducts.map((src) => preloadImage(src)));
-  };
-
+}: UseProductsPageLifecycleArgs) => {
   let boundDesktopMenuEl: HTMLElement | null = null;
 
   onMounted(() => {
@@ -50,12 +38,6 @@ export const useProductsPageLifecycle = <TProduct extends ProductWithImage>({
     initializeHotEditor();
     initializeTopbarScroll();
     window.addEventListener('scroll', onTopbarScroll, { passive: true });
-
-    void preloadVisibleImages();
-  });
-
-  watch(filteredProducts, () => {
-    void preloadVisibleImages();
   });
 
   onUnmounted(() => {

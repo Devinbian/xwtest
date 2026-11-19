@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
+import { pageTitle, sitePages } from '@/data/sitePages'
 
 const routes = [
   {
@@ -48,5 +49,12 @@ const router = createRouter({
     return false
   }
 })
+
+router.afterEach((to) => {
+  const page = sitePages.find(page => page.path === (to.path.replace(/\/$/, '') || '/'));
+  if (!page) return;
+  document.title = pageTitle(page.title);
+  document.querySelector('meta[name="description"]')?.setAttribute('content', page.description);
+});
 
 export default router 

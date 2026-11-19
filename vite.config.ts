@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
+import { staticPages } from './scripts/build/static-pages'
 
 const normalizeBase = (value?: string): string => {
   const raw = String(value ?? '').trim()
@@ -14,7 +15,7 @@ export default defineConfig(() => {
   const base = normalizeBase(process.env.VITE_BASE_PATH)
 
   return {
-    plugins: [vue()],
+    plugins: [vue(), staticPages(base, process.env.SITE_ORIGIN)],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, 'src'),

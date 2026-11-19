@@ -4,7 +4,7 @@
       <LazyPicture :src="product.image" :placeholder="generatePlaceholderUrl(product.image)" :alt="product.title" />
       <div class="overlay" :class="{ active: hover }">
         <div class="overlay-actions">
-          <router-link to="/products" class="view-details">
+          <router-link :to="{ name: 'products', query: { id: product.id } }" class="view-details">
             查看产品
           </router-link>
           <button type="button" class="consult-btn" @click.stop="openConsult">

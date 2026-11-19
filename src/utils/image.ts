@@ -1,38 +1,16 @@
 export const generatePlaceholderUrl = (originalUrl: string): string => {
-  // 如果是开发环境，直接返回原图
-  if (import.meta.env.DEV) {
-    return originalUrl;
-  }
-  
-  // 生产环境下，返回低质量预览图的URL
-  // 移除重复的 base 路径
-  const cleanUrl = originalUrl.replace(/^\/xwtest\//, '').replace(/^\//, '');
+  // 外部图片没有本项目生成的占位资源。
+  if (/^(?:[a-z][a-z\d+.-]*:|\/\/)/i.test(originalUrl)) return originalUrl;
 
-  const urlPath = cleanUrl.split('?')[0].split('#')[0];
-  const lastSlash = urlPath.lastIndexOf('/');
-  const lastDot = urlPath.lastIndexOf('.');
-  const ext =
-    lastDot > lastSlash ? urlPath.slice(lastDot + 1).toLowerCase() : 'jpg';
-  const smallExt = ext === 'avif' || ext === 'webp' ? 'jpg' : ext;
+  const base = import.meta.env.BASE_URL;
+  const url = originalUrl.startsWith(base)
+    ? originalUrl
+    : `${base}${originalUrl.replace(/^\//, '')}`;
 
-  // 生成小图URL（保持与原图扩展名一致；对 avif/webp 强制使用 jpg 作为占位兜底）
-  const smallImageUrl = cleanUrl.replace(/(\.[^.]+)$/, `-small.${smallExt}`);
-  
-  // 添加正确的 base 路径
-  return `${import.meta.env.BASE_URL}${smallImageUrl}`;
+  // 保留查询参数和 hash，仅修改路径的扩展名。
+  const [, pathname, suffix = ''] = url.match(/^([^?#]*)(.*)$/)!;
+  return pathname.replace(/\.(jpe?g|png|webp|avif)$/i, (_, ext: string) => {
+    const smallExt = /^(webp|avif)$/i.test(ext) ? 'jpg' : ext;
+    return `-small.${smallExt}`;
+  }) + suffix;
 };
-
-export const preloadImage = (src: string): Promise<void> => {
-  // 移除重复的 base 路径
-  const cleanUrl = src.replace(/^\/xwtest\//, '').replace(/^\//, '');
-  
-  // 添加正确的 base 路径
-  const finalUrl = `${import.meta.env.BASE_URL}${cleanUrl}`;
-
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve();
-    img.onerror = () => reject();
-    img.src = finalUrl;
-  });
-}; 

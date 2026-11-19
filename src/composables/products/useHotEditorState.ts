@@ -109,9 +109,19 @@ export const useHotEditorState = <TProduct extends ProductLike>({
       String(token ?? '').trim() ||
       String(window.prompt('请输入热门编辑口令（服务器端 HOT_EDITOR_TOKEN）') ?? '').trim();
     if (!resolved) return false;
-    await authorizeHotEditorSession(resolved);
-    await refreshHotEditorSession();
-    return hotEditorAuthorized.value;
+    try {
+      await authorizeHotEditorSession(resolved);
+      await refreshHotEditorSession();
+      return hotEditorAuthorized.value;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      window.alert(message === 'authorize_failed_429'
+        ? '授权尝试过于频繁，请在 15 分钟后重试。'
+        : message === 'unauthorized'
+          ? '编辑口令不正确，请重试。'
+          : '暂时无法授权，请检查热门配置服务是否已启动。');
+      return false;
+    }
   };
 
   const logoutHotEditor = async () => {

@@ -78,6 +78,13 @@
   - `HOT_EDITOR_COOKIE_DOMAIN`：Cookie 域（可选，跨子域部署时需要，例如 `.xwtest.com.cn`）
   - `HOT_EDITOR_COOKIE_SECURE`：强制 Secure Cookie（可选，`1/true` 开启；HTTPS 反代下也会自动加 Secure）
 
+### API 边界与部署说明
+
+- 请求体上限为 64 KiB，超限返回 `413`；排名必须是 1～10 的整数或 `null`，覆盖配置中的排名不得重复，非法输入返回 `400`。
+- 登录接口按直接连接 IP 限制每 15 分钟最多 10 次尝试，成功后清零，超限返回 `429` 与 `Retry-After`。服务不信任客户端提供的转发 IP；反向代理后多个访客可能共享该限制，建议网关另外设置真实客户端 IP 限流。
+- Cookie 包含随机值与签名过期时间，服务器也会检查过期。升级前的旧 Cookie 需要重新授权。退出授权清除当前浏览器 Cookie；更换 `HOT_EDITOR_TOKEN` 可使所有旧会话失效。
+- 单进程内写入按顺序执行，使用唯一临时文件原子替换。多个编辑者仍采用整份配置最后写入生效的规则；不要让多个 API 实例共用此 JSON 文件。
+
 开发环境：
 - 终端1：`HOT_EDITOR_TOKEN=你的口令 npm run api`
 - 终端2：`npm run dev`（`vite.config.ts` 已把 `/api` 代理到 `http://localhost:5175`）

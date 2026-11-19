@@ -8,7 +8,7 @@
         <div class="container">
             <div class="filters">
                 <div class="search-bar">
-                    <input type="text" v-model="searchQuery" placeholder="搜索产品..." @input="filterProducts">
+                    <input type="text" v-model="searchQuery" placeholder="搜索产品..." aria-label="搜索产品">
                 </div>
 
                 <div class="category-filters">
@@ -19,6 +19,7 @@
                 </div>
             </div>
 
+            <p v-if="!matchingProducts.length" role="status">暂无匹配产品，请尝试其他关键词或分类。</p>
             <div class="products-grid">
                 <ProductCard v-for="product in filteredProducts" :key="product.id" :product="product" />
             </div>
@@ -37,127 +38,45 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import ProductCard from '@/components/ProductCard.vue';
-import { getAssetUrl } from '@/utils/assets';
-
-	// 示例数据（展示用：不展示价格，主目标为引导咨询）
-const categories = [
-    { id: 1, name: '数字万用表/源表' },
-    { id: 2, name: '电压/电流源' },
-    { id: 3, name: '微电流计/高阻计' },
-    { id: 4, name: '示波器' },
-    { id: 5, name: '电气安规试验' },
-    { id: 6, name: '图像量测' },
-    { id: 7, name: '静电测试' },
-    { id: 8, name: '环境/材料试验' },
-    { id: 9, name: '环境检测' },
-    { id: 10, name: '测量工具' },
-    { id: 11, name: '理化分析' }
-];
-
-		const products = ref([
-		    {
-		        id: 1,
-		        title: 'KEITHLEY 2450',
-		        image: getAssetUrl('/images/products/keithley/dmm6500.jpg'),
-		        brand: 'KEITHLEY',
-		        description: '高精度数字源表',
-		        category: 1
-		    },
-		    {
-		        id: 2,
-		        title: 'KIKUSUI PWX1500L',
-		        image: getAssetUrl('/images/products/keysight/E36106B.png'),
-		        brand: 'KIKUSUI',
-		        description: '可编程直流电源',
-		        category: 2
-		    },
-		    {
-		        id: 3,
-		        title: 'ADC 7461',
-		        image: getAssetUrl('/images/products/adcmt/7461A.jpg'),
-		        brand: 'ADC',
-		        description: '高精度数字万用表',
-		        category: 1
-		    },
-		    {
-		        id: 4,
-		        title: 'RIGOL DM3068',
-		        image: getAssetUrl('/images/products/power-analyzer.jpg'),
-		        brand: 'RIGOL',
-		        description: '6½ 位数字万用表',
-		        category: 1
-		    },
-		    {
-		        id: 5,
-		        title: 'Tektronix MSO46',
-		        image: getAssetUrl('/images/products/tektronix/MSO46.png'),
-		        brand: 'Tektronix',
-		        description: '混合信号示波器',
-		        category: 4
-		    },
-		    {
-		        id: 6,
-		        title: 'Keysight DSOX1204G',
-		        image: getAssetUrl('/images/products/keysight/34461A.png'),
-		        brand: 'Keysight',
-		        description: '数字示波器',
-		        category: 4
-		    },
-		    {
-		        id: 7,
-		        title: 'CHROMA 62000P',
-		        image: getAssetUrl('/images/products/power-analyzer.jpg'),
-		        brand: 'CHROMA',
-		        description: '可编程直流电源',
-		        category: 2
-		    }
-		]);
+import { categories } from '@/data/products/categories.js';
+import { products } from '@/data/products/products.js';
 
 const searchQuery = ref('');
 const selectedCategory = ref<number | null>(null);
 const currentPage = ref(1);
 const itemsPerPage = 12;
 
-// 筛选和分页逻辑
-const filteredProducts = computed(() => {
-    let result = products.value;
-
-    if (selectedCategory.value) {
-        result = result.filter(product => product.category === selectedCategory.value);
-    }
-
-    if (searchQuery.value) {
-        const query = searchQuery.value.toLowerCase();
-        result = result.filter(product =>
-            product.title.toLowerCase().includes(query) ||
-            product.brand.toLowerCase().includes(query) ||
-            product.description.toLowerCase().includes(query)
-        );
-    }
-
-    const start = (currentPage.value - 1) * itemsPerPage;
-    const end = start + itemsPerPage;
-    return result.slice(start, end);
+const matchingProducts = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase();
+  return products.filter(product => {
+    if (selectedCategory.value && product.categoryId !== selectedCategory.value) return false;
+    return [product.name, product.brandDisplay, product.brand, product.description]
+      .some(value => value.toLowerCase().includes(query));
+  });
 });
 
-const totalPages = computed(() =>
-    Math.ceil(filteredProducts.value.length / itemsPerPage)
-);
+const totalPages = computed(() => Math.ceil(matchingProducts.value.length / itemsPerPage));
+const filteredProducts = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  return matchingProducts.value.slice(start, start + itemsPerPage).map(product => ({
+    ...product,
+    title: product.name,
+    brand: product.brandDisplay || product.brand,
+  }));
+});
 
-// 方法
+watch([searchQuery, selectedCategory], () => {
+  currentPage.value = 1;
+}, { flush: 'sync' });
+
 const selectCategory = (categoryId: number) => {
-    selectedCategory.value = selectedCategory.value === categoryId ? null : categoryId;
-    currentPage.value = 1;
-};
-
-const filterProducts = () => {
-    currentPage.value = 1;
+  selectedCategory.value = selectedCategory.value === categoryId ? null : categoryId;
 };
 
 const changePage = (page: number) => {
-    currentPage.value = page;
+  currentPage.value = Math.max(1, Math.min(page, totalPages.value));
 };
 </script>
 

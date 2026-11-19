@@ -721,7 +721,6 @@ useProductsPageLifecycle({
   initializeTopbarScroll,
   onTopbarScroll,
   cleanupTopbarScroll,
-  filteredProducts,
 });
 
 // 检查分类是否处于激活状态
