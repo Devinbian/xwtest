@@ -187,6 +187,8 @@ export const useProductsTopbarState = <
 
   const topbarCompactByScroll = ref(false);
   const topbarCompact = computed(() => {
+    // 桌面筛选栏随页面滚动，保持高度稳定，避免产品列表跳动。
+    if (!isMobile.value) return false;
     if (filterChips.value.length === 0) return true;
     return topbarCompactByScroll.value;
   });
@@ -222,6 +224,7 @@ export const useProductsTopbarState = <
   };
 
   const onTopbarScroll = () => {
+    if (!isMobile.value) return;
     if (topbarScrollRaf) return;
     topbarScrollRaf = window.requestAnimationFrame(handleTopbarScroll);
   };

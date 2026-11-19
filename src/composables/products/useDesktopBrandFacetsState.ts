@@ -50,13 +50,15 @@ export const useDesktopBrandFacetsState = <TCategory extends CategoryLike>({
   const desktopOnlyShowSelected = ref(false);
   const desktopExpandedCategories = reactive<Record<number, boolean>>({});
   const desktopShowAllBrands = reactive<Record<number, boolean>>({});
-  const desktopBrandPickerOpen = ref(false);
-  const desktopBrandPickerRoot = ref<HTMLElement | null>(null);
   const desktopBrandPickerInput = ref<HTMLInputElement | null>(null);
-  const desktopCategoriesMenuEl = ref<HTMLElement | null>(null);
+  const desktopFacetListEl = ref<HTMLElement | null>(null);
+
+  watch(desktopBrandQuery, () => {
+    desktopFacetListEl.value?.scrollTo({ top: 0, behavior: 'instant' });
+  });
 
   const handleDesktopMenuWheel = (event: WheelEvent) => {
-    const menu = desktopCategoriesMenuEl.value;
+    const menu = desktopFacetListEl.value;
     if (!menu) return;
     if (event.deltaY === 0) return;
     const atTop = menu.scrollTop <= 0;
@@ -249,8 +251,7 @@ export const useDesktopBrandFacetsState = <TCategory extends CategoryLike>({
       desktopExpandedCategories[categoryId] = true;
       toggleBrand(categoryId, suggestion.brand);
     }
-    desktopBrandQuery.value = '';
-    desktopBrandPickerOpen.value = false;
+    clearDesktopBrandSearch();
   };
 
   watch(
@@ -262,29 +263,9 @@ export const useDesktopBrandFacetsState = <TCategory extends CategoryLike>({
     { deep: true },
   );
 
-  const openDesktopBrandPicker = async () => {
-    desktopBrandPickerOpen.value = true;
-    await nextTick();
-    desktopBrandPickerInput.value?.focus?.();
-  };
-
-  const closeDesktopBrandPicker = () => {
-    desktopBrandPickerOpen.value = false;
+  const clearDesktopBrandSearch = () => {
     desktopBrandQuery.value = '';
-  };
-
-  const toggleDesktopBrandPicker = () => {
-    if (desktopBrandPickerOpen.value) closeDesktopBrandPicker();
-    else void openDesktopBrandPicker();
-  };
-
-  const handleDesktopBrandPickerDismiss = (event: Event) => {
-    if (!desktopBrandPickerOpen.value) return;
-    const root = desktopBrandPickerRoot.value;
-    const target = event.target as Node | null;
-    if (!target) return;
-    if (root?.contains(target)) return;
-    closeDesktopBrandPicker();
+    nextTick(() => desktopBrandPickerInput.value?.focus({ preventScroll: true }));
   };
 
   return {
@@ -292,10 +273,8 @@ export const useDesktopBrandFacetsState = <TCategory extends CategoryLike>({
     desktopOnlyShowSelected,
     desktopExpandedCategories,
     desktopShowAllBrands,
-    desktopBrandPickerOpen,
-    desktopBrandPickerRoot,
     desktopBrandPickerInput,
-    desktopCategoriesMenuEl,
+    desktopFacetListEl,
     desktopBrandSuggestions,
     isCategoryExpanded,
     toggleCategoryExpanded,
@@ -306,9 +285,7 @@ export const useDesktopBrandFacetsState = <TCategory extends CategoryLike>({
     desktopBrandsForCategory,
     toggleDesktopShowAllBrands,
     applyDesktopBrandSuggestion,
-    closeDesktopBrandPicker,
-    toggleDesktopBrandPicker,
-    handleDesktopBrandPickerDismiss,
+    clearDesktopBrandSearch,
     handleDesktopMenuWheel,
   };
 };

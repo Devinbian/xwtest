@@ -2,10 +2,10 @@
   <div>
     <div class="products-page">
       <!-- PC端左侧分类菜单 -->
-      <aside v-if="!isMobile" ref="desktopCategoriesMenuEl" class="categories-menu">
+      <aside v-if="!isMobile" class="categories-menu">
         <div class="filter-content">
           <div class="filters-sticky">
-            <div ref="desktopBrandPickerRoot" class="filters-toolbar">
+            <div class="filters-toolbar">
               <div class="toolbar-top">
                 <!-- 产品类型选择器 -->
                 <div class="product-type-selector">
@@ -16,7 +16,7 @@
                     :aria-pressed="route.query.type === 'new'"
                     @click="toggleProductType('new')"
                   >
-                    产品
+                    全新
                   </button>
                   <button
                     type="button"
@@ -28,29 +28,9 @@
                     中古品
                   </button>
                 </div>
-
-                <!-- 快速添加品牌（点击放大镜弹出） -->
-                <div class="brand-quick-pop">
-                  <button
-                    type="button"
-                    class="facet-icon brand-quick-trigger"
-                    title="添加品牌"
-                    :aria-expanded="desktopBrandPickerOpen"
-                    @click="toggleDesktopBrandPicker"
-                  >
-                    <i class="fas fa-search" aria-hidden="true"></i>
-                    <span class="sr-only">添加品牌</span>
-                  </button>
-                </div>
               </div>
 
-              <div
-                v-if="desktopBrandPickerOpen"
-                class="brand-quick-panel"
-                role="dialog"
-                aria-label="添加品牌"
-                @click.stop
-              >
+              <div class="brand-search" role="search" aria-label="筛选品牌">
                 <div class="brand-quick-input">
                   <i class="fas fa-search" aria-hidden="true"></i>
                   <input
@@ -58,118 +38,129 @@
                     v-model="desktopBrandQuery"
                     type="search"
                     inputmode="search"
-                    placeholder="输入品牌（支持英文/缩写）"
-                    @keydown.escape="closeDesktopBrandPicker"
+                    placeholder="搜索品牌…"
+                    aria-label="搜索品牌，支持英文或缩写"
+                    @keydown.escape.prevent="clearDesktopBrandSearch"
                   />
                   <button
                     v-if="desktopBrandQuery.trim()"
                     type="button"
                     class="brand-quick-clear"
                     aria-label="清除品牌搜索"
-                    @click="desktopBrandQuery = ''"
+                    @click="clearDesktopBrandSearch"
                   >
                     <i class="fas fa-times" aria-hidden="true"></i>
                   </button>
-                </div>
-
-                <div v-if="desktopBrandSuggestions.length" class="brand-quick-suggest">
-                  <button
-                    v-for="suggestion in desktopBrandSuggestions"
-                    :key="suggestion.key"
-                    type="button"
-                    class="suggest-item"
-                    @click="applyDesktopBrandSuggestion(suggestion)"
-                  >
-                    <span class="suggest-brand">{{ suggestion.brand }}</span>
-                    <span class="suggest-scope">{{ suggestion.scopeLabel }}</span>
-                  </button>
-                </div>
-                <div v-else class="brand-quick-empty">
-                  输入关键字以搜索品牌
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- 分类分面筛选（可同时展开多个） -->
-          <div class="facets">
-            <div
-              v-for="category in desktopVisibleCategories"
-              :key="category.id"
-              class="facet"
-              :class="{ selected: isCategorySelected(category.id) }"
-            >
-              <div class="facet-head">
+          <div
+            ref="desktopFacetListEl"
+            class="facet-scroll"
+            role="region"
+            aria-label="分类与品牌列表"
+            tabindex="0"
+            @wheel="handleDesktopMenuWheel"
+          >
+            <template v-if="desktopBrandQuery.trim()">
+              <div v-if="desktopBrandSuggestions.length" class="brand-quick-suggest" role="group" aria-label="匹配的品牌与分类">
                 <button
+                  v-for="suggestion in desktopBrandSuggestions"
+                  :key="suggestion.key"
                   type="button"
-                  class="facet-select"
-                  :class="{ active: isCategorySelected(category.id) }"
-                  :aria-pressed="isCategorySelected(category.id)"
-                  :title="isCategorySelected(category.id) ? '取消筛选该分类' : '筛选该分类'"
-                  @click.stop="toggleCategory(category.id)"
+                  class="suggest-item"
+                  @click="applyDesktopBrandSuggestion(suggestion)"
                 >
-                  <i
-                    :class="[
-                      'fas',
-                      isCategorySelected(category.id) ? 'fa-check' : 'fa-plus',
-                    ]"
-                    aria-hidden="true"
-                  ></i>
-                  <span class="sr-only">筛选该分类</span>
-                </button>
-                <button
-                  type="button"
-                  class="facet-toggle"
-                  :aria-expanded="isCategoryExpanded(category.id)"
-                  @click="toggleCategoryExpanded(category.id)"
-                >
-                  <span class="facet-title">{{ category.name }}</span>
-                  <span v-if="selectedBrandCountByCategory(category.id) > 0" class="facet-badge">
-                    已选{{ selectedBrandCountByCategory(category.id) }}
-                  </span>
-                </button>
-                <button
-                  v-if="selectedBrandCountByCategory(category.id) > 0 || isCategorySelected(category.id)"
-                  type="button"
-                  class="facet-clear"
-                  title="清空该分类筛选"
-                  aria-label="清空该分类筛选"
-                  @click.stop="clearCategoryFilters(category.id)"
-                >
-                  <i class="fas fa-times" aria-hidden="true"></i>
+                  <span class="suggest-brand">{{ suggestion.brand }}</span>
+                  <span class="suggest-scope">{{ suggestion.scopeLabel }}</span>
                 </button>
               </div>
-
-              <div v-show="isCategoryExpanded(category.id)" class="facet-body">
-                <div class="brand-chips">
+              <div v-else class="brand-quick-empty" role="status">
+                未找到匹配品牌，请换个关键词
+              </div>
+            </template>
+            <!-- 分类分面筛选（可同时展开多个） -->
+            <div v-else class="facets">
+              <div
+                v-for="category in desktopVisibleCategories"
+                :key="category.id"
+                class="facet"
+                :class="{ selected: isCategorySelected(category.id) }"
+              >
+                <div class="facet-head">
                   <button
-                    v-for="brand in desktopBrandsForCategory(category)"
-                    :key="brand"
                     type="button"
-                    class="brand-chip"
-                    :class="{ active: isBrandSelected(category.id, brand) }"
-                    :aria-pressed="isBrandSelected(category.id, brand)"
-                    @click="toggleBrand(category.id, brand)"
+                    class="facet-select"
+                    :class="{ active: isCategorySelected(category.id) }"
+                    :aria-pressed="isCategorySelected(category.id)"
+                    :title="isCategorySelected(category.id) ? '取消筛选该分类' : '筛选该分类'"
+                    @click.stop="toggleCategory(category.id)"
                   >
-                    {{ brand }}
+                    <i
+                      :class="[
+                        'fas',
+                        isCategorySelected(category.id) ? 'fa-check' : 'fa-plus',
+                      ]"
+                      aria-hidden="true"
+                    ></i>
+                    <span class="sr-only">筛选该分类</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="facet-toggle"
+                    :aria-expanded="isCategoryExpanded(category.id)"
+                    @click="toggleCategoryExpanded(category.id)"
+                  >
+                    <span class="facet-title">{{ category.name }}</span>
+                    <span v-if="selectedBrandCountByCategory(category.id) > 0" class="facet-badge">
+                      已选{{ selectedBrandCountByCategory(category.id) }}
+                    </span>
+                  </button>
+                  <button
+                    v-if="selectedBrandCountByCategory(category.id) > 0 || isCategorySelected(category.id)"
+                    type="button"
+                    class="facet-clear"
+                    title="清空该分类筛选"
+                    aria-label="清空该分类筛选"
+                    @click.stop="clearCategoryFilters(category.id)"
+                  >
+                    <i class="fas fa-times" aria-hidden="true"></i>
                   </button>
                 </div>
 
-                <button
-                  v-if="category.brands.length > DESKTOP_BRAND_PREVIEW_LIMIT"
-                  type="button"
-                  class="facet-more"
-                  @click="toggleDesktopShowAllBrands(category.id)"
-                >
-                  {{ desktopShowAllBrands[category.id] ? '收起品牌' : `更多品牌（共${category.brands.length}个）` }}
-                  <i
-                    :class="[
-                      'fas',
-                      desktopShowAllBrands[category.id] ? 'fa-chevron-up' : 'fa-chevron-down',
-                    ]"
-                    aria-hidden="true"
-                  ></i>
-                </button>
+                <div v-show="isCategoryExpanded(category.id)" class="facet-body">
+                  <div class="brand-chips">
+                    <button
+                      v-for="brand in desktopBrandsForCategory(category)"
+                      :key="brand"
+                      type="button"
+                      class="brand-chip"
+                      :class="{ active: isBrandSelected(category.id, brand) }"
+                      :aria-pressed="isBrandSelected(category.id, brand)"
+                      @click="toggleBrand(category.id, brand)"
+                    >
+                      {{ brand }}
+                    </button>
+                  </div>
+
+                  <button
+                    v-if="category.brands.length > DESKTOP_BRAND_PREVIEW_LIMIT"
+                    type="button"
+                    class="facet-more"
+                    @click="toggleDesktopShowAllBrands(category.id)"
+                  >
+                    {{ desktopShowAllBrands[category.id] ? '收起品牌' : `更多品牌（共${category.brands.length}个）` }}
+                    <i
+                      :class="[
+                        'fas',
+                        desktopShowAllBrands[category.id] ? 'fa-chevron-up' : 'fa-chevron-down',
+                      ]"
+                      aria-hidden="true"
+                    ></i>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -204,7 +195,7 @@
                   :aria-pressed="route.query.type === 'new'"
                   @click="toggleProductType('new')"
                 >
-                  产品
+                  全新
                 </button>
                 <button
                   type="button"
@@ -380,6 +371,13 @@
           </div>
         </div>
 
+        <div
+          ref="productsScrollEl"
+          class="products-scroll"
+          role="region"
+          aria-label="产品列表"
+          :tabindex="isMobile ? undefined : 0"
+        >
 	        <div v-if="filteredProducts.length === 0" class="empty-products">
 	          <div class="empty-card">
 	            <div class="empty-icon" aria-hidden="true">
@@ -457,7 +455,7 @@
             </div>
             <div class="product-info">
 	              <h3 :title="product.name">{{ product.name }}</h3>
-              <p>{{ product.description }}</p>
+              <p :title="product.description">{{ product.description }}</p>
 	              <div class="specs-row" v-if="product.specs?.length">
 	                <div
 	                  class="specs-list"
@@ -510,7 +508,8 @@
                   <span>查看详情</span>
                   <i class="fas fa-external-link-alt"></i>
                 </a>
-	                <button class="quote-btn" 
+	                <button class="quote-btn"
+                          title="咨询价格、交期、质保及现货情况"
 	                        @click.stop="openQuoteDialog(product)">
 	                  <span>立即咨询</span>
 	                  <i class="fas fa-comments"></i>
@@ -518,6 +517,7 @@
 	              </div>
 	            </div>
 	          </div>
+        </div>
         </div>
       </main>
     </div>
@@ -533,6 +533,7 @@
 	</template>
 
 <script setup lang="ts">
+  import { ref, watch } from 'vue';
 	import { useRoute, useRouter } from 'vue-router';
 	import { getAssetUrl } from '@/utils/assets';
 	import { generatePlaceholderUrl } from '@/utils/image';
@@ -661,10 +662,8 @@ const {
   desktopBrandQuery,
   desktopOnlyShowSelected,
   desktopShowAllBrands,
-  desktopBrandPickerOpen,
-  desktopBrandPickerRoot,
   desktopBrandPickerInput,
-  desktopCategoriesMenuEl,
+  desktopFacetListEl,
   desktopBrandSuggestions,
   isCategoryExpanded,
   toggleCategoryExpanded,
@@ -675,9 +674,7 @@ const {
   desktopBrandsForCategory,
   toggleDesktopShowAllBrands,
   applyDesktopBrandSuggestion,
-  closeDesktopBrandPicker,
-  toggleDesktopBrandPicker,
-  handleDesktopBrandPickerDismiss,
+  clearDesktopBrandSearch,
   handleDesktopMenuWheel,
 } = useDesktopBrandFacetsState({
   typedCategories,
@@ -714,14 +711,31 @@ useProductsPageLifecycle({
   initializeViewportState,
   cleanupViewportState,
   seedDesktopExpandedCategories,
-  desktopCategoriesMenuEl,
-  handleDesktopBrandPickerDismiss,
-  handleDesktopMenuWheel,
   initializeHotEditor,
   initializeTopbarScroll,
   onTopbarScroll,
   cleanupTopbarScroll,
 });
+
+const productsScrollEl = ref<HTMLElement | null>(null);
+
+// 筛选只重置右侧结果列表，保留左侧分类和整页的位置。
+watch(
+  [
+    () => route.query.type,
+    () => route.query.brand,
+    selectedCategories,
+    selectedBrands,
+    selectedNewProduct,
+    searchQuery,
+    hotOnly,
+  ],
+  () => {
+    if (isMobile.value) return;
+    productsScrollEl.value?.scrollTo({ top: 0, behavior: 'instant' });
+  },
+  { deep: true, flush: 'post' },
+);
 
 // 检查分类是否处于激活状态
 const isCategoryActive = isCategorySelected;

@@ -61,6 +61,7 @@
           <div
             v-else
             class="nav-item"
+            :class="{ 'submenu-open': activeSubmenu === 'new' }"
             @mouseenter="showSubmenu('new')"
             @mouseleave="scheduleHideSubmenu()"
           >
@@ -72,6 +73,9 @@
                 'is-route-active': isNewProductsRoute,
               }"
               ref="productsTrigger"
+              :aria-expanded="activeSubmenu === 'new'"
+              aria-controls="nav-submenu-products"
+              @keydown.down.prevent="showSubmenu('new')"
               @click="handleProductsClick"
             >
               产品
@@ -434,7 +438,7 @@ const scheduleHideSubmenu = () => {
   }, 160);
 };
 
-const updateSubmenuArrow = async () => {
+const updateSubmenuPosition = async () => {
   if (isMobile.value) return;
   if (activeSubmenu.value !== 'new') return;
   if (!productsTrigger.value || !newSubmenu.value) return;
@@ -443,6 +447,13 @@ const updateSubmenuArrow = async () => {
   requestAnimationFrame(() => {
     if (!productsTrigger.value || !newSubmenu.value) return;
     const triggerRect = productsTrigger.value.getBoundingClientRect();
+    // main-nav 的 backdrop-filter 为 fixed 弹层建立了定位包含块。
+    const nav = productsTrigger.value.closest('.main-nav');
+    if (!nav) return;
+    const viewportTop = triggerRect.bottom + 8;
+    const localTop = viewportTop - nav.getBoundingClientRect().top;
+    newSubmenu.value.style.setProperty('--submenu-top', `${localTop}px`);
+    newSubmenu.value.style.setProperty('--submenu-viewport-top', `${viewportTop}px`);
     const submenuRect = newSubmenu.value.getBoundingClientRect();
     const anchorX = triggerRect.left + triggerRect.width / 2;
     const raw = anchorX - submenuRect.left;
@@ -467,7 +478,7 @@ const checkMobile = () => {
 const showSubmenu = (menu: string) => {
   cancelHideSubmenu();
   activeSubmenu.value = menu;
-  updateSubmenuArrow();
+  updateSubmenuPosition();
 };
 
 const hideSubmenu = () => {
@@ -507,7 +518,7 @@ const updateHeaderHeights = () => {
       `${(mainNav as HTMLElement).clientHeight}px`,
     );
 
-  updateSubmenuArrow();
+  updateSubmenuPosition();
 };
 
 const handleTouchStart = (event: TouchEvent) => {
@@ -563,7 +574,7 @@ const unlockBodyScroll = () => {
 };
 
 const handleKeydown = (e: KeyboardEvent) => {
-  if (e.key === 'Escape' && isMenuOpen.value) closeMenu();
+  if (e.key === 'Escape' && (isMenuOpen.value || activeSubmenu.value)) closeMenu();
 };
 
 watch(isMenuOpen, (open) => {
@@ -894,11 +905,11 @@ onUnmounted(() => {
 .submenu {
   // Desktop mega-menu: centered card (never clipped), with backdrop
   position: fixed;
-  top: calc(var(--header-offset) - 2px);
+  top: var(--submenu-top, 100%);
   left: 50%;
   width: min(1240px, calc(100vw - 2rem));
-  max-height: calc(100dvh - var(--header-offset) - 1rem);
-  max-height: calc(100vh - var(--header-offset) - 1rem);
+  max-height: calc(100vh - var(--submenu-viewport-top, var(--header-offset)) - 16px);
+  max-height: calc(100dvh - var(--submenu-viewport-top, var(--header-offset)) - 16px);
   overflow: hidden;
   transform: translate(-50%, 0) scale(0.98);
   transform-origin: top center;
@@ -918,17 +929,6 @@ onUnmounted(() => {
   z-index: 1002;
   will-change: transform, opacity;
   overscroll-behavior: contain;
-
-  // Hover bridge: prevents a visible gap/flicker when moving cursor down
-  &::before {
-    content: '';
-    position: absolute;
-    top: -14px;
-    left: 0;
-    right: 0;
-    height: 14px;
-    background: transparent;
-  }
 
   // Arrow pointer (anchored by JS to productsTrigger)
   &::after {
@@ -1200,6 +1200,55 @@ onUnmounted(() => {
               -webkit-box-orient: vertical;
               overflow: hidden;
             }
+          }
+        }
+      }
+    }
+  }
+}
+
+// 保留品牌卡片的圆角、渐变与阴影，只减少菜单内部留白。
+@media (min-width: 769px) {
+  // 将鼠标通道放在按钮上，避免被弹层的滚动容器裁切。
+  .nav-item.submenu-open::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 8px;
+  }
+
+  .submenu {
+    padding: 20px;
+    overflow-y: auto;
+
+    .submenu-header {
+      gap: 20px;
+      padding-bottom: 12px;
+      margin-bottom: 12px;
+    }
+
+    .brands-grid {
+      gap: 16px;
+
+      .brand-section {
+        padding: 16px;
+
+        .brand-header {
+          gap: 10px;
+          margin-bottom: 12px;
+          padding-bottom: 12px;
+        }
+
+        .products-list {
+          gap: 8px;
+
+          .product-item {
+            gap: 10px;
+            padding: 8px;
+
+            img { width: 56px; height: 56px; }
           }
         }
       }
