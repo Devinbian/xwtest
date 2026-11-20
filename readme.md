@@ -41,7 +41,8 @@
 - 默认 `base` 为 `/`
 - 子路径部署（如 GitHub Pages）时，构建前设置：
   - `VITE_BASE_PATH=/xwtest/ npm run build`
-- CI 示例见：`.github/workflows/deploy.yml`
+- GitHub Pages 工作流：`.github/workflows/deploy.yml`
+- XWTEST 服务器发布工作流：`.github/workflows/deploy-server.yml`；首次配置、手动发布及自动发布开关见 [服务器发布说明](docs/server-deployment.md)。
 
 构建会为 `/products`、`/shop`、`/about`、`/services`、`/brands`、`/contact` 生成独立的 `目录/index.html` 入口，因此 GitHub Pages 能直接访问和刷新这些 History 路由（静态服务器可能补上末尾 `/`）。新增路由时需同时更新 `src/data/sitePages.ts`。
 
