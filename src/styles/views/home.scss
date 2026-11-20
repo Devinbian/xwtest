@@ -1532,25 +1532,9 @@ $primary-black: #000000;
     position: relative;
     flex: 1;
     min-width: calc(8% + 1px);
-    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: flex-grow 0.45s cubic-bezier(0.22, 1, 0.36, 1);
     overflow: hidden;
     cursor: pointer;
-
-    &:hover {
-      flex: 10;
-
-      .slider-bg {
-        transform: scale(1.2);
-      }
-
-      .slider-content h3 {
-        transform: translateY(-50%);
-        opacity: 1;
-        writing-mode: horizontal-tb;
-        font-size: 2.5rem;
-        letter-spacing: 2px;
-      }
-    }
 
     .slider-bg {
       position: absolute;
@@ -1583,7 +1567,7 @@ $primary-black: #000000;
       }
     }
 
-    &:hover .slider-bg::after {
+    &.is-active .slider-bg::after {
       opacity: 0.65;
     }
 
@@ -1601,7 +1585,7 @@ $primary-black: #000000;
         font-weight: 400;
         writing-mode: vertical-lr;
         transform: translateY(0);
-        transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: transform 0.2s ease, opacity 0.2s ease;
         opacity: 1;
         text-transform: uppercase;
         letter-spacing: 4px;
@@ -1610,6 +1594,66 @@ $primary-black: #000000;
         background: rgba(0, 0, 0, 0.28);
         backdrop-filter: blur(6px);
         border-radius: 10px;
+      }
+    }
+  }
+
+  .industry-title-expanded {
+    display: none;
+  }
+
+  @media (min-width: 769px) {
+    .industries-slider {
+      display: grid;
+      grid-template-columns: var(--industry-columns);
+      min-width: 0;
+      overflow: hidden;
+      transition: grid-template-columns 0.6s cubic-bezier(0.32, 0, 0.2, 1);
+    }
+
+    .slider-item {
+      min-width: 0;
+      transition: none;
+
+      .slider-bg::after {
+        transition: opacity 0.6s cubic-bezier(0.32, 0, 0.2, 1);
+      }
+
+      .slider-content h3 {
+        transition: opacity 0.24s ease, transform 0.36s ease;
+      }
+    }
+
+    .slider-content .industry-title-expanded {
+      display: block;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, calc(-50% + 4px));
+      opacity: 0;
+      pointer-events: none;
+      white-space: nowrap;
+      color: white;
+      font-size: 2rem;
+      font-weight: 400;
+      letter-spacing: 2px;
+      padding: 1rem 0.9rem;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.28);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+      transition: opacity 0.24s ease, transform 0.36s ease;
+    }
+
+    .slider-item.is-active {
+      .slider-content h3 {
+        opacity: 0;
+        transform: translateY(-4px);
+      }
+
+      .industry-title-expanded {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+        transition-delay: 0.08s;
       }
     }
   }

@@ -518,6 +518,7 @@
 	            </div>
 	          </div>
         </div>
+          <TheFooter v-if="!isMobile" class="products-footer" />
         </div>
       </main>
     </div>
@@ -539,6 +540,7 @@
 	import { generatePlaceholderUrl } from '@/utils/image';
 	import LazyPicture from '@/components/LazyPicture.vue';
 	import QuoteDialog from '@/components/QuoteDialog.vue';
+  import TheFooter from '@/components/TheFooter.vue';
   import {
     DESKTOP_BRAND_PREVIEW_LIMIT,
     useDesktopBrandFacetsState,

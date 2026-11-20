@@ -170,14 +170,6 @@
           >
             中古品
           </router-link>
-          <a
-            href="https://shop198581009.taobao.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="nav-link"
-            @click="closeMenu"
-            >淘宝店</a
-          >
           <router-link to="/about" class="nav-link" @click="closeMenu"
             >关于我们</router-link
           >
@@ -1209,6 +1201,22 @@ onUnmounted(() => {
 
 // 保留品牌卡片的圆角、渐变与阴影，只减少菜单内部留白。
 @media (min-width: 769px) {
+  // 保持胶囊宽度与右侧对齐，菜单项等宽分配，避免数量变化造成视觉收缩。
+  .nav-menu {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    width: clamp(380px, 34vw, 420px);
+    flex-shrink: 0;
+
+    .nav-link {
+      width: 100%;
+      justify-content: center;
+      padding: 0 10px;
+      white-space: nowrap;
+    }
+  }
+
   // 将鼠标通道放在按钮上，避免被弹层的滚动容器裁切。
   .nav-item.submenu-open::after {
     content: '';

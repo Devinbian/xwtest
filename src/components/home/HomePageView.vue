@@ -19,15 +19,19 @@
     <section ref="industriesSectionEl" class="industries-section">
       <div class="container-fluid">
         <h2 class="section-title">八大行业解决方案</h2>
-        <div v-if="renderIndustries" class="industries-slider">
+        <div v-if="renderIndustries" class="industries-slider"
+          :style="{ '--industry-columns': industryColumns }" @pointerleave="clearIndustryHover">
           <div v-for="(industry, index) in industries" :key="industry.id" class="slider-item"
-            @mouseenter="activeIndustry = index" @mouseleave="activeIndustry = null"
+            :class="{ 'is-active': activeIndustry === index }"
+            @pointerenter="(event) => scheduleIndustryHover(event, index)"
+            @pointermove="(event) => scheduleIndustryHover(event, index)"
             @touchstart="(e) => handleIndustryTouchStart(e, index)" @touchend="handleIndustryTouchEnd"
             @touchcancel="handleIndustryTouchCancel">
             <div class="slider-bg">
               <LazyPicture :src="industry.image" :placeholder="generatePlaceholderUrl(industry.image)" :alt="industry.name" />
               <div class="slider-content">
                 <h3>{{ industry.name }}</h3>
+                <span class="industry-title-expanded" aria-hidden="true">{{ industry.name }}</span>
               </div>
             </div>
           </div>
@@ -326,6 +330,9 @@ const {
   productCategories,
   services,
   activeIndustry,
+  industryColumns,
+  scheduleIndustryHover,
+  clearIndustryHover,
   partnersSectionEl,
   industriesSectionEl,
   mainProductsSectionEl,

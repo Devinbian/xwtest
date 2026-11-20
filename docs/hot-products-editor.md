@@ -1,4 +1,19 @@
-# 热门产品：隐藏编辑开关说明
+# 热门产品管理：入口与维护说明
+
+## 快速入口
+
+热门产品管理位于产品列表页，通过 URL 参数显示编辑入口，无需从顶部菜单进入。
+
+| 使用场景 | 访问地址 |
+| --- | --- |
+| 本地开发 | [打开热门管理](http://localhost:5174/products?__hot=1) |
+| 线上站点 | 在网站域名后加 `/products?__hot=1` |
+| 已有查询参数 | 在产品页地址后追加 `&__hot=1`，例如 `/products?type=new&__hot=1` |
+| 只查看热门 | `/products?hot=1`，仅筛选，不打开管理入口 |
+
+`__hot` 前是两个下划线。普通 `/products` 页面不显示「编辑热门」。如果站点部署在子目录下，地址也需保留部署前缀，例如 `/站点目录/products?__hot=1`。
+
+进入后点击搜索框旁的「编辑热门」，输入服务端配置的口令；在产品卡片上勾选热门、填写排序（1～10，数字越小越靠前）。修改自动保存，结束后点击「完成」。可以收藏不含口令的入口地址，方便下次进入。
 
 ## 背景
 首页「热门产品」展示的数据来源于产品列表数据（`src/data/products/products.js`），避免出现两份数据重复维护。
@@ -56,7 +71,7 @@
 如果你希望“点开链接就自动授权”，可以使用一次性参数（授权完成后会自动从 URL 移除）：
 - `/products?__hot=1&__token=你的口令`
 
-> 建议：生产环境尽量不要用 `__token` 方式（URL 可能进入浏览器历史、服务器 access log、分享时泄露）。更推荐手动点「授权」输入。
+> 建议：生产环境尽量不要用 `__token` 方式（URL 可能进入浏览器历史、服务器 access log、分享时泄露）。更推荐手动点「编辑热门」输入。
 
 ## 排序规则与“可删除排序号”
 - `hotRank` 允许 1~10，且会尽量保持唯一（同一名次只允许一个产品）
@@ -85,13 +100,32 @@
 - Cookie 包含随机值与签名过期时间，服务器也会检查过期。升级前的旧 Cookie 需要重新授权。退出授权清除当前浏览器 Cookie；更换 `HOT_EDITOR_TOKEN` 可使所有旧会话失效。
 - 单进程内写入按顺序执行，使用唯一临时文件原子替换。多个编辑者仍采用整份配置最后写入生效的规则；不要让多个 API 实例共用此 JSON 文件。
 
-开发环境：
-- 终端1：`HOT_EDITOR_TOKEN=你的口令 npm run api`
-- 终端2：`npm run dev`（`vite.config.ts` 已把 `/api` 代理到 `http://localhost:5175`）
+### 本地启动步骤
 
-生产环境：
+在仓库根目录打开两个终端，均先使用项目指定的 Node `22.21.1`。
+
+终端 1：启动热门配置 API（默认端口 `5175`）。示例中的口令需替换为自己设置的值，浏览器编辑时输入相同口令。
+
+```bash
+nvm use
+HOT_EDITOR_TOKEN='替换为你设置的口令' npm run api
+```
+
+终端 2：启动前端（默认端口 `5174`）。
+
+```bash
+nvm use
+npm run dev
+```
+
+然后访问 `http://localhost:5174/products?__hot=1`。`vite.config.ts` 已把 `/api` 代理到 `http://localhost:5175`；只启动前端可以显示编辑按钮，但无法完成授权和保存。前端已运行时可复用现有服务，无需再次启动。
+
+### 生产环境要求
+
 - 确保前端同域下 `/api/*` 能转发到 Node API 服务（例如 Nginx 反代）
 - 口令建议通过环境变量注入（不要写进前端代码/不要提交到仓库）
+- 本地与线上分别使用各自 API 的数据文件；本地编辑不会自动同步到线上。
+- 部署前备份实际使用的 `HOT_PRODUCTS_FILE`（默认 `data/hot-products.json`），避免发布时覆盖运营配置。
 
 ### 生产环境口令示例
 任选一种方式设置环境变量 `HOT_EDITOR_TOKEN`：
@@ -120,7 +154,71 @@
 
 > 提醒：`pm2 start ... --env production` 的 `--env` 用法是用于 ecosystem 配置里的环境选择，不是用来传入 `KEY=VALUE`。
 
-## 常见问题：为什么每次操作都要重新授权？
+### XWTEST-PRD：找回失败后的口令重设与服务恢复
+
+2026-11-20 通过 Termius 的 XWTEST 会话只读检查确认：
+
+- 服务器名：`XWTEST-PRD`。
+- API 脚本：`/home/app/xw-hot-products-api/hot-products-server.mjs`。
+- 现有热门数据：`/home/app/xwtest/data/hot-products.json`，恢复时必须显式指定此文件。
+- Nginx 网站配置将 API 转发到 `127.0.0.1:5175`；检查时该端口未监听，PM2 当前进程列表中没有热门产品 API。
+- 历史日志曾记录 `token: configured`，后续启动记录为 `token: missing`；PM2 保存配置及备份未包含口令值，旧口令未找回。
+- 本次检查未设置新口令，也未启动或修改线上服务。以上是检查时状态，执行恢复前先运行 `pm2 status` 确认当前状态。
+
+**固定口令：`xwtest`。** 这是维护者指定的新口令，当前仅记录在文档中，尚未应用到线上服务。执行下方启动或重启步骤后，使用此口令进入「编辑热门」。
+
+在 Termius 的 XWTEST 终端设置口令环境变量：
+
+```bash
+export HOT_EDITOR_TOKEN='xwtest'
+```
+
+如果 `pm2 status` 中没有 `xw-hot-products-api`，执行：
+
+```bash
+PORT=5175 \
+HOT_PRODUCTS_FILE=/home/app/xwtest/data/hot-products.json \
+pm2 start /home/app/xw-hot-products-api/hot-products-server.mjs \
+  --name xw-hot-products-api \
+  --interpreter node
+```
+
+如果该应用已存在，改为更新环境变量并重启，避免重复创建：
+
+```bash
+PORT=5175 \
+HOT_PRODUCTS_FILE=/home/app/xwtest/data/hot-products.json \
+pm2 restart xw-hot-products-api --update-env
+```
+
+启动或重启成功后保存 PM2 配置，清除当前 shell 中的口令变量，再检查状态：
+
+```bash
+pm2 save
+unset HOT_EDITOR_TOKEN
+pm2 status
+pm2 logs xw-hot-products-api --lines 10 --nostream
+```
+
+确认应用状态为 `online`，最新启动日志为 `token: configured`，且数据路径为 `/home/app/xwtest/data/hot-products.json`。日志可能包含旧的 `token: missing`，应以本次启动的最新记录为准。
+
+随后访问网站的 `/products?__hot=1`，点击「编辑热门」并输入新口令，验证授权。上述步骤继续使用已有数据，不执行「恢复默认」或「清空热门」。
+
+## 常见问题：入口、授权与保存
+
+| 现象 | 检查方式 |
+| --- | --- |
+| 找不到「编辑热门」 | 确认当前在产品列表页，地址含 `__hot=1`，不是仅有 `hot=1`；按钮位于搜索框旁。 |
+| 提示暂时无法授权 | 确认 API 已启动；本地检查 `5175` 服务，线上检查 `/api` 反向代理。 |
+| 提示口令不正确 | 使用当前 API 进程的 `HOT_EDITOR_TOKEN`；未设置时无法授权，修改环境变量后需要重启 API。 |
+| 提示授权尝试过于频繁 | 等待 15 分钟后再试，避免反复提交。 |
+| 提示保存失败 | 检查 API 日志、数据文件目录写入权限和网络请求；失败时页面会尝试重新读取服务端配置，不要把当前显示视为已保存。 |
+| 点击「完成」后再次编辑不问口令 | 正常行为：「完成」仅退出编辑 UI，未清除授权 Cookie。 |
+| 线上未显示本地修改 | 检查访问的环境与 API 数据文件；本地数据不会自动发布到线上。 |
+
+保存后可刷新产品页确认热门标记与排序，再返回首页检查展示结果。
+
+### 为什么每次操作都要重新授权？
 正常情况下，授权成功后会写入一个 `HttpOnly Cookie`（默认有效期 30 天），所以不需要每一步都授权。
 
 如果你遇到“每操作一步就弹授权/变回未授权”，通常原因是 **Cookie 没有被浏览器保存，或没有被转发到 API**：
@@ -136,7 +234,19 @@
 
 如果你希望手动“退出授权”，可以：
 - 清理浏览器该站点的 Cookie
-- 或在服务器上用接口清除会话：`DELETE /api/hot-products/session`
+- 或从当前浏览器会话调用：`DELETE /api/hot-products/session`，让响应清除该浏览器的 Cookie
+
+## 维护代码定位
+
+| 文件 | 职责 |
+| --- | --- |
+| `src/components/products/ProductsPageView.vue` | 编辑入口、「操作」菜单、产品卡片编辑控件 |
+| `src/composables/products/useHotEditorState.ts` | 隐藏开关、口令授权、编辑状态、保存与排序逻辑 |
+| `src/utils/hotProducts.ts` | API 请求、配置合并与变更通知 |
+| `server/hot-products-server.mjs` | 口令校验、Cookie 会话、配置校验及文件读写 |
+| `src/data/products/products.js` | 产品基础数据及默认热门标记 |
+| `data/hot-products.json` | 服务端保存的热门覆盖配置（可由 `HOT_PRODUCTS_FILE` 改址） |
+| `vite.config.ts` | 本地 `/api` 代理与部署路径 `base` |
 
 ## 影响范围
 - 产品列表页：显示「热门」角标（含 `#hotRank`）

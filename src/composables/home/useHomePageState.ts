@@ -83,6 +83,39 @@ export const useHomePageState = () => {
   const featuredHotCount = computed(() => featuredProducts.value.length);
 
   const activeIndustry = ref<number | null>(null);
+  // 统一过渡整组列宽；fr 轨道在动画中断、反向时也始终填满容器。
+  const industryColumns = computed(() => industries.map((_, index) => {
+    const share = activeIndustry.value === null
+      ? 100 / industries.length
+      : index === activeIndustry.value ? 44 : 56 / (industries.length - 1);
+    return `minmax(0, ${share}fr)`;
+  }).join(' '));
+  let industryHoverTimer: ReturnType<typeof setTimeout> | undefined;
+  let pendingIndustry: number | null = null;
+  let lastIndustryPointer: { x: number; y: number } | null = null;
+
+  const clearIndustryHover = () => {
+    clearTimeout(industryHoverTimer);
+    industryHoverTimer = undefined;
+    pendingIndustry = null;
+    lastIndustryPointer = null;
+    activeIndustry.value = null;
+  };
+
+  const scheduleIndustryHover = (event: PointerEvent, index: number) => {
+    if (event.pointerType === 'touch' || !window.matchMedia('(min-width: 769px) and (hover: hover)').matches) return;
+    // 只响应实际指针移动，避免面板变宽经过指针时再次切换。
+    if (lastIndustryPointer?.x === event.clientX && lastIndustryPointer?.y === event.clientY) return;
+    lastIndustryPointer = { x: event.clientX, y: event.clientY };
+    if (pendingIndustry === index) return;
+    clearTimeout(industryHoverTimer);
+    pendingIndustry = index;
+    if (activeIndustry.value === index) return;
+    industryHoverTimer = setTimeout(() => {
+      activeIndustry.value = index;
+      industryHoverTimer = undefined;
+    }, 80);
+  };
 
   const partnersSectionEl = ref<HTMLElement | null>(null);
   const industriesSectionEl = ref<HTMLElement | null>(null);
@@ -303,6 +336,7 @@ export const useHomePageState = () => {
   });
 
   onUnmounted(() => {
+    clearIndustryHover();
     window.removeEventListener(HOT_PRODUCTS_CHANGED_EVENT, loadHotOverrides);
     stopAutoPlay();
     revealObserver?.disconnect();
@@ -316,6 +350,9 @@ export const useHomePageState = () => {
     productCategories,
     services,
     activeIndustry,
+    industryColumns,
+    scheduleIndustryHover,
+    clearIndustryHover,
     partnersSectionEl,
     industriesSectionEl,
     mainProductsSectionEl,
