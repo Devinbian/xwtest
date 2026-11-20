@@ -9,7 +9,8 @@
 - 使用 `VITE_BASE_PATH=/`、`SITE_ORIGIN=https://xwtest.com.cn`，适配官网根路径。
 - 不发布热门产品 API，不修改 PM2、Nginx 或编辑口令。
 - 明确排除站点的 `data/` 目录，保留现有热门配置。发布包中不允许出现该目录。
-- 原有 GitHub Pages 工作流继续独立运行，使用其原来的 `/xwtest/` 构建路径。
+- `Deploy to GitHub Pages` 已于 2026-11-20 在 GitHub Actions 页面手动停用，后续推送不再运行该工作流。配置文件保留，当前发布使用 `Deploy to XWTEST Server`。
+- 停用工作流不会下线已发布的 Pages 站点或删除历史记录。如需恢复，可在该工作流页面点击 `Enable workflow`。
 
 ## 1. 配置仓库 Secrets
 
