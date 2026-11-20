@@ -250,4 +250,4 @@ pm2 logs xw-hot-products-api --lines 10 --nostream
 
 ## 影响范围
 - 产品列表页：显示「热门」角标（含 `#hotRank`）
-- 首页：监听 `xw:hot-products-changed` 事件，实时刷新热门产品数据（不改 UI，只变数据来源/排序）
+- 首页：监听 `xw:hot-products-changed` 事件，实时刷新热门产品数据（不改 UI，只变数据来源/排序）。
