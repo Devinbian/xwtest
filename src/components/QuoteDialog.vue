@@ -226,9 +226,7 @@ const handleOverlayClick = (e: MouseEvent) => {
   width: 100vw;
   height: 100dvh;
   height: 100vh;
-  background: radial-gradient(circle at 20% 10%, rgba(131, 183, 53, 0.20) 0%, rgba(0, 0, 0, 0) 42%),
-    radial-gradient(circle at 80% 60%, rgba(131, 183, 53, 0.10) 0%, rgba(0, 0, 0, 0) 55%),
-    rgba(0, 0, 0, 0.66);
+  background: rgba(12, 15, 18, 0.66);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -351,9 +349,9 @@ const handleOverlayClick = (e: MouseEvent) => {
     .product-info {
       margin-bottom: 1.25rem;
       padding: 0.95rem 0.95rem 0.9rem;
-      border: 1px solid rgba(vars.$primary-green, 0.12);
+      border: 1px solid rgba(vars.$action-color, 0.12);
       border-radius: 14px;
-      background: linear-gradient(135deg, rgba(vars.$primary-green, 0.08) 0%, rgba(0, 0, 0, 0.02) 55%, rgba(255, 255, 255, 0.0) 100%);
+      background: linear-gradient(135deg, rgba(vars.$action-color, 0.08) 0%, rgba(0, 0, 0, 0.02) 55%, rgba(255, 255, 255, 0.0) 100%);
 
       h4 {
         font-size: 1.05rem;
@@ -395,9 +393,9 @@ const handleOverlayClick = (e: MouseEvent) => {
         align-items: center;
         padding: 3px 10px;
         border-radius: 999px;
-        background: rgba(vars.$primary-green, 0.08);
-        border: 1px solid rgba(vars.$primary-green, 0.14);
-        color: color-mix(in srgb, #{vars.$primary-green} 92%, #000 8%);
+        background: rgba(vars.$action-color, 0.08);
+        border: 1px solid rgba(vars.$action-color, 0.14);
+        color: color-mix(in srgb, #{vars.$action-color} 92%, #000 8%);
         font-size: var(--text-xs);
         line-height: 1.35;
       }
@@ -440,8 +438,8 @@ const handleOverlayClick = (e: MouseEvent) => {
         transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
 
         &:hover {
-          background: rgba(vars.$primary-green, 0.08);
-          border-color: rgba(vars.$primary-green, 0.20);
+          background: rgba(vars.$action-color, 0.08);
+          border-color: rgba(vars.$action-color, 0.20);
         }
 
         &:active {
@@ -449,8 +447,8 @@ const handleOverlayClick = (e: MouseEvent) => {
         }
 
         &.copied {
-          background: rgba(vars.$primary-green, 0.12);
-          border-color: rgba(vars.$primary-green, 0.22);
+          background: rgba(vars.$action-color, 0.12);
+          border-color: rgba(vars.$action-color, 0.22);
         }
       }
 
@@ -493,7 +491,7 @@ const handleOverlayClick = (e: MouseEvent) => {
 
           i {
             font-size: 1.15rem;
-            color: vars.$primary-green;
+            color: vars.$action-color;
             width: 28px;
             text-align: center;
           }
@@ -539,7 +537,7 @@ const handleOverlayClick = (e: MouseEvent) => {
           transition: transform 0.18s ease, background 0.2s ease, border-color 0.2s ease;
 
           i {
-            color: vars.$primary-green;
+            color: vars.$action-color;
           }
 
           &:active {
@@ -547,12 +545,12 @@ const handleOverlayClick = (e: MouseEvent) => {
           }
 
           &.primary {
-            background: linear-gradient(135deg, rgba(vars.$primary-green, 0.92) 0%, rgba(vars.$primary-green, 0.70) 100%);
-            border-color: rgba(vars.$primary-green, 0.35);
-            color: #0b1200;
+            background: vars.$action-color;
+            border-color: rgba(vars.$action-color, 0.35);
+            color: white;
 
             i {
-              color: #0b1200;
+              color: white;
             }
           }
         }

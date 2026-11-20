@@ -31,7 +31,7 @@
           <router-link to="/">
             <img
               :src="getAssetUrl('/images/logo.svg')"
-              alt="Logo"
+              alt="鑫万测"
               decoding="async"
             />
           </router-link>
@@ -439,12 +439,11 @@ const updateSubmenuPosition = async () => {
   requestAnimationFrame(() => {
     if (!productsTrigger.value || !newSubmenu.value) return;
     const triggerRect = productsTrigger.value.getBoundingClientRect();
-    // main-nav 的 backdrop-filter 为 fixed 弹层建立了定位包含块。
+    // 导航使用不透明背景，fixed 弹层直接按视口坐标定位。
     const nav = productsTrigger.value.closest('.main-nav');
     if (!nav) return;
-    const viewportTop = triggerRect.bottom + 8;
-    const localTop = viewportTop - nav.getBoundingClientRect().top;
-    newSubmenu.value.style.setProperty('--submenu-top', `${localTop}px`);
+    const viewportTop = nav.getBoundingClientRect().bottom + 8;
+    newSubmenu.value.style.setProperty('--submenu-top', `${viewportTop}px`);
     newSubmenu.value.style.setProperty('--submenu-viewport-top', `${viewportTop}px`);
     const submenuRect = newSubmenu.value.getBoundingClientRect();
     const anchorX = triggerRect.left + triggerRect.width / 2;
@@ -597,186 +596,113 @@ onUnmounted(() => {
 <style lang="scss" scoped>
 @use '../styles/variables' as vars;
 
+$nav-accent: vars.$action-color;
+
+header {
+  --ui-brand-panel: #fff;
+  --ui-brand-raised: #f7fbf2;
+  --ui-brand-line: #dce8d3;
+  --ui-on-brand: #263321;
+  --ui-brand-accent: var(--action-color);
+  --ui-ink: #263321;
+  --ui-muted: #65715e;
+  --ui-surface: var(--ui-brand-raised);
+  --ui-line: var(--ui-brand-line);
+  --ui-accent: var(--ui-brand-accent);
+}
+
 .top-bar {
-  background:
-    radial-gradient(900px 260px at 20% -60%, rgba(vars.$primary-green, 0.22), rgba(0, 0, 0, 0) 60%),
-    rgba(0, 0, 0, 0.92);
-  color: white;
-  padding: 8px 0;
-  font-size: 0.9rem;
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  inset: 0 0 auto;
   z-index: 1001;
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  height: 40px;
+  background: var(--ui-surface);
+  color: var(--ui-muted);
+  border-bottom: 1px solid var(--ui-line);
+  font-size: 14px;
 
   .top-container {
+    max-width: var(--ui-content-width);
+    height: 100%;
+    padding: 0 var(--ui-gutter);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 var(--space-4);
-    min-height: 36px;
-    gap: var(--space-3);
+    gap: 24px;
+  }
 
-    .company-info {
+  .company-info,
+  .company-wordmark {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    white-space: nowrap;
+  }
+
+  .company-brand {
+    color: var(--ui-ink);
+    font-weight: 600;
+  }
+
+  .company-divider {
+    width: 1px;
+    height: 10px;
+    background: #bdc5cb45;
+  }
+
+  .company-tagline {
+    padding-left: 16px;
+    margin-left: 8px;
+    border-left: 1px solid var(--ui-line);
+  }
+
+  .contact-info {
+    display: flex;
+    gap: 24px;
+    flex-shrink: 0;
+
+    a {
       display: inline-flex;
-      align-items: baseline;
-      gap: 12px;
-      min-width: 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-
-      .company-wordmark {
-        min-width: 0;
-        display: inline-flex;
-        align-items: baseline;
-        gap: 10px;
-        color: rgba(255, 255, 255, 0.92);
-        font-weight: 650;
-        letter-spacing: 0.2px;
-        overflow: hidden;
-      }
-
-      .company-brand {
-        flex: 0 0 auto;
-        font-weight: 900;
-        letter-spacing: 1.2px;
-        background: linear-gradient(
-          90deg,
-          rgba(vars.$primary-green, 1) 0%,
-          rgba(vars.$primary-green, 0.85) 55%,
-          rgba(255, 255, 255, 0.92) 110%
-        );
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
-        text-shadow: 0 10px 24px rgba(vars.$primary-green, 0.22);
-      }
-
-      .company-divider {
-        flex: 0 0 auto;
-        width: 6px;
-        height: 6px;
-        border-radius: 999px;
-        background: rgba(vars.$primary-green, 0.9);
-        box-shadow: 0 0 0 4px rgba(vars.$primary-green, 0.14);
-        opacity: 0.9;
-      }
-
-      .company-rest {
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        color: rgba(255, 255, 255, 0.86);
-        font-weight: 650;
-        letter-spacing: 0.25px;
-      }
-
-      .company-tagline {
-        flex: 0 0 auto;
-        color: rgba(255, 255, 255, 0.58);
-        font-size: 0.82rem;
-        letter-spacing: 0.6px;
-        padding-left: 12px;
-        border-left: 1px solid rgba(255, 255, 255, 0.14);
-      }
-    }
-
-    .contact-info {
-      display: flex;
-      gap: var(--space-4);
       align-items: center;
+      gap: 6px;
+      color: var(--ui-muted);
+      text-decoration: none;
+      transition: color 0.2s ease;
 
-      a {
-        color: rgba(255, 255, 255, 0.92);
-        text-decoration: none;
-        display: flex;
-        align-items: center;
-        gap: var(--space-1);
-        padding: 6px 10px;
-        border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        background: rgba(255, 255, 255, 0.06);
-        transition: color 0.22s ease, transform 0.18s ease, opacity 0.18s ease, background 0.22s ease, border-color 0.22s ease;
-        min-width: 0;
-
-        &:hover {
-          border-color: rgba(vars.$primary-green, 0.45);
-          background: rgba(vars.$primary-green, 0.12);
-          color: #fff;
-        }
-
-        &:active {
-          transform: translateY(1px);
-        }
-
-        i {
-          font-size: 0.9rem;
-          color: rgba(vars.$primary-green, 0.95);
-          flex: 0 0 auto;
-        }
-
-        span {
-          min-width: 0;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        &:focus-visible {
-          outline: 3px solid rgba(vars.$primary-green, 0.35);
-          outline-offset: 3px;
-        }
-      }
+      &:hover { color: var(--ui-accent); }
+      i { font-size: 11px; }
     }
   }
 }
 
 @media (max-width: 1100px) {
-  .top-bar {
-    .top-container {
-      .company-info {
-        gap: 8px;
-
-        .company-tagline {
-          display: none;
-        }
-      }
-    }
-  }
+  .top-bar .company-tagline { display: none; }
 }
 
 .main-nav {
   position: fixed;
-  top: var(--top-bar-height); // 使用 CSS 变量
+  top: var(--top-bar-height);
   left: 0;
   right: 0;
   z-index: 1000;
-  height: var(--nav-height);
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  height: 84px;
+  background: var(--ui-brand-panel);
+  border-bottom: 1px solid var(--ui-line);
+  transition: box-shadow 0.2s ease;
 
   &.nav-scrolled {
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-
-    .nav-menu {
-      background: rgba(255, 255, 255, 0.7);
-      border-color: rgba(0, 0, 0, 0.12);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-    }
+    box-shadow: 0 6px 30px #35551b12;
   }
 }
 
 .nav-container {
+  max-width: var(--ui-content-width);
+  height: 100%;
+  padding: 0 var(--ui-gutter);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 80px;
-  padding: 0 var(--space-4);
 }
 
 .nav-logo {
@@ -784,89 +710,54 @@ onUnmounted(() => {
   align-items: center;
   height: 100%;
 
-  a {
-    display: flex;
-    align-items: center;
-    height: 100%;
-  }
-
-  img {
-    height: 60px;
-    width: auto;
-    object-fit: contain;
-    vertical-align: middle;
-  }
+  a { display: inline-flex; align-items: center; }
+  img { height: 56px; width: 158px; object-fit: contain; }
 }
 
 .nav-menu {
   display: flex;
   align-items: center;
-  gap: 6px;
-  height: auto;
-  padding: 8px;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.04);
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+  height: 100%;
+  gap: 16px;
 }
 
 .nav-link {
-  color: var(--text-color);
-  text-decoration: none;
-  font: inherit;
-  font-weight: 650;
-  font-size: 1.02rem;
-  transition: color 0.3s, transform 0.18s ease, opacity 0.18s ease;
-  background: none;
-  border: 1px solid transparent;
-  cursor: pointer;
-  padding: 0 14px;
   display: inline-flex;
   align-items: center;
-  height: 44px;
+  justify-content: center;
   position: relative;
-  border-radius: 999px;
-  opacity: 0.92;
+  height: 48px;
+  padding: 0 16px;
+  border: 0;
+  background: transparent;
+  color: var(--ui-muted);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
 
-  &.is-open {
-    color: vars.$primary-black;
-    background: linear-gradient(
-      180deg,
-      rgba(vars.$primary-green, 0.28),
-      rgba(vars.$primary-green, 0.12)
-    );
-    border-color: rgba(vars.$primary-green, 0.35);
-    opacity: 1;
+  &::after {
+    content: '';
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 0;
+    height: 2px;
+    background: var(--ui-brand-accent);
+    transform: scaleX(0);
+    transition: transform 0.2s ease;
   }
 
-  &:hover {
-    color: vars.$primary-black;
-    background: rgba(vars.$primary-green, 0.12);
-    opacity: 1;
+  &:hover,
+  &.is-open,
+  &.is-route-active,
+  &.router-link-exact-active,
+  &.router-link-active {
+    color: var(--ui-ink);
+    &::after { transform: scaleX(1); }
   }
-
-  &:focus-visible {
-    outline: 3px solid rgba(vars.$primary-green, 0.35);
-    outline-offset: 3px;
-    opacity: 1;
-  }
-
-  &:active {
-    transform: translateY(1px);
-  }
-}
-
-.nav-link.is-route-active,
-.nav-link.router-link-exact-active,
-.nav-link.router-link-active {
-  color: vars.$primary-black;
-  background: linear-gradient(
-    180deg,
-    rgba(vars.$primary-green, 0.32),
-    rgba(vars.$primary-green, 0.14)
-  );
-  border-color: rgba(vars.$primary-green, 0.4);
-  opacity: 1;
 }
 
 .nav-item {
@@ -905,14 +796,10 @@ onUnmounted(() => {
   overflow: hidden;
   transform: translate(-50%, 0) scale(0.98);
   transform-origin: top center;
-  background:
-    radial-gradient(1100px 520px at 14% -12%, rgba(vars.$primary-green, 0.20), rgba(255, 255, 255, 0) 58%),
-    radial-gradient(900px 460px at 110% 10%, rgba(15, 23, 42, 0.10), rgba(255, 255, 255, 0) 60%),
-    rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(20px);
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.18);
-  border: 1px solid rgba(15, 23, 42, 0.10);
-  border-radius: 20px;
+  background: var(--ui-brand-panel);
+  box-shadow: 0 16px 40px rgba(32, 38, 34, 0.10);
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius);
   padding: var(--space-4);
   opacity: 0;
   visibility: hidden;
@@ -930,7 +817,7 @@ onUnmounted(() => {
     left: var(--submenu-arrow-left, 50%);
     width: 14px;
     height: 14px;
-    background: rgba(255, 255, 255, 0.98);
+    background: var(--ui-brand-panel);
     border-left: 1px solid rgba(0, 0, 0, 0.10);
     border-top: 1px solid rgba(0, 0, 0, 0.10);
     transform: translate(-50%, -50%) rotate(45deg);
@@ -974,19 +861,19 @@ onUnmounted(() => {
       padding: 0 10px;
       border-radius: 999px;
       font-size: 0.78rem;
-      font-weight: 800;
+      font-weight: 600;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: rgba(15, 23, 42, 0.76);
-      background: rgba(vars.$primary-green, 0.14);
-      border: 1px solid rgba(vars.$primary-green, 0.22);
+      color: var(--ui-brand-accent);
+      background: rgba($nav-accent, 0.14);
+      border: 1px solid rgba($nav-accent, 0.22);
       flex: 0 0 auto;
     }
 
     .title {
       font-size: 1.22rem;
-      font-weight: 850;
-      color: vars.$primary-black;
+      font-weight: 600;
+      color: var(--ui-on-brand);
       letter-spacing: 0.2px;
       min-width: 0;
       white-space: nowrap;
@@ -1002,13 +889,11 @@ onUnmounted(() => {
     gap: 10px;
     height: 40px;
     padding: 0 14px;
-    border-radius: 999px;
+    border-radius: 6px;
     text-decoration: none;
-    color: vars.$primary-black;
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.72)) padding-box,
-      linear-gradient(135deg, rgba(vars.$primary-green, 0.34), rgba(15, 23, 42, 0.16)) border-box;
-    border: 1px solid transparent;
+    color: var(--ui-on-brand);
+    background: var(--ui-brand-panel);
+    border: 1px solid var(--ui-line);
     transition: transform 0.2s ease, opacity 0.2s ease, background 0.2s ease;
     flex: 0 0 auto;
 
@@ -1026,7 +911,7 @@ onUnmounted(() => {
     }
 
     &:focus-visible {
-      outline: 3px solid rgba(vars.$primary-green, 0.28);
+      outline: 3px solid rgba($nav-accent, 0.28);
       outline-offset: 3px;
     }
   }
@@ -1044,35 +929,10 @@ onUnmounted(() => {
     .brand-section {
       position: relative;
       padding: var(--space-3);
-      border-radius: 18px;
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.90), rgba(255, 255, 255, 0.70)) padding-box,
-        linear-gradient(135deg, rgba(vars.$primary-green, 0.30), rgba(15, 23, 42, 0.12)) border-box;
-      border: 1px solid transparent;
-      transition: transform 0.22s ease, box-shadow 0.22s ease, opacity 0.22s ease;
+      border-radius: var(--ui-radius);
+      background: var(--ui-surface);
+      border: 1px solid var(--ui-line);
       overflow: hidden;
-
-      &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 18px;
-        right: 18px;
-        height: 2px;
-        background: linear-gradient(
-          90deg,
-          rgba(vars.$primary-green, 0) 0%,
-          rgba(vars.$primary-green, 0.85) 40%,
-          rgba(vars.$primary-green, 0) 100%
-        );
-        opacity: 0.65;
-      }
-
-      &:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 22px 60px rgba(15, 23, 42, 0.14);
-        opacity: 0.98;
-      }
 
       .brand-header {
         background: none;
@@ -1093,14 +953,14 @@ onUnmounted(() => {
           display: grid;
           place-items: center;
           border-radius: 12px;
-          background: rgba(15, 23, 42, 0.035);
+          background: #f3f5f6;
           border: 1px solid rgba(15, 23, 42, 0.07);
 
           img {
             height: 28px;
             width: auto;
             object-fit: contain;
-            filter: grayscale(100%);
+            filter: none;
             transition: filter 0.25s ease;
           }
         }
@@ -1108,7 +968,7 @@ onUnmounted(() => {
         h3 {
           margin: 0;
           font-size: var(--text-lg);
-          color: vars.$primary-black;
+          color: var(--ui-on-brand);
           font-weight: 650;
           letter-spacing: 0.25px;
         }
@@ -1129,13 +989,13 @@ onUnmounted(() => {
           padding: 12px;
           border-radius: 14px;
           transition: transform 0.22s ease, background 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
-          background: rgba(255, 255, 255, 0.55);
+          background: rgba(255, 255, 255, 0.035);
           border: 1px solid rgba(15, 23, 42, 0.06);
           min-width: 0;
 
           &:hover {
-            background: rgba(vars.$primary-green, 0.03);
-            border-color: rgba(vars.$primary-green, 0.1);
+            background: rgba($nav-accent, 0.03);
+            border-color: rgba($nav-accent, 0.1);
             transform: translateX(4px);
             box-shadow: 0 10px 24px rgba(15, 23, 42, 0.10);
 
@@ -1144,21 +1004,21 @@ onUnmounted(() => {
             }
 
             h4 {
-              color: vars.$primary-green;
+              color: $nav-accent;
             }
           }
 
           &:focus-visible {
-            outline: 3px solid rgba(vars.$primary-green, 0.28);
+            outline: 3px solid rgba($nav-accent, 0.28);
             outline-offset: 3px;
           }
 
           img {
             width: 72px;
             height: 72px;
-            object-fit: cover;
+            object-fit: contain;
             border-radius: 10px;
-            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.14);
+            background: var(--ui-brand-raised);
             transition: transform 0.22s ease;
           }
 
@@ -1172,7 +1032,7 @@ onUnmounted(() => {
             h4 {
               margin: 0 0 var(--space-1);
               font-size: 0.98rem;
-              color: vars.$primary-black;
+              color: var(--ui-on-brand);
               font-weight: 500;
               letter-spacing: 0.3px;
               transition: color 0.3s ease;
@@ -1184,7 +1044,7 @@ onUnmounted(() => {
             p {
               margin: 0;
               font-size: 0.82rem;
-              color: #666;
+              color: #65715e;
               line-height: 1.35;
               opacity: 0.9;
               display: -webkit-box;
@@ -1199,14 +1059,14 @@ onUnmounted(() => {
   }
 }
 
-// 保留品牌卡片的圆角、渐变与阴影，只减少菜单内部留白。
+// 桌面导航等宽排列；下拉菜单紧凑展示品牌和型号。
 @media (min-width: 769px) {
-  // 保持胶囊宽度与右侧对齐，菜单项等宽分配，避免数量变化造成视觉收缩。
+  // 菜单项等宽分配，保持导航对齐。
   .nav-menu {
     display: grid;
     grid-auto-flow: column;
     grid-auto-columns: minmax(0, 1fr);
-    width: clamp(380px, 34vw, 420px);
+    width: clamp(400px, 34vw, 520px);
     flex-shrink: 0;
 
     .nav-link {
@@ -1224,7 +1084,7 @@ onUnmounted(() => {
     top: 100%;
     left: 0;
     right: 0;
-    height: 8px;
+    height: 24px;
   }
 
   .submenu {
@@ -1284,7 +1144,7 @@ onUnmounted(() => {
     display: block;
     width: 100%;
     height: 2px;
-    background-color: var(--text-color);
+    background-color: var(--ui-on-brand);
     transition: transform 0.3s ease, opacity 0.3s ease;
   }
 }
@@ -1316,13 +1176,13 @@ onUnmounted(() => {
 
   .main-nav {
     height: 72px;
-    background: #ffffff;
+    background: var(--ui-brand-panel);
     backdrop-filter: none;
   }
 
   .nav-container {
     height: 72px;
-    padding: 0 var(--space-2);
+    padding: 0 24px;
   }
 
   .nav-logo img {
@@ -1338,10 +1198,10 @@ onUnmounted(() => {
   .nav-action {
     width: 42px;
     height: 42px;
-    border-radius: 999px;
-    border: 1px solid rgba(15, 23, 42, 0.12);
-    background: rgba(15, 23, 42, 0.03);
-    color: rgba(15, 23, 42, 0.78);
+    border-radius: 50%;
+    border: 1px solid var(--ui-line);
+    background: #ffffff08;
+    color: var(--ui-on-brand);
     display: grid;
     place-items: center;
     text-decoration: none;
@@ -1365,7 +1225,7 @@ onUnmounted(() => {
     bottom: 0;
     top: auto;
     height: auto;
-    background: #ffffff;
+    background: var(--ui-brand-panel);
     backdrop-filter: none;
     flex-direction: column;
     align-items: stretch;
@@ -1405,11 +1265,13 @@ onUnmounted(() => {
       width: 100%;
       padding: 12px 14px;
       text-align: center;
-      border: 1px solid rgba(15, 23, 42, 0.08);
-      background: rgba(15, 23, 42, 0.02);
+      border: 1px solid var(--ui-line);
+      background: #ffffff05;
       font-size: 1.05rem;
-      border-radius: 14px;
+      border-radius: 8px;
       line-height: 1.2;
+
+      &::after { display: none; }
       transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
       opacity: 1;
 
@@ -1420,8 +1282,8 @@ onUnmounted(() => {
       &.router-link-exact-active,
       &.router-link-active,
       &.is-route-active {
-        background: rgba(vars.$primary-green, 0.14);
-        border-color: rgba(vars.$primary-green, 0.30);
+        background: rgba($nav-accent, 0.14);
+        border-color: rgba($nav-accent, 0.30);
       }
     }
 
@@ -1504,7 +1366,7 @@ onUnmounted(() => {
           gap: var(--space-3);
 
             .brand-section {
-              background: white;
+              background: var(--ui-brand-raised);
               padding: var(--space-3);
               border-radius: 8px;
               box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -1537,7 +1399,7 @@ onUnmounted(() => {
                 margin: 0;
                 font-size: 1rem;
                 font-weight: 500;
-                color: vars.$primary-black;
+                color: var(--ui-on-brand);
               }
             }
 
@@ -1576,7 +1438,7 @@ onUnmounted(() => {
                   left: 0;
                   right: 0;
                   bottom: 0;
-                  background: vars.$primary-green;
+                  background: $nav-accent;
                   opacity: 0;
                   transition: opacity 0.2s ease;
                 }
@@ -1586,13 +1448,13 @@ onUnmounted(() => {
                 }
 
                 &.touch-active {
-                  border-color: vars.$primary-green;
+                  border-color: $nav-accent;
                 }
 
                 img {
                   width: 100%;
                   height: 100px;
-                  object-fit: cover;
+                  object-fit: contain;
                   border-radius: 4px;
                   margin-bottom: var(--space-2);
                 }
@@ -1604,14 +1466,14 @@ onUnmounted(() => {
                   h4 {
                     font-size: 0.9rem;
                     margin-bottom: var(--space-1);
-                    color: vars.$primary-green;
+                    color: $nav-accent;
                     font-weight: 500;
                   }
 
                   p {
                     font-size: 0.8rem;
                     line-height: 1.4;
-                    color: #666;
+                    color: #65715e;
                   }
                 }
 
@@ -1634,7 +1496,7 @@ onUnmounted(() => {
     left: 0;
     right: 0;
     bottom: 0;
-    background: #ffffff;
+    background: var(--ui-brand-panel);
     z-index: 998;
     pointer-events: none;
     transform: translateZ(0);
@@ -1679,7 +1541,7 @@ onUnmounted(() => {
 
 @media (max-width: 640px) {
   .nav-container {
-    padding: 0 var(--space-2);
+    padding: 0 24px;
   }
 
   .nav-logo img {

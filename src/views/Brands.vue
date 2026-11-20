@@ -21,9 +21,10 @@ import PartnerBrands from '@/components/PartnerBrands.vue'
 </script>
 
 <style lang="scss" scoped>
+@use '../styles/variables' as vars;
 @use 'sass:color';
 
-$primary-green: #83B735;
+$action-color: vars.$action-color;
 $primary-black: #333;
 
 .brands-page {
@@ -32,19 +33,19 @@ $primary-black: #333;
 }
 
 .container {
-  max-width: 1200px;
+  max-width: var(--ui-content-width);
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 var(--ui-gutter);
 }
 
 .page-hero {
-  background: linear-gradient(135deg, color.adjust($primary-green, $lightness: -10%), $primary-green);
+  background: var(--surface-banner);
   color: white;
   padding: 4rem 0;
   text-align: center;
 
   h1 {
-    font-size: 3rem;
+    font-size: clamp(36px, 4.5vw, 64px);
     margin-bottom: 1rem;
   }
 
@@ -70,7 +71,7 @@ $primary-black: #333;
     transform: translateX(-50%);
     width: 60px;
     height: 3px;
-    background: $primary-green;
+    background: $action-color;
     border-radius: 2px;
   }
 }

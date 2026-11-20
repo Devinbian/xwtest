@@ -84,7 +84,7 @@
           transform: translateX(-50%);
           width: 60px;
           height: 3px;
-          background: vars.$primary-green;
+          background: vars.$action-color;
           border-radius: 3px;
         }
       }
@@ -144,7 +144,7 @@
   display: inline-block;
   padding: 0.8rem 2rem;
   border-radius: 30px;
-  background: vars.$primary-green;
+  background: vars.$action-color;
   color: white;
   text-decoration: none;
   transition: vars.$transition-normal;
@@ -155,7 +155,7 @@
   box-shadow: vars.$shadow-sm;
 
   &:hover {
-    background: vars.$accent-green;
+    background: vars.$action-hover;
     transform: translateY(-2px);
     box-shadow: vars.$shadow-hover;
   }

@@ -199,7 +199,7 @@ onUnmounted(() => {
 @use '../styles/variables' as vars;
 
 .site-footer {
-    background-color: vars.$primary-black;
+    background-color: var(--ui-brand-panel);
     color: #fff;
     padding: clamp(28px, 4vw, 52px) 0 0;
     margin-top: clamp(28px, 4vw, 52px);
@@ -211,8 +211,8 @@ onUnmounted(() => {
         position: absolute;
         inset: 0;
         background:
-            radial-gradient(circle at 10% 10%, rgba(vars.$primary-green, 0.09), transparent 45%),
-            radial-gradient(circle at 90% 0%, rgba(vars.$primary-green, 0.06), transparent 38%),
+            radial-gradient(circle at 10% 10%, rgba(vars.$accent-on-brand, 0.09), transparent 45%),
+            radial-gradient(circle at 90% 0%, rgba(vars.$accent-on-brand, 0.06), transparent 38%),
             linear-gradient(to top, rgba(255, 255, 255, 0.04), transparent 60%);
         pointer-events: none;
         opacity: 0.8;
@@ -252,7 +252,7 @@ onUnmounted(() => {
                 bottom: -8px;
                 width: 36px;
                 height: 2px;
-                background: rgba(vars.$primary-green, 0.9);
+                background: rgba(vars.$accent-on-brand, 0.9);
                 border-radius: 2px;
             }
         }
@@ -278,13 +278,13 @@ onUnmounted(() => {
                 text-overflow: ellipsis;
 
                 &:hover {
-                    color: vars.$primary-green;
+                    color: vars.$accent-on-brand;
                     transform: translateX(2px);
                 }
             }
 
             li.more a {
-                color: rgba(vars.$primary-green, 0.95);
+                color: rgba(vars.$accent-on-brand, 0.95);
                 font-weight: 600;
 
                 i {
@@ -324,7 +324,7 @@ onUnmounted(() => {
             width: 3px;
             height: 3px;
             border-radius: 999px;
-            background: rgba(vars.$primary-green, 0.85);
+            background: rgba(vars.$accent-on-brand, 0.85);
         }
     }
 
@@ -357,7 +357,7 @@ onUnmounted(() => {
         i {
             width: 16px;
             text-align: center;
-            color: rgba(vars.$primary-green, 0.95);
+            color: rgba(vars.$accent-on-brand, 0.95);
             flex: 0 0 auto;
         }
 
@@ -372,7 +372,7 @@ onUnmounted(() => {
 
         &:hover {
             background: rgba(255, 255, 255, 0.06);
-            border-color: rgba(vars.$primary-green, 0.25);
+            border-color: rgba(vars.$accent-on-brand, 0.25);
             transform: translateY(-1px);
         }
 
@@ -427,7 +427,7 @@ onUnmounted(() => {
             transition: color 0.2s ease;
 
             &:hover {
-                color: rgba(vars.$primary-green, 0.95);
+                color: rgba(vars.$accent-on-brand, 0.95);
             }
         }
     }
@@ -516,7 +516,7 @@ onUnmounted(() => {
             -webkit-tap-highlight-color: transparent;
 
             i {
-                color: rgba(vars.$primary-green, 0.95);
+                color: rgba(vars.$accent-on-brand, 0.95);
             }
 
             &:active {
@@ -525,11 +525,11 @@ onUnmounted(() => {
         }
 
         .action-btn.primary {
-            background: rgba(vars.$primary-green, 0.16);
-            border-color: rgba(vars.$primary-green, 0.30);
+            background: rgba(vars.$accent-on-brand, 0.16);
+            border-color: rgba(vars.$accent-on-brand, 0.30);
 
             i {
-                color: rgba(vars.$primary-green, 1);
+                color: rgba(vars.$accent-on-brand, 1);
             }
         }
 
@@ -563,7 +563,7 @@ onUnmounted(() => {
             color: rgba(255, 255, 255, 0.92);
 
             i {
-                color: rgba(vars.$primary-green, 0.95);
+                color: rgba(vars.$accent-on-brand, 0.95);
                 width: 16px;
                 text-align: center;
             }
@@ -604,7 +604,7 @@ onUnmounted(() => {
             }
 
             li.more a {
-                color: rgba(vars.$primary-green, 0.95);
+                color: rgba(vars.$accent-on-brand, 0.95);
                 font-weight: 800;
             }
         }

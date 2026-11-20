@@ -43,3 +43,9 @@ npm run generate-thumbnails && npm run generate-modern-images
 - `npm run dev` / `npm run build` 会通过 `predev` / `prebuild` 自动执行上述脚本（见 `package.json`）。
 - 如果你在 **开发服务器已启动后** 才替换图片：需要手动执行脚本，或重启 `npm run dev`。
 
+
+## 首页透明设备素材
+
+`npm run generate-hero-cutouts` 从已有泰克与尼康产品原图生成 `hero/*-cutout.png`，移除画布边缘连通的近白背景，并处理影像测量仪支架内的背景及底部投影。原产品图保持不变。生成脚本按原图与脚本修改时间更新产物；新增素材应检查设备白色面板与边缘是否完整。
+
+`predev` / `prebuild` 已按“透明图 → 占位图 → WebP/AVIF”顺序执行。不要直接编辑生成的透明图。

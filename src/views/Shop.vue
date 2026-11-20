@@ -86,7 +86,7 @@ const changePage = (page: number) => {
 }
 
 .hero-section {
-    background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+    background: var(--surface-banner);
     color: white;
     padding: 4rem 2rem;
     text-align: center;

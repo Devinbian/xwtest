@@ -102,44 +102,38 @@
     <section ref="featuredSectionEl" class="featured-products" :class="{ 'is-visible': featuredTitleShown }">
       <div class="container">
         <div class="featured-header">
-          <span class="featured-scanlines" aria-hidden="true"></span>
-          <div class="featured-header-main">
-            <h2 class="section-title">
-              <span class="title-icon" aria-hidden="true">
-                <i class="fas fa-microchip"></i>
-                <i class="fas fa-fire title-flame"></i>
-              </span>
-              <span class="title-text">热门产品</span>
-              <span
-                class="title-badge"
-                :aria-label="`热度榜，当前展示 ${featuredHotCount} 款`"
-              >
-                <span class="badge-label">热度榜</span>
-                <span class="badge-sep">/</span>
-                <span class="badge-label-en">HOT PICK</span>
-                <span class="badge-count">{{ featuredHotCount }}</span>
-              </span>
-            </h2>
-            <button type="button" class="featured-cta" @click="goToHotProducts" aria-label="查看全部热门产品">
-              查看全部
-              <i class="fas fa-arrow-right" aria-hidden="true"></i>
-            </button>
+          <div>
+            <span class="featured-eyebrow">精选仪器 / FEATURED</span>
+            <h2 class="section-title">热门产品<span class="featured-count">{{ featuredHotCount }}</span></h2>
+            <p class="featured-subtitle">高频咨询 · 热度排序 · 一键直达品牌</p>
           </div>
-          <p class="featured-subtitle">高频咨询 · 热度排序 · 一键直达品牌</p>
+          <button type="button" class="featured-cta" @click="goToHotProducts" aria-label="查看全部热门产品">
+            查看全部<span aria-hidden="true">↗</span>
+          </button>
         </div>
         <div
           v-if="renderFeatured && featuredProducts.length > 0"
           class="products-slider"
+          role="region"
+          aria-label="热门产品轮播"
           @mouseenter="handleMouseEnter"
           @mouseleave="handleMouseLeave"
+          @focusin="handleFeaturedFocusIn"
+          @focusout="handleFeaturedFocusOut"
         >
           <div class="slider-wrapper" ref="sliderWrapper" :style="{ transform: `translate3d(${-currentSlide * 100}%, 0, 0)` }">
-            <div v-for="(product, index) in featuredProducts" :key="product.id" class="product-slide">
+            <div
+              v-for="(product, index) in featuredProducts"
+              :key="product.id"
+              class="product-slide"
+              :aria-hidden="currentSlide !== index"
+              :inert="currentSlide !== index ? true : undefined"
+            >
               <div class="product-content">
                 <div class="product-image">
                   <LazyPicture
-                    :src="product.image"
-                    :placeholder="generatePlaceholderUrl(product.image)"
+                    :src="getFeaturedImage(product.image)"
+                    :placeholder="generatePlaceholderUrl(getFeaturedImage(product.image))"
                     :alt="product.title"
                     :eager="index === currentSlide"
                     :disable-sources="disableFeaturedModernSources"
@@ -151,32 +145,36 @@
                   <h3 class="product-title">{{ product.title }}</h3>
                   <p class="product-description">{{ product.description }}</p>
                   <button type="button" class="product-link" :aria-label="`了解更多：${product.title}`"
+                    :tabindex="currentSlide === index ? 0 : -1"
                     @click="goToProduct(product.brand)">
-                    了解更多
+                    了解更多<span aria-hidden="true">↗</span>
                   </button>
                 </div>
               </div>
             </div>
           </div>
-          <button type="button" class="slider-nav prev" aria-label="上一项热门产品" @click="prevSlide"
-            :disabled="currentSlide === 0">
-            <span>←</span>
-          </button>
-          <button type="button" class="slider-nav next" aria-label="下一项热门产品" @click="nextSlide"
-            :disabled="currentSlide === featuredProducts.length - 1">
-            <span>→</span>
-          </button>
-          <div class="slider-dots">
-            <button
-              v-for="(_, index) in featuredProducts"
-              :key="index"
-              type="button"
-              class="dot"
-              :class="{ active: currentSlide === index }"
-              :aria-label="`切换到第 ${index + 1} 个热门产品`"
-              :aria-current="currentSlide === index ? 'true' : undefined"
-              @click="goToSlide(index)"
-            />
+          <div class="featured-controls">
+            <button type="button" class="slider-nav" aria-label="上一项热门产品" @click="prevSlide"
+              :disabled="currentSlide === 0"><span aria-hidden="true">←</span></button>
+            <div class="slider-dots">
+              <button
+                v-for="(_, index) in featuredProducts"
+                :key="index"
+                type="button"
+                class="dot"
+                :class="{ active: currentSlide === index }"
+                :aria-label="`切换到第 ${index + 1} 个热门产品`"
+                :aria-current="currentSlide === index ? 'true' : undefined"
+                @click="goToSlide(index)"
+              />
+            </div>
+            <button type="button" class="slider-nav" aria-label="下一项热门产品" @click="nextSlide"
+              :disabled="currentSlide === featuredProducts.length - 1"><span aria-hidden="true">→</span></button>
+            <button type="button" class="slider-nav playback" :aria-label="isFeaturedPaused ? '播放热门产品轮播' : '暂停热门产品轮播'"
+              @click="isFeaturedPaused = !isFeaturedPaused">
+              <svg v-if="isFeaturedPaused" viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4 9 6-9 6Z" fill="currentColor" /></svg>
+              <svg v-else viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5v10M13 5v10" stroke="currentColor" stroke-width="2" /></svg>
+            </button>
           </div>
         </div>
         <div v-else-if="renderFeatured" class="featured-empty">
@@ -325,6 +323,14 @@ import LazyPicture from '@/components/LazyPicture.vue';
 import { generatePlaceholderUrl } from '@/utils/image';
 import { useHomePageState } from '@/composables/home/useHomePageState';
 
+// 复用已生成的紧边设备图，避免热门产品展台被原图白边占满。
+const featuredImages: Record<string, string> = {
+  [getAssetUrl('images/products/tektronix/Tek-MSO68B.png')]: getAssetUrl('images/hero/scope-cutout.png'),
+  [getAssetUrl('images/products/nikon/VMZ-S_Rev1_500.png')]: getAssetUrl('images/hero/metrology-cutout.png'),
+  [getAssetUrl('images/products/nikon/L300.png')]: getAssetUrl('images/hero/microscope-cutout.png'),
+};
+const getFeaturedImage = (src: string) => featuredImages[src] ?? src;
+
 const {
   industries,
   productCategories,
@@ -358,6 +364,9 @@ const {
   goToSlide,
   handleMouseEnter,
   handleMouseLeave,
+  handleFeaturedFocusIn,
+  handleFeaturedFocusOut,
+  isFeaturedPaused,
   handleTouchStartEvent,
   handleTouchEndEvent,
   goToProduct,

@@ -78,6 +78,7 @@ const closeConsult = () => {
 </script>
 
 <style lang="scss" scoped>
+@use '../styles/variables' as vars;
 .product-card {
   background: white;
   border-radius: 8px;
@@ -210,9 +211,9 @@ const closeConsult = () => {
         flex: 0 0 auto;
         padding: 1px 8px;
         border-radius: 999px;
-        background: rgba(131, 183, 53, 0.08);
-        border: 1px solid rgba(131, 183, 53, 0.16);
-        color: rgb(111, 162, 46);
+        background: rgba(vars.$action-color, 0.08);
+        border: 1px solid rgba(vars.$action-color, 0.16);
+        color: vars.$action-hover;
         line-height: 1.4;
         white-space: nowrap;
       }

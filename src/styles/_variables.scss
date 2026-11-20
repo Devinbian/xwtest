@@ -1,10 +1,14 @@
 @use 'sass:map';
 
 // 主题颜色
-$primary-green: #83B735;  // Logo中的绿色
-$primary-dark: #2C3E50;   // Logo中的深色
-$accent-green: #6FA22E;   // 深绿色，用于悬停效果
-$accent-dark: #1A2633;    // 更深的灰色，用于强调
+$brand-green: #83b735;
+$action-color: #507d22;  // 浅色背景上的链接、按钮与选中状态
+$primary-dark: #282c30;  // 正文与标题
+$action-hover: #41661b;  // 交互悬停态
+$accent-on-brand: #e3f5c9; // 深色背景上的文字与细节
+$surface-brand: #416d26;
+$surface-brand-raised: #608d32;
+$accent-dark: #181c1f;    // 更深的灰色，用于强调
 $primary-black: #000000;    // 黑色
 
 // 8px spacing system
@@ -57,7 +61,7 @@ $shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
 $shadow-hover: 0 15px 30px rgba(0, 0, 0, 0.15);
 
 // 字体
-$font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+$font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
 $font-size-base: 1rem;
 $font-size-lg: 1.125rem;
 $font-size-sm: 0.875rem;
@@ -73,9 +77,26 @@ $z-index-popover: 1060;
 $z-index-tooltip: 1070;
 
 :root {
+  // 全站主题：品牌绿与白色统一全站，绿色深浅仅用于层次与可读性。
+  --ui-content-width: 1600px;
+  --ui-gutter: clamp(24px, 4vw, 48px);
+  --ui-ink: #282c30;
+  --ui-muted: #656d72;
+  --ui-surface: #f7fbf2;
+  --ui-line: #dce8d3;
+  --brand-green: #{$brand-green};
+  --ui-accent: #{$action-color};
+  --ui-radius: 12px;
+  --ui-brand-panel: #{$surface-brand};
+  --ui-brand-raised: #{$surface-brand-raised};
+  --ui-brand-line: #ffffff40;
+  --ui-on-brand: #ffffff;
+  --ui-brand-accent: #{$accent-on-brand};
+  --surface-banner: radial-gradient(ellipse at 80% 0%, #b5e77940, transparent 60%), linear-gradient(120deg, #{$surface-brand}, #{$surface-brand-raised});
+
   // Header layout (set by TheNavigation at runtime)
   --top-bar-height: 40px;
-  --nav-height: 80px;
+  --nav-height: 84px;
   --header-offset: calc(var(--top-bar-height) + var(--nav-height));
 
   // Spacing scale (8px grid)
@@ -95,9 +116,9 @@ $z-index-tooltip: 1070;
   --space-16: 128px;
 
   // 颜色
-  --primary-green: #{$primary-green};
+  --action-color: #{$action-color};
   --primary-dark: #{$primary-dark};
-  --accent-green: #{$accent-green};
+  --action-hover: #{$action-hover};
   --accent-dark: #{$accent-dark};
   
   // 背景色
@@ -113,8 +134,8 @@ $z-index-tooltip: 1070;
   // Typography scale
   --font-family-base: #{$font-family-base};
   --line-height-base: #{$line-height-base};
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
   --text-md: 1rem;
   --text-lg: 1.125rem;
   --text-xl: clamp(1.25rem, 1.15rem + 0.4vw, 1.5rem);
@@ -140,9 +161,9 @@ $z-index-tooltip: 1070;
   --shadow-hover: #{$shadow-hover};
 
   // Legacy tokens kept for compatibility (mapped to brand palette)
-  --primary-color: #{$primary-green};
-  --primary-color-dark: #{$accent-green};
-  --secondary-color: #{$accent-green};
+  --primary-color: #{$action-color};
+  --primary-color-dark: #{$action-hover};
+  --secondary-color: #{$action-hover};
   --text-color: var(--text-primary);
   --background-color: #ffffff;
 } 

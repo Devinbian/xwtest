@@ -47,7 +47,7 @@ onUnmounted(() => {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: vars.$primary-green;
+  background: vars.$action-color;
   color: white;
   border: none;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -73,7 +73,7 @@ onUnmounted(() => {
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-    background: color.adjust(vars.$primary-green, $lightness: -5%);
+    background: color.adjust(vars.$action-color, $lightness: -5%);
   }
 
   &:active {

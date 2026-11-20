@@ -185,9 +185,10 @@ const processSteps = ref([
 </script>
 
 <style lang="scss" scoped>
+@use '../styles/variables' as vars;
 @use 'sass:color';
 
-$primary-green: #83B735;
+$action-color: vars.$action-color;
 $primary-black: #333;
 
 .services-page {
@@ -197,15 +198,15 @@ $primary-black: #333;
 }
 
 .container {
-  max-width: 1200px;
+  max-width: var(--ui-content-width);
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 var(--ui-gutter);
 }
 
 // Hero Banner
 .page-hero {
   position: relative;
-  background: linear-gradient(135deg, color.adjust($primary-green, $lightness: -10%), $primary-green);
+  background: var(--surface-banner);
   color: white;
   padding: 5rem 0;
   overflow: hidden;
@@ -218,9 +219,7 @@ $primary-black: #333;
     .hero-overlay {
       position: absolute;
       inset: 0;
-      background: linear-gradient(135deg,
-        rgba($primary-green, 0.95) 0%,
-        rgba(color.adjust($primary-green, $lightness: -15%), 0.9) 100%);
+      background: linear-gradient(135deg, #ffffff03, transparent);
     }
 
     .hero-pattern {
@@ -244,7 +243,7 @@ $primary-black: #333;
   }
 
   .hero-title {
-    font-size: 3.5rem;
+    font-size: clamp(36px, 4.5vw, 64px);
     font-weight: 700;
     margin-bottom: 1.5rem;
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
@@ -304,7 +303,7 @@ $primary-black: #333;
       transform: translateX(-50%);
       width: 80px;
       height: 4px;
-      background: linear-gradient(90deg, transparent, $primary-green, transparent);
+      background: linear-gradient(90deg, transparent, $action-color, transparent);
       border-radius: 2px;
     }
   }
@@ -338,7 +337,7 @@ $primary-black: #333;
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, $primary-green, color.adjust($primary-green, $lightness: 15%));
+    background: linear-gradient(90deg, $action-color, color.adjust($action-color, $lightness: 15%));
     transform: scaleX(0);
     transform-origin: left;
     transition: transform 0.4s ease;
@@ -354,7 +353,8 @@ $primary-black: #333;
 
     .service-icon {
       transform: scale(1.1) rotate(5deg);
-      background: linear-gradient(135deg, $primary-green, color.adjust($primary-green, $lightness: 15%));
+      background: $action-color;
+      i { color: white; }
     }
 
     .card-decoration {
@@ -374,7 +374,7 @@ $primary-black: #333;
   .service-icon {
     width: 80px;
     height: 80px;
-    background: linear-gradient(135deg, rgba($primary-green, 0.1), rgba($primary-green, 0.05));
+    background: linear-gradient(135deg, rgba($action-color, 0.1), rgba($action-color, 0.05));
     border-radius: 20px;
     display: flex;
     align-items: center;
@@ -384,7 +384,7 @@ $primary-black: #333;
 
     i {
       font-size: 2rem;
-      color: $primary-green;
+      color: $action-color;
     }
   }
 
@@ -416,7 +416,7 @@ $primary-black: #333;
       font-size: 0.95rem;
 
       i {
-        color: $primary-green;
+        color: $action-color;
         font-size: 0.8rem;
       }
     }
@@ -439,7 +439,7 @@ $primary-black: #333;
       width: 150px;
       height: 150px;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba($primary-green, 0.1), transparent);
+      background: radial-gradient(circle, rgba($action-color, 0.1), transparent);
       transition: transform 0.4s ease;
     }
 
@@ -449,7 +449,7 @@ $primary-black: #333;
       right: 20px;
       width: 60px;
       height: 2px;
-      background: linear-gradient(90deg, $primary-green, transparent);
+      background: linear-gradient(90deg, $action-color, transparent);
       transform: rotate(-45deg);
     }
   }
@@ -489,7 +489,7 @@ $primary-black: #333;
   .step-number {
     width: 60px;
     height: 60px;
-    background: linear-gradient(135deg, $primary-green, color.adjust($primary-green, $lightness: 15%));
+    background: linear-gradient(135deg, $action-color, color.adjust($action-color, $lightness: 15%));
     color: white;
     border-radius: 50%;
     display: flex;
@@ -498,7 +498,7 @@ $primary-black: #333;
     font-size: 1.5rem;
     font-weight: 700;
     margin-bottom: 1.5rem;
-    box-shadow: 0 4px 15px rgba($primary-green, 0.3);
+    box-shadow: 0 4px 15px rgba($action-color, 0.3);
     position: relative;
     z-index: 2;
   }
@@ -524,7 +524,7 @@ $primary-black: #333;
     left: calc(50% + 30px);
     width: calc(100% - 60px);
     height: 2px;
-    background: linear-gradient(90deg, $primary-green, color.adjust($primary-green, $lightness: 20%));
+    background: linear-gradient(90deg, $action-color, color.adjust($action-color, $lightness: 20%));
     z-index: 1;
 
     @media (max-width: 768px) {
@@ -539,9 +539,7 @@ $primary-black: #333;
 }
 
 .commitment-card {
-  background: linear-gradient(135deg,
-    rgba($primary-green, 0.05) 0%,
-    rgba($primary-green, 0.02) 100%);
+  background: var(--ui-surface);
   border-radius: 20px;
   padding: 3rem;
   display: flex;
@@ -557,16 +555,16 @@ $primary-black: #333;
   .commitment-icon {
     width: 120px;
     height: 120px;
-    background: linear-gradient(135deg, $primary-green, color.adjust($primary-green, $lightness: 15%));
+    background: linear-gradient(135deg, $action-color, color.adjust($action-color, $lightness: 15%));
     border-radius: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 8px 30px rgba($primary-green, 0.3);
+    box-shadow: 0 8px 30px rgba($action-color, 0.3);
 
     i {
-      font-size: 3rem;
+      font-size: clamp(36px, 4.5vw, 64px);
       color: white;
     }
   }
@@ -604,7 +602,7 @@ $primary-black: #333;
 
       i {
         font-size: 1.5rem;
-        color: $primary-green;
+        color: $action-color;
       }
 
       span {

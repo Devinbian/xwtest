@@ -155,10 +155,16 @@ export const useHomePageState = () => {
 
   const autoPlayInterval = ref<number | null>(null);
   const isHovering = ref(false);
+  const isFeaturedFocused = ref(false);
+  const isFeaturedPaused = ref(false);
+  const handleFeaturedFocusIn = () => { isFeaturedFocused.value = true; };
+  const handleFeaturedFocusOut = (event: FocusEvent) => {
+    isFeaturedFocused.value = (event.currentTarget as HTMLElement).contains(event.relatedTarget as Node | null);
+  };
   const startAutoPlay = () => {
     if (autoPlayInterval.value) return;
     autoPlayInterval.value = window.setInterval(() => {
-      if (!isHovering.value) {
+      if (!isHovering.value && !isFeaturedFocused.value && !isFeaturedPaused.value && !document.hidden) {
         if (currentSlide.value < featuredProducts.value.length - 1) {
           currentSlide.value++;
         } else {
@@ -378,6 +384,9 @@ export const useHomePageState = () => {
     goToSlide,
     handleMouseEnter,
     handleMouseLeave,
+    handleFeaturedFocusIn,
+    handleFeaturedFocusOut,
+    isFeaturedPaused,
     handleTouchStartEvent,
     handleTouchEndEvent,
     goToCategory,

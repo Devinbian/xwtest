@@ -261,7 +261,8 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
-$primary-green: #83b735;
+@use '../styles/variables' as vars;
+$action-color: vars.$action-color;
 
 .partner-brands {
   width: 100%;
@@ -371,8 +372,8 @@ $primary-green: #83b735;
     height: 48px;
     border: none;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
+    background: rgba(vars.$action-color, 0.08);
+    color: vars.$action-color;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -383,7 +384,7 @@ $primary-green: #83b735;
 
     &:hover {
       transform: translateY(-50%) scale(1.08);
-      background: rgba(255, 255, 255, 0.16);
+      background: rgba(vars.$action-color, 0.14);
     }
 
     &:active:not(:disabled) {
@@ -434,17 +435,17 @@ $primary-green: #83b735;
       width: 8px;
       height: 8px;
       border-radius: 4px;
-      background: rgba(255, 255, 255, 0.25);
+      background: rgba(vars.$action-color, 0.25);
       transition: transform 0.3s ease, opacity 0.3s ease;
     }
 
     &:hover:not(.active)::before {
-      background: rgba($primary-green, 0.72);
+      background: rgba(vars.$action-color, 0.72);
     }
 
     &.active::before {
       width: 24px;
-      background: $primary-green;
+      background: vars.$action-color;
     }
   }
 }
@@ -499,12 +500,12 @@ $primary-green: #83b735;
       transition: transform 0.3s ease, opacity 0.3s ease;
 
       &:hover {
-        background: rgba($primary-green, 0.1);
-        color: $primary-green;
+        background: rgba($action-color, 0.1);
+        color: $action-color;
       }
 
       &.active {
-        background: $primary-green;
+        background: $action-color;
         color: #fff;
       }
     }

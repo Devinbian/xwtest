@@ -75,9 +75,10 @@ import { getAssetUrl } from '@/utils/assets'
 </script>
 
 <style lang="scss" scoped>
+@use '../styles/variables' as vars;
 @use 'sass:color';
 
-$primary-green: #83B735;
+$action-color: vars.$action-color;
 $primary-black: #333;
 
 .contact-page {
@@ -86,19 +87,19 @@ $primary-black: #333;
 }
 
 .container {
-  max-width: 1200px;
+  max-width: var(--ui-content-width);
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 var(--ui-gutter);
 }
 
 .page-hero {
-  background: linear-gradient(135deg, color.adjust($primary-green, $lightness: -10%), $primary-green);
+  background: var(--surface-banner);
   color: white;
   padding: 4rem 0;
   text-align: center;
 
   h1 {
-    font-size: 3rem;
+    font-size: clamp(36px, 4.5vw, 64px);
     margin-bottom: 1rem;
   }
 
@@ -138,9 +139,7 @@ $primary-black: #333;
 
     &.primary {
       grid-area: primary;
-      background: linear-gradient(135deg,
-          rgba($primary-green, 0.95),
-          color.adjust($primary-green, $lightness: -15%));
+      background: var(--surface-banner);
       position: relative;
       overflow: hidden;
 
@@ -267,7 +266,7 @@ $primary-black: #333;
     .icon-wrapper {
       width: 60px;
       height: 60px;
-      background: rgba($primary-green, 0.1);
+      background: rgba($action-color, 0.1);
       border-radius: 12px;
       display: flex;
       align-items: center;
@@ -276,7 +275,7 @@ $primary-black: #333;
 
       i {
         font-size: 1.5rem;
-        color: $primary-green;
+        color: $action-color;
       }
     }
 
@@ -295,7 +294,7 @@ $primary-black: #333;
         margin-bottom: 0.25rem;
 
         a {
-          color: $primary-green;
+          color: $action-color;
           text-decoration: none;
           font-weight: 500;
 
@@ -309,7 +308,7 @@ $primary-black: #333;
           font-weight: 500;
 
           a {
-            color: $primary-green;
+            color: $action-color;
           }
         }
       }

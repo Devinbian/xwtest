@@ -18,8 +18,9 @@
     "lint:external-links": "node scripts/code-health/check-external-links.cjs",
     "generate-thumbnails": "node scripts/images/generate-thumbnails.cjs",
     "generate-modern-images": "node scripts/images/generate-modern-images.cjs",
-    "predev": "npm run generate-thumbnails && npm run generate-modern-images",
-    "prebuild": "npm run generate-thumbnails && npm run generate-modern-images",
+    "generate-hero-cutouts": "node scripts/images/generate-hero-cutouts.cjs",
+    "predev": "npm run generate-hero-cutouts && npm run generate-thumbnails && npm run generate-modern-images",
+    "prebuild": "npm run generate-hero-cutouts && npm run generate-thumbnails && npm run generate-modern-images",
     "find-unused-components": "node scripts/code-health/find-unused-components.cjs",
     "find-unused-views": "node scripts/code-health/find-unused-views.cjs"
   },

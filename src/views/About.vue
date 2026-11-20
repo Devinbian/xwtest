@@ -209,24 +209,20 @@ import { getAssetUrl } from '@/utils/assets';
 }
 
 .container {
-  max-width: 1200px;
+  max-width: var(--ui-content-width);
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 var(--ui-gutter);
 }
 
 // 页面标题区域
 .page-header {
-  background: linear-gradient(
-    135deg,
-    color.adjust(vars.$primary-green, $lightness: -10%),
-    vars.$primary-green
-  );
+  background: var(--surface-banner);
   color: white;
   padding: 4rem 0;
   text-align: center;
 
   h1 {
-    font-size: 2.5rem;
+    font-size: clamp(36px, 4.5vw, 64px);
     font-weight: 600;
     margin-bottom: 1rem;
   }
@@ -263,7 +259,7 @@ section {
     transform: translateX(-50%);
     width: 60px;
     height: 3px;
-    background: vars.$primary-green;
+    background: vars.$action-color;
     border-radius: 2px;
   }
 }
@@ -315,7 +311,7 @@ section {
           display: block;
           font-size: 2.5rem;
           font-weight: 600;
-          color: vars.$primary-green;
+          color: vars.$action-color;
           margin-bottom: 0.5rem;
         }
 
@@ -334,7 +330,7 @@ section {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 2rem;
-    max-width: 1200px;
+    max-width: var(--ui-content-width);
     margin: 0 auto;
 
     @media (max-width: 1024px) {
@@ -388,7 +384,7 @@ section {
           width: 70px;
           height: 70px;
           margin-bottom: 1.5rem;
-          background: rgba(vars.$primary-green, 0.1);
+          background: rgba(vars.$action-color, 0.1);
           border-radius: 50%;
           display: flex;
           align-items: center;
@@ -396,7 +392,7 @@ section {
 
           i {
             font-size: 1.8rem;
-            color: vars.$primary-green;
+            color: vars.$action-color;
           }
         }
 
@@ -417,7 +413,7 @@ section {
         position: absolute;
         inset: 0;
         padding: 2rem;
-        background: vars.$primary-green;
+        background: vars.$action-color;
         color: white;
         opacity: 0;
         transform: translateY(10px);
@@ -493,11 +489,7 @@ section {
 
         &.primary {
           grid-area: primary;
-          background: linear-gradient(
-            135deg,
-            rgba(vars.$primary-green, 0.95),
-            color.adjust(vars.$primary-green, $lightness: -15%)
-          );
+          background: var(--surface-banner);
           position: relative;
           overflow: hidden;
 
@@ -622,7 +614,7 @@ section {
         .icon-wrapper {
           width: 60px;
           height: 60px;
-          background: rgba(vars.$primary-green, 0.1);
+          background: rgba(vars.$action-color, 0.1);
           border-radius: 12px;
           display: flex;
           align-items: center;
@@ -633,7 +625,7 @@ section {
 
           i {
             font-size: 1.5rem;
-            color: vars.$primary-green;
+            color: vars.$action-color;
           }
         }
 
@@ -653,7 +645,7 @@ section {
             &.phone {
               font-size: 1.2rem;
               font-weight: 500;
-              color: vars.$primary-green;
+              color: vars.$action-color;
             }
           }
         }
