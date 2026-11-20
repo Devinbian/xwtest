@@ -18,9 +18,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -73,4 +73,3 @@ jobs:
           ssh "${ssh_options[@]}" -p "$SSH_PORT" "$destination" "umask 077; mkdir -p '$remote_dir'"
           scp "${ssh_options[@]}" -P "$SSH_PORT" "$RUNNER_TEMP/site.tar.gz" scripts/deploy/deploy-server.sh "$destination:$remote_dir/"
           ssh "${ssh_options[@]}" -p "$SSH_PORT" "$destination" "bash '$remote_dir/deploy-server.sh' '$remote_dir/site.tar.gz' '$release_id' '$GITHUB_SHA'"
-
